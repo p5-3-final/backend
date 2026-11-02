@@ -11,14 +11,20 @@ import java.util.OptionalLong;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.S3Utilities;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -98,6 +104,47 @@ class S3UploadStorage implements UploadStorage {
     } catch (S3Exception e) {
       // 조각이 빠졌거나(InvalidPart) 이미 합쳤거나 취소된 업로드(NoSuchUpload). 호출자가 파일 크기로 다시 판단한다.
       log.info("멀티파트 합치기 실패: key={}, status={}", storageKey, e.statusCode());
+    }
+  }
+
+  @Override
+  public boolean deleteVideoFiles(
+      String prefix, String storageKey, @Nullable String multipartUploadId) {
+    try {
+      if (multipartUploadId != null) {
+        abortMultipartUpload(storageKey, multipartUploadId);
+      }
+      for (ListObjectsV2Response page :
+          s3.listObjectsV2Paginator(r -> r.bucket(properties.bucket()).prefix(prefix))) {
+        if (page.contents().isEmpty()) {
+          continue;
+        }
+        List<ObjectIdentifier> objects =
+            page.contents().stream()
+                .map(o -> ObjectIdentifier.builder().key(o.key()).build())
+                .toList();
+        DeleteObjectsResponse response =
+            s3.deleteObjects(
+                r -> r.bucket(properties.bucket()).delete(d -> d.objects(objects).quiet(true)));
+        if (response.hasErrors() && !response.errors().isEmpty()) {
+          log.warn("저장소 파일 삭제 실패: prefix={}, errors={}", prefix, response.errors().size());
+          return false;
+        }
+      }
+      return true;
+    } catch (SdkException e) {
+      log.warn("저장소 정리 실패: prefix={}", prefix, e);
+      return false;
+    }
+  }
+
+  // 업로드를 이미 합쳤거나 취소했으면 NoSuchUpload다. 지울 조각이 없으니 성공으로 본다.
+  private void abortMultipartUpload(String storageKey, String uploadId) {
+    try {
+      s3.abortMultipartUpload(
+          r -> r.bucket(properties.bucket()).key(storageKey).uploadId(uploadId));
+    } catch (NoSuchUploadException e) {
+      log.debug("이미 끝난 멀티파트 업로드: key={}", storageKey);
     }
   }
 

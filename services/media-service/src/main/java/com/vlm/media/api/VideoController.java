@@ -3,6 +3,7 @@ package com.vlm.media.api;
 import com.vlm.media.application.CompleteUploadService;
 import com.vlm.media.application.CreateVideoService;
 import com.vlm.media.application.CreatedVideo;
+import com.vlm.media.application.DeleteVideoService;
 import com.vlm.media.application.VideoQueryService;
 import com.vlm.media.domain.UploadStorage.UploadedPart;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,7 @@ class VideoController {
   private final CreateVideoService createVideoService;
   private final CompleteUploadService completeUploadService;
   private final VideoQueryService videoQueryService;
+  private final DeleteVideoService deleteVideoService;
 
   @PostMapping(VIDEOS)
   ResponseEntity<CreateVideoResponse> create(
@@ -62,6 +65,15 @@ class VideoController {
       @PathVariable UUID videoId) {
     return VideoResponse.from(
         videoQueryService.get(videoId, UserHeaders.userId(userId), UserHeaders.isAdmin(roles)));
+  }
+
+  @DeleteMapping(VIDEOS + "/{videoId}")
+  ResponseEntity<Void> delete(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
+      @RequestHeader(value = UserHeaders.USER_ROLES, required = false) @Nullable String roles,
+      @PathVariable UUID videoId) {
+    deleteVideoService.delete(videoId, UserHeaders.userId(userId), UserHeaders.isAdmin(roles));
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping(VIDEOS + "/{videoId}/complete")

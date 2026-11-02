@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import org.jspecify.annotations.Nullable;
 
 /** 영상 파일 저장소. 구현은 S3 API 하나이고 운영 S3와 로컬 SeaweedFS를 설정으로 고른다(ADR-0006). */
 public interface UploadStorage {
@@ -24,6 +25,15 @@ public interface UploadStorage {
    * #objectSize}로 확인한다.
    */
   void completeMultipartUpload(String storageKey, String uploadId, List<UploadedPart> parts);
+
+  /**
+   * 영상 하나의 파일을 모두 지운다. 끝나지 않은 멀티파트 업로드가 있으면 먼저 취소한다(SPEC-003 R-20).
+   *
+   * @param prefix 영상 하나의 파일이 들어가는 접두사({@link StorageKey#prefix})
+   * @param multipartUploadId 멀티파트로 올린 영상이면 그 업로드 ID
+   * @return 모두 지웠으면 true. 실패하면 false이고 호출자가 다음에 다시 시도한다
+   */
+  boolean deleteVideoFiles(String prefix, String storageKey, @Nullable String multipartUploadId);
 
   /** 저장소에 있는 파일 크기. 파일이 없으면 비어 있다. */
   OptionalLong objectSize(String storageKey);

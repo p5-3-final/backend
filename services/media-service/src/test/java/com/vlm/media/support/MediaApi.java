@@ -1,5 +1,6 @@
 package com.vlm.media.support;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -55,6 +56,10 @@ public final class MediaApi {
 
   public static MockHttpServletRequestBuilder getRequest(String videoId) {
     return get("/api/v1/media/videos/{id}", videoId);
+  }
+
+  public static MockHttpServletRequestBuilder deleteRequest(String videoId) {
+    return delete("/api/v1/media/videos/{id}", videoId);
   }
 
   public static MockHttpServletRequestBuilder completeRequest(String videoId) {
