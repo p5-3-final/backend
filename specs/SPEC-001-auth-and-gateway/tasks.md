@@ -65,10 +65,10 @@ updated: 2026-11-02
 - [x] T036 [P] [R-30] IP당 로그인·가입 분당 10회 초과 시 429 `GATEWAY_RATE_LIMITED` + `Retry-After` — 테스트 `RateLimitTest`(Testcontainers Redis), 구현 라우트 `RequestRateLimiter`, `config/RateLimitConfig`, `error/RateLimitedResponseFilter` (f74d91a)
 
 ## Phase 8: 운영 준비
-- [x] T037 [R-31] ADMIN이 없으면 환경변수로 초기 관리자 생성, 값이 없으면 경고 후 건너뜀 — 테스트 `A/test/.../application/InitialAdminTest.java`, 구현 `application/{InitialAdminCreator,InitialAdminProperties}`
+- [x] T037 [R-31] ADMIN이 없으면 환경변수로 초기 관리자 생성, 값이 없으면 경고 후 건너뜀 — 테스트 `A/test/.../application/InitialAdminTest.java`, 구현 `application/{InitialAdminCreator,InitialAdminProperties}` (e3e772b)
 
 ## Phase 9: 마무리
-- [ ] T050 auth-service 응답과 `auth-service.yaml` 스키마 일치 확인 — 테스트 `A/test/.../contract/AuthContractTest.java`
+- [x] T050 auth-service 응답과 `auth-service.yaml` 스키마 일치 확인 — 테스트 `A/test/.../contract/AuthContractTest.java`
 - [ ] T051 [NFR-2, NFR-3] DB에 토큰 원문 없음, 로그에 비밀번호·토큰·티켓 없음 — 테스트 `SensitiveLogTest`(두 서비스)
 - [ ] T052 [NFR-1] 게이트웨이 추가 지연 p95 50ms 이하 — 테스트 `G/test/.../GatewayLatencyTest.java`
 - [ ] T053 [NFR-4] 모든 오류 응답 `application/problem+json`·`traceId` 확인, Actuator health·tracing 설정 확인

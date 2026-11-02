@@ -178,6 +178,9 @@ sequenceDiagram
 - **통합 (auth-service)**: `@SpringBootTest` + Testcontainers PostgreSQL(`@ServiceConnection`) + MockMvc. 요구사항마다 API 테스트
 - **통합 (api-gateway)**: `@SpringBootTest(RANDOM_PORT)` + `WebTestClient`. 하위 서비스와 JWKS는 WireMock, 테스트 키 쌍으로 토큰을 직접 서명. P2는 Testcontainers Redis
 - **계약**: auth-service 응답을 `auth-service.yaml` 스키마로 검증(T050). 테스트 이름은 `@DisplayName("[SPEC-001 R-n] ...")`
+  - `com.atlassian.oai:swagger-request-validator-mockmvc` 2.46.1(사용자 승인, 테스트 전용)로 MockMvc 요청·응답을 검증한다. 일부러 계약을 어긴 요청을 보내는 실패 케이스는 응답만 검증한다.
+  - 계약 원본은 docs 레포에 둔다. 로컬은 작업 공간 구조(`../../docs/contracts`)를, CI는 `checks.yml`에서 docs 레포를 체크아웃해 `CONTRACTS_DIR`로 넘긴다. 파일이 없으면 테스트가 실패한다.
+  - 추가 필드를 금지하는 엄격 검사를 유지한다. 이 검사로 400 응답의 `errors`가 계약에 없던 것을 찾아 계약에 추가했다(docs #13, `_common.yaml` 1.2.0).
 - **아키텍처**: 서비스마다 ArchUnit(`api → application → domain ← infra`, 서비스 간 import 금지, `GeneralCodingRules`). 게이트웨이는 레이어 대신 패키지 간 순환 금지만 검사
 - **E2E**: 로컬 compose에서 가입 → 로그인 → 게이트웨이 경유 `/me` 수동 시연 (성공 지표)
 
