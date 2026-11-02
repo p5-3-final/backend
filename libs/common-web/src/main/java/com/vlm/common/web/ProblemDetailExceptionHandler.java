@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -91,6 +93,33 @@ public class ProblemDetailExceptionHandler extends ResponseEntityExceptionHandle
       HttpHeaders headers,
       HttpStatusCode status,
       WebRequest request) {
+    ProblemDetail problem =
+        ProblemDetail.forStatusAndDetail(status, CommonErrorCode.INVALID_REQUEST.defaultMessage());
+    problem.setProperty("code", validationErrorCode);
+    return handleExceptionInternal(exception, problem, headers, status, request);
+  }
+
+  @Override
+  protected @Nullable ResponseEntity<Object> handleHandlerMethodValidationException(
+      HandlerMethodValidationException exception,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    return invalidRequest(exception, headers, status, request);
+  }
+
+  @Override
+  protected @Nullable ResponseEntity<Object> handleTypeMismatch(
+      TypeMismatchException exception,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    return invalidRequest(exception, headers, status, request);
+  }
+
+  // 쿼리 파라미터의 범위·형식 오류도 본문 검증 실패와 같은 서비스 코드로 돌려준다.
+  private ResponseEntity<Object> invalidRequest(
+      Exception exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
     ProblemDetail problem =
         ProblemDetail.forStatusAndDetail(status, CommonErrorCode.INVALID_REQUEST.defaultMessage());
     problem.setProperty("code", validationErrorCode);

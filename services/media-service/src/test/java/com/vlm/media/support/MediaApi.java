@@ -1,5 +1,6 @@
 package com.vlm.media.support;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,6 +47,14 @@ public final class MediaApi {
     ResultActions result =
         mvc.perform(asUser(createVideoRequest(fileName, sizeBytes, contentType), ownerId));
     return JSON.readTree(result.andReturn().getResponse().getContentAsString());
+  }
+
+  public static MockHttpServletRequestBuilder listRequest() {
+    return get("/api/v1/media/videos");
+  }
+
+  public static MockHttpServletRequestBuilder getRequest(String videoId) {
+    return get("/api/v1/media/videos/{id}", videoId);
   }
 
   public static MockHttpServletRequestBuilder completeRequest(String videoId) {

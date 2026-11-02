@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.vlm.common.error.BusinessException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 class ProblemDetailExceptionHandlerTest {
@@ -41,6 +43,11 @@ class ProblemDetailExceptionHandlerTest {
     @GetMapping("/unexpected")
     String unexpected() {
       throw new IllegalStateException("database password is wrong");
+    }
+
+    @GetMapping("/paged")
+    String paged(@RequestParam(defaultValue = "20") @Max(100) int size) {
+      return String.valueOf(size);
     }
 
     @PostMapping("/validated")
@@ -94,6 +101,25 @@ class ProblemDetailExceptionHandlerTest {
   void unreadableBody() throws Exception {
     mockMvc
         .perform(post("/validated").contentType(MediaType.APPLICATION_JSON).content("{broken"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(VALIDATION_CODE));
+  }
+
+  @Test
+  @DisplayName("쿼리 파라미터가 범위를 벗어나면 서비스가 정한 code로 400을 반환한다")
+  void parameterOutOfRange() throws Exception {
+    mockMvc
+        .perform(get("/paged").param("size", "101"))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.code").value(VALIDATION_CODE));
+  }
+
+  @Test
+  @DisplayName("쿼리 파라미터 형식이 틀리면 서비스가 정한 code로 400을 반환한다")
+  void parameterTypeMismatch() throws Exception {
+    mockMvc
+        .perform(get("/paged").param("size", "abc"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value(VALIDATION_CODE));
   }

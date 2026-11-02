@@ -2,6 +2,7 @@ package com.vlm.media.api;
 
 import com.vlm.common.error.BusinessException;
 import com.vlm.media.domain.MediaErrorCode;
+import java.util.Arrays;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
@@ -12,6 +13,12 @@ final class UserHeaders {
   static final String USER_ROLES = "X-User-Roles";
 
   private UserHeaders() {}
+
+  /** 쉼표로 이은 역할 중에 ADMIN이 있는지. */
+  static boolean isAdmin(@Nullable String roles) {
+    return roles != null
+        && Arrays.stream(roles.split(",")).map(String::trim).anyMatch("ADMIN"::equals);
+  }
 
   static UUID userId(@Nullable String value) {
     if (value == null || value.isBlank()) {
