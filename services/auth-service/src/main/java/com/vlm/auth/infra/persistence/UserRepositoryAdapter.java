@@ -41,8 +41,8 @@ class UserRepositoryAdapter implements UserRepository {
   }
 
   @Override
-  public Optional<User> findByEmail(String email) {
-    return jpaRepository.findByEmail(email);
+  public Optional<User> findByEmailForUpdate(String email) {
+    return jpaRepository.findWithLockByEmail(email);
   }
 
   @Override

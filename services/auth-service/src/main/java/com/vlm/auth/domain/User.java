@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
@@ -19,6 +20,10 @@ import org.jspecify.annotations.Nullable;
 @Table(name = "users")
 @Getter
 public class User {
+
+  // SPEC-001 R-29: 연속 5회 실패하면 15분 잠근다.
+  private static final int LOCK_THRESHOLD = 5;
+  private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,5 +65,23 @@ public class User {
   /** 가입한 사용자 계정을 만든다. 역할은 USER다. */
   public static User signUp(String email, String passwordHash, String nickname) {
     return new User(email, passwordHash, nickname, Role.USER);
+  }
+
+  public boolean isLocked(Instant now) {
+    return lockedUntil != null && now.isBefore(lockedUntil);
+  }
+
+  /** SPEC-001 R-29: 연속 실패가 기준에 닿으면 잠그고, 잠금이 풀린 뒤 다시 세도록 횟수를 비운다. */
+  public void recordLoginFailure(Instant now) {
+    failedLoginCount++;
+    if (failedLoginCount >= LOCK_THRESHOLD) {
+      lockedUntil = now.plus(LOCK_DURATION);
+      failedLoginCount = 0;
+    }
+  }
+
+  public void recordLoginSuccess() {
+    failedLoginCount = 0;
+    lockedUntil = null;
   }
 }

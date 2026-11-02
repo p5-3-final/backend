@@ -86,6 +86,8 @@ updated: 2026-11-02
 ### auth-service 구성
 - **가입**: 이메일 소문자 정규화 후 중복 확인 → 비밀번호 정책 → BCrypt(strength 10) 해시 → `users` 저장. 이메일 유니크 제약으로 동시 가입 경쟁도 409로 변환한다.
 - **로그인**: 사용자 조회 → 잠금 확인(423) → 비밀번호 확인 → 실패 시 실패 횟수 증가(5회째에 `locked_until = now + 15분`) / 성공 시 초기화 → 로그인 기록 → 토큰 발급.
+  - 실패 횟수와 잠금은 401·423 응답과 함께 저장돼야 하므로 로그인 트랜잭션은 `BusinessException`으로 롤백하지 않는다. 동시 실패로 횟수가 덮어써지지 않도록 사용자 행을 잠그고 조회한다(`findByEmailForUpdate`).
+  - 잠긴 계정의 시도도 실패로 기록한다(R-9). 잠글 때 실패 횟수를 0으로 비워, 잠금이 풀린 뒤 다시 5회를 센다.
   - 이메일이 없을 때도 BCrypt 비교를 한 번 수행해 응답 시간으로 계정 존재 여부가 드러나지 않게 한다.
 - **접근 토큰**: `NimbusJwtEncoder` + EC P-256 키. 헤더 `kid`, 클레임은 `access-token.md` 그대로. `iss`는 환경변수.
   - 서명 키는 PEM 대신 JWK JSON으로 받는다. JDK만으로는 EC 개인키 PEM에서 공개키를 만들 수 없어 BouncyCastle이 필요해지기 때문이다.
@@ -118,6 +120,9 @@ updated: 2026-11-02
   - 하위 서비스로 보낼 때 `ticket` 쿼리를 지운다(NFR-3, 로그에 티켓이 남지 않게).
   - EX 60은 티켓 유효기간 30초 + 허용 오차 30초다.
 - **요청 수 제한**: `RequestRateLimiter` + `RedisRateLimiter`, 키는 클라이언트 IP. 분당 10회는 `replenishRate=1, burstCapacity=60, requestedTokens=6`으로 표현한다. 거절 응답을 ProblemDetail로 바꾼다.
+  - 로그인·가입(POST)만 별도 라우트 `auth-rate-limited`로 묶어 auth-service 라우트보다 앞에 둔다. 두 경로는 카운터를 같이 쓴다.
+  - 클라이언트 IP는 `X-Forwarded-For`의 마지막 값(ALB가 붙인 값) 하나만 믿는다(`XForwardedRemoteAddressResolver.maxTrustedIndex(1)`). 헤더가 없으면 접속 주소다.
+  - `RateLimitedResponseFilter`가 거절 응답(본문 없는 429)을 ProblemDetail로 바꾸고, `Retry-After`는 RedisRateLimiter 헤더(남은 토큰, 요청 토큰, 충전 속도)로 계산한다.
   - IP는 ALB가 붙인 `X-Forwarded-For`의 마지막 신뢰 홉을 쓴다(`forwarded-headers-strategy`). 로컬은 원격 주소.
 
 ### 데이터 모델 (auth_db)
