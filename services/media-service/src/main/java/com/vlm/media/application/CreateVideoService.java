@@ -1,6 +1,9 @@
 package com.vlm.media.application;
 
+import com.vlm.media.domain.UploadPlan;
 import com.vlm.media.domain.UploadStorage;
+import com.vlm.media.domain.UploadStorage.MultipartUploadTarget;
+import com.vlm.media.domain.UploadStorage.UploadTarget;
 import com.vlm.media.domain.Video;
 import com.vlm.media.domain.VideoRepository;
 import java.time.Clock;
@@ -25,9 +28,23 @@ public class CreateVideoService {
     Instant now = clock.instant();
     Video video =
         Video.startUpload(ownerId, fileName, sizeBytes, contentType, now, settings.uploadExpiry());
-    var upload =
-        uploadStorage.prepareSingleUpload(
-            video.getStorageKey(), contentType, sizeBytes, now.plus(settings.urlTtl()));
+    Instant urlExpiresAt = now.plus(settings.urlTtl());
+    UploadPlan plan = UploadPlan.of(sizeBytes, settings.singleMaxBytes(), settings.partSizeBytes());
+    UploadTarget upload;
+    if (plan.method() == UploadPlan.Method.SINGLE) {
+      upload =
+          uploadStorage.prepareSingleUpload(
+              video.getStorageKey(), contentType, sizeBytes, urlExpiresAt);
+    } else {
+      String uploadId = uploadStorage.startMultipartUpload(video.getStorageKey(), contentType);
+      video.useMultipart(uploadId, plan.partSizeBytes());
+      upload =
+          new MultipartUploadTarget(
+              plan.partSizeBytes(),
+              uploadStorage.presignParts(
+                  video.getStorageKey(), uploadId, plan.partCount(), settings.urlTtl()),
+              urlExpiresAt);
+    }
     return new CreatedVideo(videoRepository.save(video), upload);
   }
 }

@@ -23,21 +23,21 @@ updated: 2026-11-03
 
 ## Phase 2: US-1 작은 영상 업로드 (P1)
 
-- [x] T004 [R-1] 업로드 자리 요청 시 `UPLOADING` 영상 생성, 201과 `Location` — 테스트 `M/test/.../api/CreateVideoApiTest.java`, 구현 `M/main/.../{api/VideoController,application/CreateVideoService,domain/Video,infra/persistence}`
-- [x] T005 [P] [R-4] 크기 0 또는 5GB 초과면 400 `MEDIA_FILE_SIZE_INVALID` — 테스트 `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
-- [x] T006 [P] [R-5] 확장자·MIME이 허용 4종 짝이 아니면 400 `MEDIA_UNSUPPORTED_FORMAT` — 테스트 `M/test/.../domain/VideoFilePolicyTest.java`, `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
-- [x] T007 [R-6] 저장 키는 `sources/<videoId>/original`이고 파일 이름을 쓰지 않음 — 테스트 `CreateVideoApiTest`, 구현 `domain/StorageKey`
-- [x] T008 [R-2] [NFR-6] 100MB 이하는 POST 정책(크기 고정, 1시간) 발급, 같은 크기는 저장소가 받고 다른 크기는 거절 — 테스트 `M/test/.../infra/storage/PostPolicySignerTest.java`, `M/test/.../api/SingleUploadTest.java`, 구현 `infra/storage/{PostPolicySigner,S3UploadStorage}`
-- [x] T009 [R-7] 업로드된 파일이 있으면 완료 요청으로 `UPLOADED`, 200 — 테스트 `M/test/.../api/CompleteUploadApiTest.java`, 구현 `application/CompleteUploadService`
-- [x] T010 [R-9] [R-21] 완료 시 `video.uploaded`를 같은 트랜잭션에 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `application/event/VideoEvents`
-- [x] T011 [R-10] 파일이 없거나 크기가 다르면 409 `MEDIA_UPLOAD_INCOMPLETE`, 상태 유지 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
-- [x] T012 [R-11] 이미 완료된 영상에 다시 요청하면 200, 이벤트 재기록 없음 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
-- [x] T013 [NFR-2] 같은 영상 완료 요청 10건 동시에도 전이·이벤트 한 번 — 테스트 `M/test/.../application/ConcurrentCompleteTest.java`, 구현 `infra/persistence`(행 잠금 조회)
+- [x] T004 [R-1] 업로드 자리 요청 시 `UPLOADING` 영상 생성, 201과 `Location` — 테스트 `M/test/.../api/CreateVideoApiTest.java`, 구현 `M/main/.../{api/VideoController,application/CreateVideoService,domain/Video,infra/persistence}` (0383afb)
+- [x] T005 [P] [R-4] 크기 0 또는 5GB 초과면 400 `MEDIA_FILE_SIZE_INVALID` — 테스트 `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy` (0383afb)
+- [x] T006 [P] [R-5] 확장자·MIME이 허용 4종 짝이 아니면 400 `MEDIA_UNSUPPORTED_FORMAT` — 테스트 `M/test/.../domain/VideoFilePolicyTest.java`, `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy` (0383afb)
+- [x] T007 [R-6] 저장 키는 `sources/<videoId>/original`이고 파일 이름을 쓰지 않음 — 테스트 `CreateVideoApiTest`, 구현 `domain/StorageKey` (0383afb)
+- [x] T008 [R-2] [NFR-6] 100MB 이하는 POST 정책(크기 고정, 1시간) 발급, 같은 크기는 저장소가 받고 다른 크기는 거절 — 테스트 `M/test/.../infra/storage/PostPolicySignerTest.java`, `M/test/.../api/SingleUploadTest.java`, 구현 `infra/storage/{PostPolicySigner,S3UploadStorage}` (0383afb)
+- [x] T009 [R-7] 업로드된 파일이 있으면 완료 요청으로 `UPLOADED`, 200 — 테스트 `M/test/.../api/CompleteUploadApiTest.java`, 구현 `application/CompleteUploadService` (0383afb)
+- [x] T010 [R-9] [R-21] 완료 시 `video.uploaded`를 같은 트랜잭션에 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `application/event/VideoEvents` (0383afb)
+- [x] T011 [R-10] 파일이 없거나 크기가 다르면 409 `MEDIA_UPLOAD_INCOMPLETE`, 상태 유지 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService` (0383afb)
+- [x] T012 [R-11] 이미 완료된 영상에 다시 요청하면 200, 이벤트 재기록 없음 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService` (0383afb)
+- [x] T013 [NFR-2] 같은 영상 완료 요청 10건 동시에도 전이·이벤트 한 번 — 테스트 `M/test/.../application/ConcurrentCompleteTest.java`, 구현 `infra/persistence`(행 잠금 조회) (0383afb)
 
 ## Phase 3: US-2 큰 영상 멀티파트 업로드 (P1)
 
-- [ ] T014 [R-3] [NFR-6] 100MB 초과면 멀티파트 시작, 조각 크기(64MiB)와 조각별 주소(1시간) 반환 — 테스트 `M/test/.../domain/UploadPlanTest.java`, `M/test/.../api/MultipartUploadTest.java`, 구현 `domain/UploadPlan`, `S3UploadStorage`
-- [ ] T015 [R-8] 조각 목록으로 완료 요청 시 합친 뒤 `UPLOADED` — 테스트 `MultipartUploadTest`, 구현 `CompleteUploadService`, `S3UploadStorage`
+- [x] T014 [R-3] [NFR-6] 100MB 초과면 멀티파트 시작, 조각 크기(64MiB)와 조각별 주소(1시간) 반환 — 테스트 `M/test/.../domain/UploadPlanTest.java`, `M/test/.../api/MultipartUploadTest.java`, 구현 `domain/UploadPlan`, `S3UploadStorage`
+- [x] T015 [R-8] 조각 목록으로 완료 요청 시 합친 뒤 `UPLOADED` — 테스트 `MultipartUploadTest`, 구현 `CompleteUploadService`, `S3UploadStorage`
 
 ## Phase 4: US-3 내 영상 보기 (P1)
 

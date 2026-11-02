@@ -2,24 +2,34 @@ package com.vlm.media.infra.storage;
 
 import com.vlm.media.domain.UploadStorage;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 class S3UploadStorage implements UploadStorage {
 
   private final MediaStorageProperties properties;
   private final S3Client s3;
+  private final S3Presigner presigner;
   private final AwsCredentialsProvider credentials;
   private final Clock clock;
 
@@ -38,6 +48,57 @@ class S3UploadStorage implements UploadStorage {
             credentials.resolveCredentials(),
             clock.instant());
     return new SingleUploadTarget(bucketUrl(), fields, expiresAt);
+  }
+
+  @Override
+  public String startMultipartUpload(String storageKey, String contentType) {
+    return s3.createMultipartUpload(
+            r -> r.bucket(properties.bucket()).key(storageKey).contentType(contentType))
+        .uploadId();
+  }
+
+  @Override
+  public List<PartTarget> presignParts(
+      String storageKey, String uploadId, int partCount, Duration ttl) {
+    return IntStream.rangeClosed(1, partCount)
+        .mapToObj(
+            partNumber ->
+                new PartTarget(
+                    partNumber,
+                    presigner
+                        .presignUploadPart(
+                            r ->
+                                r.signatureDuration(ttl)
+                                    .uploadPartRequest(
+                                        p ->
+                                            p.bucket(properties.bucket())
+                                                .key(storageKey)
+                                                .uploadId(uploadId)
+                                                .partNumber(partNumber)))
+                        .url()
+                        .toString()))
+        .toList();
+  }
+
+  @Override
+  public void completeMultipartUpload(
+      String storageKey, String uploadId, List<UploadedPart> parts) {
+    List<CompletedPart> completed =
+        parts.stream()
+            .sorted(Comparator.comparingInt(UploadedPart::partNumber))
+            .map(p -> CompletedPart.builder().partNumber(p.partNumber()).eTag(p.eTag()).build())
+            .toList();
+    try {
+      s3.completeMultipartUpload(
+          r ->
+              r.bucket(properties.bucket())
+                  .key(storageKey)
+                  .uploadId(uploadId)
+                  .multipartUpload(m -> m.parts(completed)));
+    } catch (S3Exception e) {
+      // 조각이 빠졌거나(InvalidPart) 이미 합쳤거나 취소된 업로드(NoSuchUpload). 호출자가 파일 크기로 다시 판단한다.
+      log.info("멀티파트 합치기 실패: key={}, status={}", storageKey, e.statusCode());
+    }
   }
 
   @Override

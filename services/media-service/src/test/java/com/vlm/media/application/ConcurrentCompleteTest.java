@@ -45,7 +45,7 @@ class ConcurrentCompleteTest {
             pool.submit(
                 () -> {
                   start.await();
-                  return completeUploadService.complete(videoId, ownerId).getStatus();
+                  return completeUploadService.complete(videoId, ownerId, List.of()).getStatus();
                 }));
       }
       start.countDown();

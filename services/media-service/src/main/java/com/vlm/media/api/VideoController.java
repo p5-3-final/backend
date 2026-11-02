@@ -3,8 +3,10 @@ package com.vlm.media.api;
 import com.vlm.media.application.CompleteUploadService;
 import com.vlm.media.application.CreateVideoService;
 import com.vlm.media.application.CreatedVideo;
+import com.vlm.media.domain.UploadStorage.UploadedPart;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -36,13 +38,16 @@ class VideoController {
             request.contentType());
     VideoResponse video = VideoResponse.from(created.video());
     return ResponseEntity.created(URI.create(VIDEOS + "/" + video.id()))
-        .body(new CreateVideoResponse(video, UploadInstruction.Single.from(created.upload())));
+        .body(new CreateVideoResponse(video, UploadInstruction.from(created.upload())));
   }
 
   @PostMapping(VIDEOS + "/{videoId}/complete")
   VideoResponse complete(
       @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
-      @PathVariable UUID videoId) {
-    return VideoResponse.from(completeUploadService.complete(videoId, UserHeaders.userId(userId)));
+      @PathVariable UUID videoId,
+      @Valid @RequestBody(required = false) @Nullable CompleteUploadRequest request) {
+    List<UploadedPart> parts = request == null ? List.of() : request.uploadedParts();
+    return VideoResponse.from(
+        completeUploadService.complete(videoId, UserHeaders.userId(userId), parts));
   }
 }
