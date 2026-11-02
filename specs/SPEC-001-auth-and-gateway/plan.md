@@ -200,6 +200,7 @@ sequenceDiagram
 - **환경변수** (레포 `.env.example`, 루트 `local/.env.example`에 반영)
   - auth-service: `AUTH_DB_URL`, `AUTH_DB_USERNAME`, `AUTH_DB_PASSWORD`, `AUTH_JWT_ISSUER`, `AUTH_JWT_SIGNING_KEY`(개인키를 포함한 EC P-256 JWK JSON, `kid` 포함, 비밀값), `AUTH_JWT_PREVIOUS_PUBLIC_KEYS`(선택, JWK Set JSON), `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`(비밀값)
   - api-gateway: `GATEWAY_JWKS_URI`, `GATEWAY_JWT_ISSUER`, `GATEWAY_CORS_ALLOWED_ORIGINS`, `GATEWAY_REDIS_HOST`, `GATEWAY_REDIS_PORT`, 서비스별 `*_SERVICE_URI`
+- **로컬 단독 실행**: README "로컬 실행"에 PostgreSQL·Redis 컨테이너와 `bootRun` 순서를 적는다. 서명 키는 `./gradlew :services:auth-service:generateSigningKey`(테스트 소스의 생성기)로 만든다.
 - **로컬 compose** (docs 레포 `local/`): PostgreSQL(auth_db), Redis, auth-service(8081), api-gateway(8080). 별도 docs PR로 추가한다.
 - **운영**: Secrets Manager 경로(infra), gitops `apps/{auth-service,api-gateway}/base` 매니페스트와 auth-service NetworkPolicy(게이트웨이만 허용)는 각 레포 PR로 한다.
 - **배포 순서**: auth-service → api-gateway (게이트웨이가 시작할 때 JWKS를 읽을 수 있어야 함).

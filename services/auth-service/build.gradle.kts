@@ -27,3 +27,11 @@ tasks.test {
             .orElse(rootDir.resolve("../../docs/contracts").canonicalPath)
     systemProperty("vlm.contracts.dir", contractsDir.get())
 }
+
+// 로컬 실행용 서명 키(개인키 포함 JWK)를 출력한다. 값은 .env의 AUTH_JWT_SIGNING_KEY에 넣는다.
+tasks.register<JavaExec>("generateSigningKey") {
+    group = "application"
+    description = "Prints a new EC P-256 signing JWK for local runs."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.vlm.auth.tools.SigningKeyGenerator")
+}

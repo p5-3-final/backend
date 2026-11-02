@@ -70,10 +70,10 @@ updated: 2026-11-02
 ## Phase 9: 마무리
 - [x] T050 auth-service 응답과 `auth-service.yaml` 스키마 일치 확인 — 테스트 `A/test/.../contract/AuthContractTest.java`
 - [x] T051 [NFR-2, NFR-3] DB에 토큰 원문 없음, 로그에 비밀번호·토큰·티켓 없음 — 테스트 `SensitiveLogTest`(두 서비스)
-- [ ] T052 [NFR-1] 게이트웨이 추가 지연 p95 50ms 이하 — 테스트 `G/test/.../GatewayLatencyTest.java`
+- [x] T052 [NFR-1] 게이트웨이 추가 지연 p95 50ms 이하 — 테스트 `G/test/.../GatewayLatencyTest.java`
 - [x] T053 [NFR-4] 모든 오류 응답 `application/problem+json`·`traceId` 확인, Actuator health·tracing 설정 확인 — 테스트 `TraceIdTest`(두 서비스), 구현 `build-logic` 추적 의존성, `G/main/.../error/ProblemResponseWriter`
-- [ ] T054 환경변수 반영: 레포 `.env.example`, 루트 `local/.env.example`, README 명령어
-- [ ] T055 서비스 workflow `.github/workflows/{auth-service,api-gateway}.yml` (이미지 빌드·ECR push·gitops 갱신)
+- [x] T054 환경변수 반영: 레포 `.env.example`, README 명령어·로컬 실행, 서명 키 생성 태스크. 루트 `local/.env.example`은 compose 주소가 정해져야 하므로 docs 레포 로컬 compose PR에서 추가한다
+- [ ] T055 (infra 준비 후 진행, 사용자 결정) 서비스 workflow `.github/workflows/{auth-service,api-gateway}.yml` (이미지 빌드·ECR push·gitops 갱신)
 
 ## 완료 조건 (Definition of Done)
 - [ ] 이 레포가 담당하는 모든 R-*의 테스트 통과
