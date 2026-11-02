@@ -77,7 +77,7 @@ updated: 2026-11-02
 | 경로 | 변경 |
 | --- | --- |
 | `settings.gradle.kts` | `services:auth-service`, `services:api-gateway` 추가 |
-| `gradle/libs.versions.toml` | WireMock, Testcontainers BOM 추가 |
+| `gradle/libs.versions.toml`, `build-logic` | WireMock, Testcontainers(Boot BOM 관리), JSpecify(`@Nullable`, java-style.md) 추가 |
 | `libs/common-core` | `ErrorCode` 인터페이스, `BusinessException` |
 | `libs/common-web` | MVC용 `ProblemDetailExceptionHandler`(`code`, `traceId` 포함), Bean Validation 오류 변환 |
 | `services/auth-service` | 새 모듈. 패키지 `com.vlm.auth.{api,application,domain,infra}` |
@@ -153,7 +153,7 @@ sequenceDiagram
 되돌리기 어렵거나 다른 레포에 영향을 주는 결정은 없다. 토큰 형식은 이미 계약으로 확정됐다.
 
 ## 6. 테스트 전략
-- **새 라이브러리 (사용자 승인)**: gateway `spring-cloud-starter-gateway`, `spring-boot-starter-oauth2-resource-server`, `spring-boot-starter-data-redis-reactive` / auth `spring-boot-starter-{web,data-jpa,validation}`, `flyway-core`, `flyway-database-postgresql`, `postgresql`, `spring-security-crypto`, `spring-security-oauth2-jose` / 테스트 `org.testcontainers:{postgresql,junit-jupiter}`, `com.redis:testcontainers-redis` 또는 GenericContainer, `org.wiremock:wiremock-standalone`
+- **새 라이브러리 (사용자 승인)**: gateway `spring-cloud-starter-gateway-server-webflux`(Spring Cloud 2025.0부터 이 이름), `spring-boot-starter-oauth2-resource-server`, `spring-boot-starter-data-redis-reactive` / auth `spring-boot-starter-{web,data-jpa,validation}`, `flyway-core`, `flyway-database-postgresql`, `postgresql`, `spring-security-crypto`, `spring-security-oauth2-jose` / 테스트 `org.testcontainers:{postgresql,junit-jupiter}`, `com.redis:testcontainers-redis` 또는 GenericContainer, `org.wiremock:wiremock-standalone`
 - **단위**: `PasswordPolicy`, `User` 잠금 규칙(시계 주입), 재발급 토큰 회전 규칙
 - **통합 (auth-service)**: `@SpringBootTest` + Testcontainers PostgreSQL(`@ServiceConnection`) + MockMvc. 요구사항마다 API 테스트
 - **통합 (api-gateway)**: `@SpringBootTest(RANDOM_PORT)` + `WebTestClient`. 하위 서비스와 JWKS는 WireMock, 테스트 키 쌍으로 토큰을 직접 서명. P2는 Testcontainers Redis

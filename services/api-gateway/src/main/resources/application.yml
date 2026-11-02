@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # 서비스 주소는 환경마다 다르다. 기본값은 로컬 compose의 포트(service-catalog.md)다.
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/auth/**
+            - id: media-service
+              uri: ${MEDIA_SERVICE_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/media/**
+            - id: pipeline-service
+              uri: ${PIPELINE_SERVICE_URI:http://localhost:8083}
+              predicates:
+                - Path=/api/v1/jobs/**
+            - id: analysis-api
+              uri: ${ANALYSIS_SERVICE_URI:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/analysis/**
+            - id: search-service
+              uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
+              predicates:
+                - Path=/api/v1/search/**
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8087}
+              predicates:
+                - Path=/api/v1/notify/**
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

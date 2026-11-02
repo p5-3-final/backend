@@ -23,6 +23,9 @@ java {
 dependencies {
     errorprone(library("errorprone-core"))
     errorprone(library("nullaway"))
+    // java-style.md: null이 꼭 필요한 곳에는 JSpecify @Nullable을 단다(NullAway가 인식).
+    compileOnly(library("jspecify"))
+    testCompileOnly(library("jspecify"))
     compileOnly(library("lombok"))
     annotationProcessor(library("lombok"))
     testCompileOnly(library("lombok"))

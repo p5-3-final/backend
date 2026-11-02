@@ -15,11 +15,11 @@ updated: 2026-11-02
 경로 약어: `A` = `services/auth-service/src`, `G` = `services/api-gateway/src`
 
 ## Phase 1: 준비
-- [ ] T001 버전 카탈로그에 WireMock·Testcontainers 추가 — `gradle/libs.versions.toml`
-- [ ] T002 [P] 공통 오류 타입 `ErrorCode`, `BusinessException` — 테스트 `libs/common-core/src/test/.../BusinessExceptionTest.java`, 구현 `libs/common-core/src/main/java/com/vlm/common/error/`
-- [ ] T003 [P] MVC용 ProblemDetail 핸들러(`code`, `traceId`, Bean Validation 변환) — 테스트 `libs/common-web/src/test/.../ProblemDetailExceptionHandlerTest.java`, 구현 `libs/common-web/src/main/java/com/vlm/common/web/`
-- [ ] T004 auth-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611021200__create_auth_tables.sql`, ArchUnit 테스트 — `services/auth-service/`
-- [ ] T005 [P] api-gateway 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, 라우트 설정, 테스트용 키 쌍·WireMock 지원 클래스 — `services/api-gateway/`
+- [x] T001 버전 카탈로그에 WireMock·Testcontainers·JSpecify 추가 — `gradle/libs.versions.toml`, `build-logic`
+- [x] T002 [P] 공통 오류 타입 `ErrorCode`, `BusinessException` — 테스트 `libs/common-core/src/test/.../BusinessExceptionTest.java`, 구현 `libs/common-core/src/main/java/com/vlm/common/error/`
+- [x] T003 [P] MVC용 ProblemDetail 핸들러(`code`, `traceId`, Bean Validation 변환) — 테스트 `libs/common-web/src/test/.../ProblemDetailExceptionHandlerTest.java`, 구현 `libs/common-web/src/main/java/com/vlm/common/web/`
+- [x] T004 auth-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611021200__create_auth_tables.sql`, ArchUnit 테스트 — `services/auth-service/`
+- [x] T005 [P] api-gateway 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, 라우트 설정, WireMock 지원 클래스, ArchUnit 테스트 — `services/api-gateway/`
 
 ## Phase 2: US-1 회원가입 (P1)
 - [ ] T006 [R-1] 정상 가입 시 USER 계정 생성, 201 — 테스트 `A/test/.../api/SignUpApiTest.java`, 구현 `A/main/.../{api/SignUpController,application/SignUpService,domain/User,infra/persistence}`
@@ -38,7 +38,7 @@ updated: 2026-11-02
 
 ## Phase 4: US-3 인증된 요청 전달 (P1)
 - [ ] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig`
-- [ ] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`, 구현 `config/SecurityConfig`, `filter/UserHeaderFilter`
+- [ ] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`(테스트용 EC 키 쌍·토큰 서명 지원 클래스 포함), 구현 `config/SecurityConfig`, `filter/UserHeaderFilter`
 - [ ] T019 [R-14] 토큰 없음 401 `AUTH_TOKEN_MISSING` — 테스트 `TokenRejectionTest`, 구현 `error/ProblemAuthenticationEntryPoint`
 - [ ] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig`
 - [ ] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint`
