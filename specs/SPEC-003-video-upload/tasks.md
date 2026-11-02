@@ -17,22 +17,22 @@ updated: 2026-11-03
 
 ## Phase 1: 준비
 
-- [x] T001 버전 카탈로그에 AWS SDK BOM, spring-kafka, Testcontainers Kafka, JSON Schema 검증기 추가 — `gradle/libs.versions.toml`
-- [x] T002 [NFR-3] Outbox 기록·발행: 같은 트랜잭션 기록, 1초 주기 발행(키·`traceparent` 헤더), 실패 시 같은 eventId로 재시도 — 테스트 `CM/test/.../OutboxPublisherTest.java`(Testcontainers PostgreSQL·Kafka), 구현 `CM/main/java/com/vlm/common/messaging/`
-- [x] T003 media-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611031200__create_media_tables.sql`, ArchUnit 테스트, 테스트 지원(PostgreSQL·Kafka·SeaweedFS 컨테이너와 버킷), 저장소 설정 테스트(주소를 비우면 S3 기본 주소·가상 호스트 방식, 넣으면 그 주소·path-style) — `services/media-service/`, 테스트 `M/test/.../infra/storage/S3ClientConfigTest.java`
+- [x] T001 버전 카탈로그에 AWS SDK BOM, spring-kafka, Testcontainers Kafka, JSON Schema 검증기 추가 — `gradle/libs.versions.toml` (e8094c0)
+- [x] T002 [NFR-3] Outbox 기록·발행: 같은 트랜잭션 기록, 1초 주기 발행(키·`traceparent` 헤더), 실패 시 같은 eventId로 재시도 — 테스트 `CM/test/.../OutboxPublisherTest.java`(Testcontainers PostgreSQL·Kafka), 구현 `CM/main/java/com/vlm/common/messaging/` (e8094c0)
+- [x] T003 media-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611031200__create_media_tables.sql`, ArchUnit 테스트, 테스트 지원(PostgreSQL·Kafka·SeaweedFS 컨테이너와 버킷), 저장소 설정 테스트(주소를 비우면 S3 기본 주소·가상 호스트 방식, 넣으면 그 주소·path-style) — `services/media-service/`, 테스트 `M/test/.../infra/storage/S3ClientConfigTest.java` (e8094c0)
 
 ## Phase 2: US-1 작은 영상 업로드 (P1)
 
-- [ ] T004 [R-1] 업로드 자리 요청 시 `UPLOADING` 영상 생성, 201과 `Location` — 테스트 `M/test/.../api/CreateVideoApiTest.java`, 구현 `M/main/.../{api/VideoController,application/CreateVideoService,domain/Video,infra/persistence}`
-- [ ] T005 [P] [R-4] 크기 0 또는 5GB 초과면 400 `MEDIA_FILE_SIZE_INVALID` — 테스트 `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
-- [ ] T006 [P] [R-5] 확장자·MIME이 허용 4종 짝이 아니면 400 `MEDIA_UNSUPPORTED_FORMAT` — 테스트 `M/test/.../domain/VideoFilePolicyTest.java`, `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
-- [ ] T007 [R-6] 저장 키는 `sources/<videoId>/original`이고 파일 이름을 쓰지 않음 — 테스트 `CreateVideoApiTest`, 구현 `domain/StorageKey`
-- [ ] T008 [R-2] [NFR-6] 100MB 이하는 POST 정책(크기 고정, 1시간) 발급, 같은 크기는 저장소가 받고 다른 크기는 거절 — 테스트 `M/test/.../infra/storage/PostPolicySignerTest.java`, `M/test/.../api/SingleUploadTest.java`, 구현 `infra/storage/{PostPolicySigner,S3UploadStorage}`
-- [ ] T009 [R-7] 업로드된 파일이 있으면 완료 요청으로 `UPLOADED`, 200 — 테스트 `M/test/.../api/CompleteUploadApiTest.java`, 구현 `application/CompleteUploadService`
-- [ ] T010 [R-9] [R-21] 완료 시 `video.uploaded`를 같은 트랜잭션에 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `application/event/VideoEvents`
-- [ ] T011 [R-10] 파일이 없거나 크기가 다르면 409 `MEDIA_UPLOAD_INCOMPLETE`, 상태 유지 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
-- [ ] T012 [R-11] 이미 완료된 영상에 다시 요청하면 200, 이벤트 재기록 없음 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
-- [ ] T013 [NFR-2] 같은 영상 완료 요청 10건 동시에도 전이·이벤트 한 번 — 테스트 `M/test/.../application/ConcurrentCompleteTest.java`, 구현 `infra/persistence`(행 잠금 조회)
+- [x] T004 [R-1] 업로드 자리 요청 시 `UPLOADING` 영상 생성, 201과 `Location` — 테스트 `M/test/.../api/CreateVideoApiTest.java`, 구현 `M/main/.../{api/VideoController,application/CreateVideoService,domain/Video,infra/persistence}`
+- [x] T005 [P] [R-4] 크기 0 또는 5GB 초과면 400 `MEDIA_FILE_SIZE_INVALID` — 테스트 `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
+- [x] T006 [P] [R-5] 확장자·MIME이 허용 4종 짝이 아니면 400 `MEDIA_UNSUPPORTED_FORMAT` — 테스트 `M/test/.../domain/VideoFilePolicyTest.java`, `CreateVideoApiTest`, 구현 `domain/VideoFilePolicy`
+- [x] T007 [R-6] 저장 키는 `sources/<videoId>/original`이고 파일 이름을 쓰지 않음 — 테스트 `CreateVideoApiTest`, 구현 `domain/StorageKey`
+- [x] T008 [R-2] [NFR-6] 100MB 이하는 POST 정책(크기 고정, 1시간) 발급, 같은 크기는 저장소가 받고 다른 크기는 거절 — 테스트 `M/test/.../infra/storage/PostPolicySignerTest.java`, `M/test/.../api/SingleUploadTest.java`, 구현 `infra/storage/{PostPolicySigner,S3UploadStorage}`
+- [x] T009 [R-7] 업로드된 파일이 있으면 완료 요청으로 `UPLOADED`, 200 — 테스트 `M/test/.../api/CompleteUploadApiTest.java`, 구현 `application/CompleteUploadService`
+- [x] T010 [R-9] [R-21] 완료 시 `video.uploaded`를 같은 트랜잭션에 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `application/event/VideoEvents`
+- [x] T011 [R-10] 파일이 없거나 크기가 다르면 409 `MEDIA_UPLOAD_INCOMPLETE`, 상태 유지 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
+- [x] T012 [R-11] 이미 완료된 영상에 다시 요청하면 200, 이벤트 재기록 없음 — 테스트 `CompleteUploadApiTest`, 구현 `CompleteUploadService`
+- [x] T013 [NFR-2] 같은 영상 완료 요청 10건 동시에도 전이·이벤트 한 번 — 테스트 `M/test/.../application/ConcurrentCompleteTest.java`, 구현 `infra/persistence`(행 잠금 조회)
 
 ## Phase 3: US-2 큰 영상 멀티파트 업로드 (P1)
 

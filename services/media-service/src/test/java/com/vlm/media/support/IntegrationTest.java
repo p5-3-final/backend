@@ -18,7 +18,10 @@ import org.springframework.test.context.jdbc.Sql;
     properties = {
       // 주기 작업은 테스트가 직접 불러 시점을 정한다.
       "vlm.outbox.scheduling-enabled=false",
-      "vlm.media.jobs.scheduling-enabled=false"
+      "vlm.media.jobs.scheduling-enabled=false",
+      // 큰 파일 없이 멀티파트를 확인하려고 기준값을 낮춘다. 조각은 S3 최소 크기(5MiB)다. 기본값은 계약 값(100MB, 64MiB).
+      "vlm.media.upload.single-max-bytes=1048576",
+      "vlm.media.upload.part-size-bytes=5242880"
     })
 @AutoConfigureMockMvc
 // 테스트에서는 Spring Boot가 추적을 꺼 두므로, 운영처럼 traceparent를 이어 받도록 켠다.
