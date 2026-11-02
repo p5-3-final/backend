@@ -8,6 +8,7 @@ public enum GatewayErrorCode implements ErrorCode {
   TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "접근 토큰이 올바르지 않습니다."),
   TOKEN_EXPIRED(401, "AUTH_TOKEN_EXPIRED", "접근 토큰이 만료되었습니다."),
   TICKET_INVALID(401, "AUTH_TICKET_INVALID", "알림 연결 티켓이 올바르지 않습니다."),
+  RATE_LIMITED(429, "GATEWAY_RATE_LIMITED", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
   ROUTE_NOT_FOUND(404, "GATEWAY_ROUTE_NOT_FOUND", "요청한 경로를 찾을 수 없습니다."),
   TIMEOUT(504, "GATEWAY_TIMEOUT", "서비스가 제한 시간 안에 응답하지 않았습니다."),
   UNAVAILABLE(503, "GATEWAY_UNAVAILABLE", "서비스에 연결할 수 없습니다."),

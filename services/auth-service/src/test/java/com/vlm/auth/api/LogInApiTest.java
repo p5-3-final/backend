@@ -167,4 +167,40 @@ class LogInApiTest {
         MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
     return HexFormat.of().formatHex(digest);
   }
+
+  @Test
+  @DisplayName("[SPEC-001 R-29] 연속 5회 실패하면 올바른 비밀번호여도 423 AUTH_ACCOUNT_LOCKED를 반환한다")
+  void locksAfterFiveFailures() throws Exception {
+    for (int i = 0; i < 5; i++) {
+      AuthApi.logIn(mockMvc, EMAIL, "wrong1234").andExpect(status().isUnauthorized());
+    }
+
+    AuthApi.logIn(mockMvc, EMAIL, PASSWORD)
+        .andExpect(status().isLocked())
+        .andExpect(jsonPath("$.code").value("AUTH_ACCOUNT_LOCKED"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-001 R-29] 잠금 시간이 지나면 다시 로그인할 수 있다")
+  void unlocksAfterLockPeriod() throws Exception {
+    for (int i = 0; i < 5; i++) {
+      AuthApi.logIn(mockMvc, EMAIL, "wrong1234").andExpect(status().isUnauthorized());
+    }
+    jdbcTemplate.update("UPDATE users SET locked_until = now() - interval '1 second'");
+
+    AuthApi.logIn(mockMvc, EMAIL, PASSWORD).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-001 R-29] 로그인에 성공하면 실패 횟수를 초기화한다")
+  void successResetsFailureCount() throws Exception {
+    for (int i = 0; i < 4; i++) {
+      AuthApi.logIn(mockMvc, EMAIL, "wrong1234").andExpect(status().isUnauthorized());
+    }
+
+    AuthApi.logIn(mockMvc, EMAIL, PASSWORD).andExpect(status().isOk());
+
+    assertThat(jdbcTemplate.queryForObject("SELECT failed_login_count FROM users", Integer.class))
+        .isZero();
+  }
 }

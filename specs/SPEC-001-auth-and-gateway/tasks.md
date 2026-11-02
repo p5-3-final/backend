@@ -56,13 +56,13 @@ updated: 2026-11-02
 - [x] T031 [R-25] 로그아웃 시 재발급 토큰 폐기, 쿠키 삭제, 204 — 테스트 `LogOutApiTest`, 구현 `api/LogOutController`, `api/UserIdHeader`, `application/LogOutService` (de3ea67)
 
 ## Phase 6: US-5 실시간 알림 연결 인증 (P2)
-- [x] T032 [R-26] 30초 티켓(JWT, `aud: vlm-sse`) 발급 — 테스트 `A/test/.../api/SseTicketApiTest.java`, 구현 `application/SseTicketService`, `domain/SseTicketIssuer`, `infra/token/{JwtSseTicketIssuer,UserTokenSigner}`
-- [x] T033 [R-27] 유효 티켓이면 사용 처리 후 사용자 헤더 붙여 notification-service로 전달 — 테스트 `G/test/.../SseTicketTest.java`(Testcontainers Redis), 구현 `filter/SseTicketFilter`, `config/SseTicketDecoder`
-- [x] T034 [R-28] 티켓 없음·만료·재사용·접근 토큰 제출 401 `AUTH_TICKET_INVALID` — 테스트 `SseTicketTest`, 구현 `SseTicketFilter`
+- [x] T032 [R-26] 30초 티켓(JWT, `aud: vlm-sse`) 발급 — 테스트 `A/test/.../api/SseTicketApiTest.java`, 구현 `application/SseTicketService`, `domain/SseTicketIssuer`, `infra/token/{JwtSseTicketIssuer,UserTokenSigner}` (d0bbb71)
+- [x] T033 [R-27] 유효 티켓이면 사용 처리 후 사용자 헤더 붙여 notification-service로 전달 — 테스트 `G/test/.../SseTicketTest.java`(Testcontainers Redis), 구현 `filter/SseTicketFilter`, `config/SseTicketDecoder` (d0bbb71)
+- [x] T034 [R-28] 티켓 없음·만료·재사용·접근 토큰 제출 401 `AUTH_TICKET_INVALID` — 테스트 `SseTicketTest`, 구현 `SseTicketFilter` (d0bbb71)
 
 ## Phase 7: US-6 로그인 남용 방지 (P2)
-- [ ] T035 [R-29] 연속 5회 실패 시 15분간 423 `AUTH_ACCOUNT_LOCKED`, 성공 시 횟수 초기화 — 테스트 `domain/AccountLockTest`, `LogInApiTest`, 구현 `domain/User`, `LogInService`
-- [ ] T036 [P] [R-30] IP당 로그인·가입 분당 10회 초과 시 429 `GATEWAY_RATE_LIMITED` + `Retry-After` — 테스트 `RateLimitTest`(Testcontainers Redis), 구현 라우트 `RequestRateLimiter`, `error/RateLimitedResponseFilter`
+- [x] T035 [R-29] 연속 5회 실패 시 15분간 423 `AUTH_ACCOUNT_LOCKED`, 성공 시 횟수 초기화 — 테스트 `domain/AccountLockTest`, `LogInApiTest`, 구현 `domain/User`, `LogInService`
+- [x] T036 [P] [R-30] IP당 로그인·가입 분당 10회 초과 시 429 `GATEWAY_RATE_LIMITED` + `Retry-After` — 테스트 `RateLimitTest`(Testcontainers Redis), 구현 라우트 `RequestRateLimiter`, `config/RateLimitConfig`, `error/RateLimitedResponseFilter`
 
 ## Phase 8: 운영 준비
 - [ ] T037 [R-31] ADMIN이 없으면 환경변수로 초기 관리자 생성, 값이 없으면 경고 후 건너뜀 — 테스트 `A/test/.../application/InitialAdminTest.java`, 구현 `application/InitialAdminCreator`

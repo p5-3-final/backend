@@ -11,6 +11,7 @@ import com.vlm.auth.domain.User;
 import com.vlm.auth.domain.UserRepository;
 import com.vlm.common.error.BusinessException;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,10 +34,13 @@ public class LogInService {
   private final LoginAuditRecorder loginAuditRecorder;
   private final Clock clock;
 
-  @Transactional
+  // 실패 횟수와 잠금은 401·423 응답과 함께 저장돼야 하므로 BusinessException으로는 롤백하지 않는다.
+  // 이 메서드는 그 외의 쓰기를 모두 성공 경로에서만 한다.
+  @Transactional(noRollbackFor = BusinessException.class)
   public IssuedTokens logIn(LogInCommand command) {
     String email = command.email().trim().toLowerCase(Locale.ROOT);
-    Optional<User> found = userRepository.findByEmail(email);
+    Instant now = clock.instant();
+    Optional<User> found = userRepository.findByEmailForUpdate(email);
     if (found.isEmpty()) {
       // 계정이 없어도 해시 비교를 한 번 해서, 응답 시간으로 가입 여부가 드러나지 않게 한다.
       passwordHasher.matches(command.password(), DUMMY_PASSWORD_HASH);
@@ -45,14 +49,20 @@ public class LogInService {
     }
     User user = found.get();
     Long userId = Objects.requireNonNull(user.getId());
+    if (user.isLocked(now)) {
+      loginAuditRecorder.record(userId, false, command.clientIp());
+      throw new BusinessException(AuthErrorCode.ACCOUNT_LOCKED);
+    }
     if (!passwordHasher.matches(command.password(), user.getPasswordHash())) {
+      user.recordLoginFailure(now);
       loginAuditRecorder.record(userId, false, command.clientIp());
       throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
     }
+    user.recordLoginSuccess();
     loginAuditRecorder.record(userId, true, command.clientIp());
     IssuedAccessToken accessToken = accessTokenIssuer.issue(user);
     RefreshTokenSecret secret = RefreshTokenSecret.generate();
-    refreshTokenRepository.save(RefreshToken.startFamily(userId, secret.hash(), clock.instant()));
+    refreshTokenRepository.save(RefreshToken.startFamily(userId, secret.hash(), now));
     return new IssuedTokens(accessToken.value(), accessToken.expiresInSeconds(), secret.raw());
   }
 }
