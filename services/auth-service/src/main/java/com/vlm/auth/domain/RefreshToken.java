@@ -11,9 +11,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 
 /** 재발급 토큰. 원문 대신 해시를 저장하고, 같은 로그인에서 회전된 토큰은 familyId로 묶는다. */
@@ -33,9 +31,8 @@ public class RefreshToken {
 
   private UUID familyId;
 
-  // 마이그레이션에서 SHA-256 hex 고정 길이 CHAR(64)로 만들었다.
+  // SHA-256 hex(64자)
   @Column(length = 64)
-  @JdbcTypeCode(SqlTypes.CHAR)
   private String tokenHash;
 
   private Instant expiresAt;
