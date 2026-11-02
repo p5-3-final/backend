@@ -52,6 +52,13 @@ public final class MediaApi {
     return post("/api/v1/media/videos/{id}/complete", videoId);
   }
 
+  public static MockHttpServletRequestBuilder completeRequest(String videoId, Object parts)
+      throws Exception {
+    return completeRequest(videoId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(Map.of("parts", parts)));
+  }
+
   public static JsonNode json(ResultActions result) throws Exception {
     return JSON.readTree(result.andReturn().getResponse().getContentAsString());
   }
