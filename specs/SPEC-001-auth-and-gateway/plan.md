@@ -201,6 +201,7 @@ sequenceDiagram
   - auth-service: `AUTH_DB_URL`, `AUTH_DB_USERNAME`, `AUTH_DB_PASSWORD`, `AUTH_JWT_ISSUER`, `AUTH_JWT_SIGNING_KEY`(개인키를 포함한 EC P-256 JWK JSON, `kid` 포함, 비밀값), `AUTH_JWT_PREVIOUS_PUBLIC_KEYS`(선택, JWK Set JSON), `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`(비밀값)
   - api-gateway: `GATEWAY_JWKS_URI`, `GATEWAY_JWT_ISSUER`, `GATEWAY_CORS_ALLOWED_ORIGINS`, `GATEWAY_REDIS_HOST`, `GATEWAY_REDIS_PORT`, 서비스별 `*_SERVICE_URI`
 - **로컬 단독 실행**: README "로컬 실행"에 PostgreSQL·Redis 컨테이너와 `bootRun` 순서를 적는다. 서명 키는 `./gradlew :services:auth-service:generateSigningKey`(테스트 소스의 생성기)로 만든다.
+- **이미지**: 레포 루트 `Dockerfile` 하나를 Spring 서비스가 같이 쓰고 `SERVICE` 빌드 인자로 서비스를 고른다(사용자 결정). 빌드 단계에서 `bootJar`를 만들고 실행 단계에는 JRE와 계층별로 푼 jar만 담는다. UID 10001로 실행한다. 로컬 compose와 T055 workflow가 같은 파일을 쓴다.
 - **로컬 compose** (docs 레포 `local/`): PostgreSQL(auth_db), Redis, auth-service(8081), api-gateway(8080). 별도 docs PR로 추가한다.
 - **운영**: Secrets Manager 경로(infra), gitops `apps/{auth-service,api-gateway}/base` 매니페스트와 auth-service NetworkPolicy(게이트웨이만 허용)는 각 레포 PR로 한다.
 - **배포 순서**: auth-service → api-gateway (게이트웨이가 시작할 때 JWKS를 읽을 수 있어야 함).

@@ -50,6 +50,12 @@ jobs:
           args: -color
       - name: zizmor
         run: pipx run zizmor==1.31.1 --format plain .github/workflows
+      # 필수 검사 목록을 늘리지 않으려고 Dockerfile 검사도 이 job에서 한다(ci-common.md).
+      - name: hadolint
+        uses: docker://hadolint/hadolint@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d # v2.15.1
+        with:
+          entrypoint: /bin/hadolint
+          args: Dockerfile
 
   gradle:
     runs-on: ubuntu-latest
