@@ -8,7 +8,9 @@ public enum AuthErrorCode implements ErrorCode {
   PASSWORD_POLICY(400, "AUTH_PASSWORD_POLICY", "비밀번호는 8~64자이고 영문과 숫자를 모두 포함해야 합니다."),
   INVALID_CREDENTIALS(401, "AUTH_INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
   TOKEN_MISSING(401, "AUTH_TOKEN_MISSING", "인증이 필요합니다."),
-  TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "인증 정보가 올바르지 않습니다.");
+  TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "인증 정보가 올바르지 않습니다."),
+  REFRESH_INVALID(401, "AUTH_REFRESH_INVALID", "다시 로그인해 주세요."),
+  REFRESH_REUSED(401, "AUTH_REFRESH_REUSED", "다시 로그인해 주세요.");
 
   private final int status;
   private final String code;

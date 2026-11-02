@@ -92,6 +92,10 @@ updated: 2026-11-02
 - **로그인 기록**: 실패한 로그인은 예외로 끝나 트랜잭션이 롤백되므로, 기록은 `REQUIRES_NEW` 트랜잭션으로 남긴다. 클라이언트 IP는 `server.forward-headers-strategy=framework`로 게이트웨이의 `X-Forwarded-For`에서 읽는다.
 - **재발급 토큰**: 256비트 난수(base64url). DB에는 SHA-256 해시만 저장. 로그인마다 새 `family_id`를 만들고, 재발급할 때 같은 family로 새 토큰을 만들며 이전 토큰에 `used_at`을 기록한다.
   - `used_at`이 있는 토큰이 다시 오면 그 family 전체에 `revoked_at`을 기록하고 401 `AUTH_REFRESH_REUSED`.
+  - 검사 순서: 쿠키 없음·미발급 → 폐기됨(`AUTH_REFRESH_INVALID`) → 사용됨(`AUTH_REFRESH_REUSED`) → 만료(`AUTH_REFRESH_INVALID`).
+  - 같은 토큰으로 동시에 재발급하지 못하도록 조회할 때 행을 잠근다(`SELECT … FOR UPDATE`). 두 번째 요청은 재사용으로 처리된다.
+  - family 폐기는 오류 응답 전에 커밋돼야 하므로 재발급 트랜잭션은 `BusinessException`으로 롤백하지 않는다. `REQUIRES_NEW`로 분리하면 바깥 트랜잭션이 잠근 행을 기다려 교착이 생긴다.
+  - 로그아웃: 쿠키의 토큰이 요청한 사용자의 것이면 그 family를 폐기한다. 쿠키가 없거나 남의 토큰이어도 204와 삭제 쿠키(`Max-Age=0`)를 반환한다.
   - 쿠키: `refresh_token`, `Path=/api/v1/auth`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Max-Age=1209600`.
 - **JWKS**: 현재 서명 키의 공개키 + 환경변수로 지정한 이전 공개키(선택)를 반환한다. 개인키는 응답에 넣지 않는다.
 - **알림 티켓**: 같은 서명 키로 `aud: vlm-sse`, 30초 JWT를 발급한다. 저장하지 않는다.

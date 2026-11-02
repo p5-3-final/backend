@@ -3,7 +3,9 @@ package com.vlm.auth.api;
 import com.vlm.auth.domain.RefreshToken;
 import org.springframework.http.ResponseCookie;
 
-/** 재발급 토큰 쿠키. 속성은 계약 {@code auth-service.yaml}의 SetRefreshTokenCookie와 같다. */
+/**
+ * 재발급 토큰 쿠키. 속성은 계약 {@code auth-service.yaml}의 SetRefreshTokenCookie·ClearRefreshTokenCookie와 같다.
+ */
 final class RefreshTokenCookies {
 
   static final String NAME = "refresh_token";
@@ -16,6 +18,16 @@ final class RefreshTokenCookies {
     return ResponseCookie.from(NAME, rawToken)
         .path(PATH)
         .maxAge(RefreshToken.TIME_TO_LIVE)
+        .httpOnly(true)
+        .secure(true)
+        .sameSite("Strict")
+        .build();
+  }
+
+  static ResponseCookie clear() {
+    return ResponseCookie.from(NAME, "")
+        .path(PATH)
+        .maxAge(0)
         .httpOnly(true)
         .secure(true)
         .sameSite("Strict")
