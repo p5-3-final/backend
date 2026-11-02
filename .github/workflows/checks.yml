@@ -57,6 +57,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # 계약 테스트가 docs 레포의 OpenAPI 원본을 읽는다(public 레포라 토큰이 필요 없다).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: p5-3-final/docs
+          path: docs-repo
+          persist-credentials: false
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
@@ -66,3 +72,5 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: build
         run: ./gradlew build
+        env:
+          CONTRACTS_DIR: ${{ github.workspace }}/docs-repo/docs/contracts

@@ -16,4 +16,14 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.junit.jupiter)
+    testImplementation(libs.swagger.request.validator.mockmvc)
+}
+
+// 계약 원본은 docs 레포에 있다. 로컬은 작업 공간 구조(project/repos/backend)를 따르고, CI는 CONTRACTS_DIR로 넘긴다.
+tasks.test {
+    val contractsDir =
+        providers
+            .environmentVariable("CONTRACTS_DIR")
+            .orElse(rootDir.resolve("../../docs/contracts").canonicalPath)
+    systemProperty("vlm.contracts.dir", contractsDir.get())
 }
