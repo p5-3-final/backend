@@ -132,4 +132,15 @@ public class Video {
     this.status = VideoStatus.UPLOADED;
     this.uploadedAt = now;
   }
+
+  /** 삭제 상태로 바꾼다(SPEC-003 R-18). 어느 상태에서든 지울 수 있다. */
+  public void delete(Instant now) {
+    this.status = VideoStatus.DELETED;
+    this.deletedAt = now;
+  }
+
+  /** 저장소 파일을 모두 지웠다고 기록한다. 정리 작업이 다시 가져가지 않는다(SPEC-003 R-20). */
+  public void markStorageCleaned(Instant now) {
+    this.storageCleanedAt = now;
+  }
 }

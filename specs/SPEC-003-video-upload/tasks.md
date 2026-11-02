@@ -41,16 +41,16 @@ updated: 2026-11-03
 
 ## Phase 4: US-3 내 영상 보기 (P1)
 
-- [x] T016 [R-14] 내 영상만 최신순, 기본 20·최대 100개, 삭제 제외 — 테스트 `M/test/.../api/ListVideosApiTest.java`, 구현 `application/VideoQueryService`, `infra/persistence`
-- [x] T017 [R-15] 상세에 ID·파일 이름·크기·형식·상태·시각 — 테스트 `M/test/.../api/GetVideoApiTest.java`, 구현 `VideoQueryService`
-- [x] T018 [R-16] 없음·삭제됨·권한 없음은 구분 없이 404 `MEDIA_VIDEO_NOT_FOUND` — 테스트 `GetVideoApiTest`, 구현 `domain/VideoAccess`
+- [x] T016 [R-14] 내 영상만 최신순, 기본 20·최대 100개, 삭제 제외 — 테스트 `M/test/.../api/ListVideosApiTest.java`, 구현 `application/VideoQueryService`, `infra/persistence` (8d50cf4)
+- [x] T017 [R-15] 상세에 ID·파일 이름·크기·형식·상태·시각 — 테스트 `M/test/.../api/GetVideoApiTest.java`, 구현 `VideoQueryService` (8d50cf4)
+- [x] T018 [R-16] 없음·삭제됨·권한 없음은 구분 없이 404 `MEDIA_VIDEO_NOT_FOUND` — 테스트 `GetVideoApiTest`, 구현 `domain/VideoAccess` (8d50cf4)
 
 ## Phase 5: US-4 영상 삭제 (P2)
 
-- [ ] T019 [R-18] 소유자가 삭제하면 `DELETED`, 204, 목록·상세에서 사라짐 — 테스트 `M/test/.../api/DeleteVideoApiTest.java`, 구현 `application/DeleteVideoService`
-- [ ] T020 [R-17] ADMIN은 남의 영상도 상세 조회·삭제 가능 — 테스트 `GetVideoApiTest`, `DeleteVideoApiTest`, 구현 `domain/VideoAccess`
-- [ ] T021 [R-19] [R-21] 삭제 시 `video.deleted`를 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoDeletedEventTest.java`, 구현 `DeleteVideoService`, `VideoEvents`
-- [ ] T022 [R-20] 삭제된 영상의 저장소 파일과 끝나지 않은 조각 정리, 실패하면 다음 주기에 재시도 — 테스트 `M/test/.../application/StorageCleanupTest.java`, 구현 `application/StorageCleanupJob`
+- [x] T019 [R-18] 소유자가 삭제하면 `DELETED`, 204, 목록·상세에서 사라짐 — 테스트 `M/test/.../api/DeleteVideoApiTest.java`, 구현 `application/DeleteVideoService`
+- [x] T020 [R-17] ADMIN은 남의 영상도 상세 조회·삭제 가능 — 테스트 `GetVideoApiTest`, `DeleteVideoApiTest`, 구현 `domain/VideoAccess`
+- [x] T021 [R-19] [R-21] 삭제 시 `video.deleted`를 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoDeletedEventTest.java`, 구현 `DeleteVideoService`, `VideoEvents`
+- [x] T022 [R-20] 삭제된 영상의 저장소 파일과 끝나지 않은 조각 정리, 실패하면 다음 주기에 재시도 — 테스트 `M/test/.../application/StorageCleanupTest.java`, 구현 `application/StorageCleanupJob`
 
 ## Phase 6: US-5 끝나지 않은 업로드 정리 (P2)
 

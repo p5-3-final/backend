@@ -4,6 +4,7 @@ import com.vlm.media.domain.Video;
 import com.vlm.media.domain.VideoPage;
 import com.vlm.media.domain.VideoRepository;
 import com.vlm.media.domain.VideoStatus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +44,10 @@ class VideoRepositoryAdapter implements VideoRepository {
   @Override
   public Optional<Video> findByPublicIdForUpdate(UUID publicId) {
     return jpaRepository.findWithLockByPublicId(publicId);
+  }
+
+  @Override
+  public List<Video> lockStorageCleanupTargets(int limit) {
+    return jpaRepository.lockStorageCleanupTargets(limit);
   }
 }
