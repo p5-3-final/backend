@@ -22,6 +22,10 @@ public abstract class GatewayIntegrationTest {
 
   @DynamicPropertySource
   static void gatewayProperties(DynamicPropertyRegistry registry) {
+    registerProperties(registry);
+  }
+
+  public static void registerProperties(DynamicPropertyRegistry registry) {
     DownstreamServices.register(registry);
     registry.add("GATEWAY_JWKS_URI", () -> DownstreamServices.server().baseUrl() + JWKS_PATH);
     registry.add("GATEWAY_JWT_ISSUER", () -> TestTokens.ISSUER);
@@ -29,6 +33,11 @@ public abstract class GatewayIntegrationTest {
 
   @BeforeEach
   void resetDownstream() {
+    stubJwks();
+  }
+
+  /** WireMock을 초기화하고 auth-service JWKS 응답을 다시 등록한다. */
+  public static void stubJwks() {
     downstream().resetAll();
     downstream()
         .stubFor(

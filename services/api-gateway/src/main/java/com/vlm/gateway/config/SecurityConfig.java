@@ -18,6 +18,7 @@ class SecurityConfig {
       ServerHttpSecurity http, ProblemAuthenticationEntryPoint entryPoint) {
     return http
         // 세션·폼 로그인을 쓰지 않는 토큰 인증이다. 재발급 쿠키는 SameSite=Strict라 CSRF 토큰 없이 둔다.
+        .cors(Customizer.withDefaults())
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
         .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
         .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
