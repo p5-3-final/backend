@@ -7,6 +7,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -14,6 +15,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 /** 게이트웨이 통합 테스트 공통 설정. 하위 서비스와 auth-service JWKS를 WireMock 하나로 대신하고, Redis는 컨테이너로 띄운다. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+// 테스트에서는 Spring Boot가 추적을 꺼 두므로, 운영처럼 traceparent를 이어 받도록 켠다.
+@AutoConfigureObservability(metrics = false)
 public abstract class GatewayIntegrationTest {
 
   protected static final String JWKS_PATH = "/.well-known/jwks.json";
