@@ -39,10 +39,14 @@ backend/
 │   ├── search-service/           # 텍스트 구간 탐색 (pgvector)
 │   └── notification-service/     # 실시간 알림 (WebFlux, SSE)
 ├── specs/SPEC-NNN-*/             # plan.md, tasks.md
-└── .github/workflows/<service>.yml
+├── .github/workflows/
+│   ├── checks.yml                # 모든 PR 공통 검사 (PR 제목, actionlint·zizmor, spotlessCheck·build)
+│   └── <service>.yml             # 서비스별 이미지 빌드·배포
+├── lombok.config                 # 허용 목록 밖 Lombok 기능 차단
+└── lefthook.yml                  # 커밋 전 검사
 ```
 
-서비스 내부 패키지는 `com.<org>.<service>` 아래에 다음과 같이 나눈다.
+서비스 내부 패키지는 `com.vlm.<service>`(예: `com.vlm.auth`, `com.vlm.gateway`) 아래에 다음과 같이 나눈다.
 
 | 패키지 | 내용 |
 | --- | --- |
@@ -66,7 +70,7 @@ backend/
 작업을 끝내기 전에 `spotlessCheck`와 변경한 서비스의 `build`(컴파일 검사와 테스트 포함)를 실행한다.
 
 ## lint
-도구: Spotless, javac `-Xlint:all -Werror`, Error Prone + NullAway, ArchUnit, `lombok.config`. 공통 도구(workflow, Dockerfile, lefthook)는 `.claude/rules/ci-common.md`에 있다.
+도구: Spotless, javac `-Xlint:all,-processing -Werror`, Error Prone + NullAway, ArchUnit, `lombok.config`. 공통 도구(workflow, Dockerfile, lefthook)는 `.claude/rules/ci-common.md`에 있다.
 
 규칙 세트와 설정 위치는 `.claude/rules/lint.md`에 있다. **검사 도구의 설정 파일을 만들거나 고칠 때는 이 파일을 먼저 읽는다.**
 
