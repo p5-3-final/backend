@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -116,7 +118,8 @@ class LogInApiTest {
             .getResponse()
             .getContentAsString();
 
-    assertThat(unknownEmail).isEqualTo(wrongPassword);
+    // traceId는 요청마다 다르므로 빼고 비교한다.
+    assertThat(withoutTraceId(unknownEmail)).isEqualTo(withoutTraceId(wrongPassword));
     assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM refresh_tokens", Integer.class))
         .isZero();
   }
@@ -202,5 +205,12 @@ class LogInApiTest {
 
     assertThat(jdbcTemplate.queryForObject("SELECT failed_login_count FROM users", Integer.class))
         .isZero();
+  }
+
+  private static Map<String, Object> withoutTraceId(String problemJson) throws Exception {
+    Map<String, Object> problem =
+        new ObjectMapper().readValue(problemJson, new TypeReference<Map<String, Object>>() {});
+    problem.remove("traceId");
+    return problem;
   }
 }

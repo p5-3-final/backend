@@ -181,6 +181,11 @@ sequenceDiagram
   - `com.atlassian.oai:swagger-request-validator-mockmvc` 2.46.1(사용자 승인, 테스트 전용)로 MockMvc 요청·응답을 검증한다. 일부러 계약을 어긴 요청을 보내는 실패 케이스는 응답만 검증한다.
   - 계약 원본은 docs 레포에 둔다. 로컬은 작업 공간 구조(`../../docs/contracts`)를, CI는 `checks.yml`에서 docs 레포를 체크아웃해 `CONTRACTS_DIR`로 넘긴다. 파일이 없으면 테스트가 실패한다.
   - 추가 필드를 금지하는 엄격 검사를 유지한다. 이 검사로 400 응답의 `errors`가 계약에 없던 것을 찾아 계약에 추가했다(docs #13, `_common.yaml` 1.2.0).
+- **추적(NFR-4)**: 서비스 convention plugin에 `micrometer-tracing-bridge-otel`(사용자 승인, Boot BOM 관리)을 넣어 W3C `traceparent`를 이어 받고 하위 서비스로 넘긴다.
+  - auth-service는 MDC의 `traceId`를 common-web 핸들러가 넣는다. 게이트웨이는 WebFlux라 MDC 대신 요청의 관측 컨텍스트(`ServerRequestObservationContext`)에서 현재 span을 찾아 `ProblemResponseWriter`가 넣는다.
+  - Spring Boot는 테스트에서 추적을 꺼 두므로 통합 테스트 공통 설정에 `@AutoConfigureObservability(metrics = false)`를 붙인다.
+  - 수집기(exporter)는 아직 두지 않는다. 운영 수집 방식은 관측 스택을 정할 때 따로 결정한다.
+- **민감 정보(NFR-2, NFR-3)**: 두 서비스의 실제 흐름을 실행하고 출력 캡처에 비밀번호·토큰·티켓 원문이 없는지 확인한다(`com.vlm`은 DEBUG). DB에는 재발급 토큰의 SHA-256 해시만 있는지 확인한다.
 - **아키텍처**: 서비스마다 ArchUnit(`api → application → domain ← infra`, 서비스 간 import 금지, `GeneralCodingRules`). 게이트웨이는 레이어 대신 패키지 간 순환 금지만 검사
 - **E2E**: 로컬 compose에서 가입 → 로그인 → 게이트웨이 경유 `/me` 수동 시연 (성공 지표)
 
