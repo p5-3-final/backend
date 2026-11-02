@@ -1,5 +1,8 @@
 package com.vlm.auth.domain;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /** 사용자 저장소. 구현은 infra 레이어에 있다. */
 public interface UserRepository {
 
@@ -12,4 +15,8 @@ public interface UserRepository {
   User save(User user);
 
   boolean existsByEmail(String email);
+
+  Optional<User> findByEmail(String email);
+
+  Optional<User> findByPublicId(UUID publicId);
 }

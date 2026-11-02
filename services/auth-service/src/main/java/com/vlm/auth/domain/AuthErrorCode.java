@@ -5,7 +5,10 @@ import com.vlm.common.error.ErrorCode;
 /** auth-service 오류 코드. 계약 {@code auth-service.yaml}의 code 값과 같다. */
 public enum AuthErrorCode implements ErrorCode {
   EMAIL_DUPLICATED(409, "AUTH_EMAIL_DUPLICATED", "이미 가입된 이메일입니다."),
-  PASSWORD_POLICY(400, "AUTH_PASSWORD_POLICY", "비밀번호는 8~64자이고 영문과 숫자를 모두 포함해야 합니다.");
+  PASSWORD_POLICY(400, "AUTH_PASSWORD_POLICY", "비밀번호는 8~64자이고 영문과 숫자를 모두 포함해야 합니다."),
+  INVALID_CREDENTIALS(401, "AUTH_INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
+  TOKEN_MISSING(401, "AUTH_TOKEN_MISSING", "인증이 필요합니다."),
+  TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "인증 정보가 올바르지 않습니다.");
 
   private final int status;
   private final String code;

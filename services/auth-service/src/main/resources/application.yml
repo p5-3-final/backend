@@ -14,6 +14,8 @@ spring:
 
 server:
   port: 8080
+  # api-gateway가 붙인 X-Forwarded-For로 클라이언트 IP를 읽는다. 게이트웨이 외 접근은 NetworkPolicy로 막는다.
+  forward-headers-strategy: framework
 
 management:
   endpoints:
@@ -28,3 +30,9 @@ management:
 vlm:
   problem:
     validation-error-code: AUTH_INVALID_REQUEST
+  auth:
+    jwt:
+      issuer: ${AUTH_JWT_ISSUER}
+      audience: vlm-api
+      signing-key: ${AUTH_JWT_SIGNING_KEY}
+      previous-public-keys: ${AUTH_JWT_PREVIOUS_PUBLIC_KEYS:}
