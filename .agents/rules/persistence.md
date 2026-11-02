@@ -12,6 +12,7 @@ globs: "**/src/main/resources/db/migration/**, **/infra/persistence/**, **/domai
   - 컬럼 삭제나 이름 변경은 "추가 → 코드 전환 → 배포 → 삭제" 순서로 PR을 나눈다.
   - `NOT NULL` 컬럼을 추가할 때는 기본값을 주거나 단계적으로 적용한다.
 - 테이블과 컬럼 이름은 `snake_case`로 쓰고, 테이블 이름은 복수형이다. PK는 `id BIGINT` (IDENTITY)다.
+- 문자열 컬럼은 `VARCHAR(n)`이나 `TEXT`를 쓴다. `CHAR(n)`은 쓰지 않는다. PostgreSQL에서는 성능 이점이 없고, 공백을 채우고 비교하는 동작이 달라 버그가 생기기 쉬우며, JPA 기본 매핑(`VARCHAR`)과도 맞지 않는다.
 - 모든 테이블에 `created_at`, `updated_at`(`TIMESTAMPTZ`)을 둔다.
 - 다른 서비스의 테이블을 참조하는 FK를 만들지 않는다. ID 값만 저장한다.
 - N+1 쿼리를 피한다. 목록 조회는 fetch join, `@EntityGraph`, 또는 DTO projection으로 처리한다.

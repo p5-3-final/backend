@@ -111,12 +111,12 @@ updated: 2026-11-02
   - IP는 ALB가 붙인 `X-Forwarded-For`의 마지막 신뢰 홉을 쓴다(`forwarded-headers-strategy`). 로컬은 원격 주소.
 
 ### 데이터 모델 (auth_db)
-마이그레이션: `V202611021200__create_auth_tables.sql`
+마이그레이션: `V202611021200__create_auth_tables.sql`, `V202611031200__change_token_hash_to_varchar.sql`(`token_hash`를 `CHAR(64)`에서 `VARCHAR(64)`로)
 
 | 테이블 | 컬럼 | 비고 |
 | --- | --- | --- |
 | `users` | `id BIGINT IDENTITY PK`, `public_id UUID UNIQUE NOT NULL`, `email VARCHAR(254) UNIQUE NOT NULL`, `password_hash VARCHAR(100) NOT NULL`, `nickname VARCHAR(20) NOT NULL`, `role VARCHAR(20) NOT NULL`, `failed_login_count INT NOT NULL DEFAULT 0`, `locked_until TIMESTAMPTZ NULL`, `created_at`, `updated_at` | 외부에는 `public_id`만 노출(토큰 `sub`, `X-User-Id`, API `id`). 역할은 하나이며 API에서는 배열로 반환 |
-| `refresh_tokens` | `id BIGINT IDENTITY PK`, `user_id BIGINT NOT NULL REFERENCES users`, `family_id UUID NOT NULL`, `token_hash CHAR(64) UNIQUE NOT NULL`, `expires_at TIMESTAMPTZ NOT NULL`, `used_at TIMESTAMPTZ NULL`, `revoked_at TIMESTAMPTZ NULL`, `created_at`, `updated_at` | 인덱스 `(family_id)` |
+| `refresh_tokens` | `id BIGINT IDENTITY PK`, `user_id BIGINT NOT NULL REFERENCES users`, `family_id UUID NOT NULL`, `token_hash VARCHAR(64) UNIQUE NOT NULL`, `expires_at TIMESTAMPTZ NOT NULL`, `used_at TIMESTAMPTZ NULL`, `revoked_at TIMESTAMPTZ NULL`, `created_at`, `updated_at` | 인덱스 `(family_id)` |
 | `login_audits` | `id BIGINT IDENTITY PK`, `user_id BIGINT NULL`, `success BOOLEAN NOT NULL`, `client_ip VARCHAR(45) NOT NULL`, `occurred_at TIMESTAMPTZ NOT NULL`, `created_at`, `updated_at` | 없는 이메일이면 `user_id` NULL. 시도한 이메일 원문은 저장하지 않음 |
 
 ### API / 이벤트
