@@ -27,7 +27,7 @@ updated: 2026-11-02
 | R-4 | auth-service `PasswordPolicy` | `PasswordPolicyTest`, `SignUpApiTest` |
 | R-5 | auth-service `SignUpRequest` 검증 | `SignUpApiTest` |
 | R-6 | auth-service `PasswordHasher` | `SignUpApiTest` (저장값이 원문과 다르고 BCrypt로 일치) |
-| R-7 | auth-service `LogInService`, `TokenIssuer` | `LogInApiTest` |
+| R-7 | auth-service `LogInService`, `AccessTokenIssuer`(구현 `JwtAccessTokenIssuer`) | `LogInApiTest` |
 | R-8 | auth-service `LogInService` | `LogInApiTest` |
 | R-9 | auth-service `LoginAuditRecorder` | `LogInApiTest` |
 | R-10 | auth-service `MeController` | `MeApiTest` |

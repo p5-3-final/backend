@@ -31,7 +31,7 @@ updated: 2026-11-02
 
 ## Phase 3: US-2 로그인과 내 정보 (P1)
 - [x] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys` (25f801e)
-- [x] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtTokenIssuer`, `domain/RefreshToken` (25f801e)
+- [x] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtAccessTokenIssuer`, `domain/RefreshToken` (25f801e)
 - [x] T014 [R-8] 이메일 없음·비밀번호 틀림을 구분하지 않고 401 — 테스트 `LogInApiTest`, 구현 `LogInService` (25f801e)
 - [x] T015 [R-9] 로그인 시도마다 기록(시각, 계정, 성공 여부, IP) — 테스트 `LogInApiTest`, 구현 `domain/LoginAudit`, `application/LoginAuditRecorder` (25f801e)
 - [x] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService` (25f801e)
@@ -76,7 +76,7 @@ updated: 2026-11-02
 - [ ] T055 (infra 준비 후 진행, 사용자 결정) 서비스 workflow `.github/workflows/{auth-service,api-gateway}.yml` (이미지 빌드·ECR push·gitops 갱신)
 
 ## 완료 조건 (Definition of Done)
-- [ ] 이 레포가 담당하는 모든 R-*의 테스트 통과
-- [ ] lint, 타입 검사, 전체 테스트 통과
-- [ ] plan.md와 실제 구현이 일치함
+- [x] 이 레포가 담당하는 모든 R-*의 테스트 통과
+- [x] lint, 타입 검사, 전체 테스트 통과
+- [x] plan.md와 실제 구현이 일치함
 - [ ] docs 레포 spec 상태 갱신 (`Implementing` / `Done`)
