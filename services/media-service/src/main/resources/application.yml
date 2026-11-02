@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: media-service
+  datasource:
+    url: ${MEDIA_DB_URL}
+    username: ${MEDIA_DB_USERNAME}
+    password: ${MEDIA_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      # Outbox 발행이 "전송 확인"을 기다리므로 모든 복제본 기록을 확인한다.
+      acks: all
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+vlm:
+  problem:
+    validation-error-code: MEDIA_INVALID_REQUEST
+  media:
+    storage:
+      bucket: ${MEDIA_S3_BUCKET}
+      region: ${MEDIA_S3_REGION}
+      # 비우면 SDK가 리전 기본 주소를 쓴다(운영 S3). 로컬은 SeaweedFS 주소를 넣는다(ADR-0006).
+      endpoint: ${MEDIA_S3_ENDPOINT:}
+      public-endpoint: ${MEDIA_S3_PUBLIC_ENDPOINT:}
+      path-style: ${MEDIA_S3_PATH_STYLE:false}
