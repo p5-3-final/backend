@@ -6,7 +6,8 @@ globs: ".github/workflows/**"
 
 # CI/CD 규칙 (backend)
 
-- workflow는 서비스마다 하나다: `.github/workflows/<service>.yml`
+- 모든 PR 공통 검사는 `.github/workflows/checks.yml`이다(PR 제목, actionlint·zizmor, `spotlessCheck`, 전체 `build`). 경로 필터 없이 항상 실행하므로 ruleset 필수 검사로 등록한다.
+- 이미지 빌드·배포 workflow는 서비스마다 하나다: `.github/workflows/<service>.yml`
 - `paths` 필터는 반드시 아래를 모두 포함한다. 하나라도 빠지면 공통 코드를 바꿨을 때 그 서비스가 재빌드되지 않는다.
   ```yaml
   paths:
