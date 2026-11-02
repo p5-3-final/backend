@@ -30,19 +30,19 @@ updated: 2026-11-02
 - [x] T011 [R-6] 비밀번호를 BCrypt 해시로만 저장 — 테스트 `SignUpApiTest`, 구현 `infra/BcryptPasswordHasher` (26ffffb)
 
 ## Phase 3: US-2 로그인과 내 정보 (P1)
-- [x] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys`
-- [x] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtTokenIssuer`, `domain/RefreshToken`
-- [x] T014 [R-8] 이메일 없음·비밀번호 틀림을 구분하지 않고 401 — 테스트 `LogInApiTest`, 구현 `LogInService`
-- [x] T015 [R-9] 로그인 시도마다 기록(시각, 계정, 성공 여부, IP) — 테스트 `LogInApiTest`, 구현 `domain/LoginAudit`, `application/LoginAuditRecorder`
-- [x] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService`
+- [x] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys` (25f801e)
+- [x] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtTokenIssuer`, `domain/RefreshToken` (25f801e)
+- [x] T014 [R-8] 이메일 없음·비밀번호 틀림을 구분하지 않고 401 — 테스트 `LogInApiTest`, 구현 `LogInService` (25f801e)
+- [x] T015 [R-9] 로그인 시도마다 기록(시각, 계정, 성공 여부, IP) — 테스트 `LogInApiTest`, 구현 `domain/LoginAudit`, `application/LoginAuditRecorder` (25f801e)
+- [x] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService` (25f801e)
 
 ## Phase 4: US-3 인증된 요청 전달 (P1)
-- [ ] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig`
-- [ ] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`(테스트용 EC 키 쌍·토큰 서명 지원 클래스 포함), 구현 `config/SecurityConfig`, `filter/UserHeaderFilter`
-- [ ] T019 [R-14] 토큰 없음 401 `AUTH_TOKEN_MISSING` — 테스트 `TokenRejectionTest`, 구현 `error/ProblemAuthenticationEntryPoint`
-- [ ] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig`
-- [ ] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint`
-- [ ] T022 [R-17] 클라이언트가 보낸 `X-User-*` 헤더 제거 (공개·보호 경로 모두) — 테스트 `HeaderSpoofingTest`, 구현 `UserHeaderFilter`
+- [x] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig`
+- [x] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`(테스트용 EC 키 쌍·토큰 서명 지원 클래스 포함), 구현 `config/SecurityConfig`, `filter/UserHeaderFilter`
+- [x] T019 [R-14] 토큰 없음 401 `AUTH_TOKEN_MISSING` — 테스트 `TokenRejectionTest`, 구현 `error/ProblemAuthenticationEntryPoint`
+- [x] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig`
+- [x] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint`
+- [x] T022 [R-17] 클라이언트가 보낸 `X-User-*` 헤더 제거 (공개·보호 경로 모두) — 테스트 `HeaderSpoofingTest`, 구현 `UserHeaderFilter`
 - [ ] T023 [P] [R-18] 등록되지 않은 경로 404 `GATEWAY_ROUTE_NOT_FOUND` — 테스트 `GatewayErrorTest`, 구현 `error/GatewayErrorHandler`
 - [ ] T024 [R-19] 하위 서비스 응답 시간 초과 504 `GATEWAY_TIMEOUT` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`, 라우트 응답 시간 설정
 - [ ] T025 [R-20] 하위 서비스 연결 불가 503 `GATEWAY_UNAVAILABLE` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`

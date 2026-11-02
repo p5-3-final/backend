@@ -32,6 +32,13 @@ spring:
               predicates:
                 - Path=/api/v1/notify/**
 
+vlm:
+  gateway:
+    jwt:
+      jwks-uri: ${GATEWAY_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
+      issuer: ${GATEWAY_JWT_ISSUER}
+      audience: vlm-api
+
 server:
   port: 8080
 
