@@ -28,6 +28,7 @@ public final class TestTokens {
 
   public static final String ISSUER = "vlm-auth-test";
   public static final String AUDIENCE = "vlm-api";
+  public static final String TICKET_AUDIENCE = "vlm-sse";
   public static final ECKey SIGNING_KEY = generate("gateway-test");
 
   /** 키 교체 후 새로 쓰는 키. 처음에는 JWKS에 없다. */
@@ -62,6 +63,28 @@ public final class TestTokens {
   public static String with(UnaryOperator<JWTClaimsSet.Builder> customizer) {
     return sign(
         SIGNING_KEY, customizer.apply(claims(UUID.randomUUID().toString(), "USER")).build());
+  }
+
+  /** 계약 "알림 연결 티켓" 형식의 유효한 티켓(aud vlm-sse, 30초). */
+  public static String ticket(String subject, String... roles) {
+    return ticketWith(subject, b -> b, roles);
+  }
+
+  /** 유효한 티켓 클레임에서 일부를 바꾼 티켓. */
+  public static String ticketWith(
+      String subject, UnaryOperator<JWTClaimsSet.Builder> customizer, String... roles) {
+    Instant now = Instant.now();
+    JWTClaimsSet.Builder builder =
+        claims(subject, roles)
+            .audience(TICKET_AUDIENCE)
+            .expirationTime(toDate(now.plusSeconds(30)));
+    return sign(SIGNING_KEY, customizer.apply(builder).build());
+  }
+
+  /** 다른 키로 서명한 티켓. */
+  public static String ticketSignedWith(ECKey key) {
+    return sign(
+        key, claims(UUID.randomUUID().toString(), "USER").audience(TICKET_AUDIENCE).build());
   }
 
   /** ES256이 아닌 HS256으로 서명한 토큰. 알고리즘 제한 테스트에 쓴다. */

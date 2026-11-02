@@ -1,6 +1,11 @@
 spring:
   application:
     name: api-gateway
+  # 알림 티켓 1회용 처리(SPEC-001 R-27)와 요청 수 제한에 쓰는 게이트웨이 전용 Redis
+  data:
+    redis:
+      host: ${GATEWAY_REDIS_HOST:localhost}
+      port: ${GATEWAY_REDIS_PORT:6379}
   cloud:
     gateway:
       server:
@@ -44,6 +49,7 @@ vlm:
       jwks-uri: ${GATEWAY_JWKS_URI:http://localhost:8081/.well-known/jwks.json}
       issuer: ${GATEWAY_JWT_ISSUER}
       audience: vlm-api
+      ticket-audience: vlm-sse
     cors:
       allowed-origins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:5173}
 

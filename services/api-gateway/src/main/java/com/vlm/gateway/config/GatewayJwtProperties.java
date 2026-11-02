@@ -9,7 +9,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  *
  * @param jwksUri auth-service 공개키 목록 주소(클러스터 내부)
  * @param issuer 받아들일 {@code iss}
- * @param audience 받아들일 {@code aud}
+ * @param audience 접근 토큰으로 받아들일 {@code aud}
+ * @param ticketAudience 알림 연결 티켓으로 받아들일 {@code aud}
  * @param jwksCacheTtl 공개키 목록 캐시 갱신 주기. 계약상 5분 이내
  * @param jwksRefetchCooldown 모르는 kid 때문에 다시 받는 최소 간격
  */
@@ -18,5 +19,6 @@ public record GatewayJwtProperties(
     String jwksUri,
     String issuer,
     String audience,
+    String ticketAudience,
     @DefaultValue("5m") Duration jwksCacheTtl,
     @DefaultValue("10s") Duration jwksRefetchCooldown) {}

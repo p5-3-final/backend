@@ -12,7 +12,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-/** 게이트웨이 통합 테스트 공통 설정. 하위 서비스와 auth-service JWKS를 WireMock 하나로 대신한다. */
+/** 게이트웨이 통합 테스트 공통 설정. 하위 서비스와 auth-service JWKS를 WireMock 하나로 대신하고, Redis는 컨테이너로 띄운다. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class GatewayIntegrationTest {
 
@@ -29,6 +29,8 @@ public abstract class GatewayIntegrationTest {
     DownstreamServices.register(registry);
     registry.add("GATEWAY_JWKS_URI", () -> DownstreamServices.server().baseUrl() + JWKS_PATH);
     registry.add("GATEWAY_JWT_ISSUER", () -> TestTokens.ISSUER);
+    registry.add("GATEWAY_REDIS_HOST", () -> TestRedis.container().getHost());
+    registry.add("GATEWAY_REDIS_PORT", () -> TestRedis.container().getMappedPort(TestRedis.PORT));
   }
 
   @BeforeEach

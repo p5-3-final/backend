@@ -1,6 +1,7 @@
 package com.vlm.gateway.config;
 
 import com.vlm.gateway.error.ProblemAuthenticationEntryPoint;
+import com.vlm.gateway.filter.SseTicketFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,9 @@ class SecurityConfig {
                         "/api/v1/auth/signup",
                         "/api/v1/auth/login",
                         "/api/v1/auth/refresh")
+                    .permitAll()
+                    // SPEC-001 R-27: 알림 연결은 접근 토큰 대신 SseTicketFilter가 티켓으로 인증한다.
+                    .pathMatchers(HttpMethod.GET, SseTicketFilter.PATH)
                     .permitAll()
                     .pathMatchers("/actuator/health", "/actuator/health/**")
                     .permitAll()

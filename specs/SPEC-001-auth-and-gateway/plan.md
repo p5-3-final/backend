@@ -98,7 +98,7 @@ updated: 2026-11-02
   - 로그아웃: 쿠키의 토큰이 요청한 사용자의 것이면 그 family를 폐기한다. 쿠키가 없거나 남의 토큰이어도 204와 삭제 쿠키(`Max-Age=0`)를 반환한다.
   - 쿠키: `refresh_token`, `Path=/api/v1/auth`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Max-Age=1209600`.
 - **JWKS**: 현재 서명 키의 공개키 + 환경변수로 지정한 이전 공개키(선택)를 반환한다. 개인키는 응답에 넣지 않는다.
-- **알림 티켓**: 같은 서명 키로 `aud: vlm-sse`, 30초 JWT를 발급한다. 저장하지 않는다.
+- **알림 티켓**: 같은 서명 키로 `aud: vlm-sse`, 30초 JWT를 발급한다. 저장하지 않는다. 접근 토큰과 클레임 구성이 같으므로 서명은 `UserTokenSigner` 하나로 하고, 역할은 헤더가 아니라 DB에서 읽는다.
 - **내 정보**: `X-User-Id`(UUID)로 사용자를 조회한다. 게이트웨이가 넣은 헤더를 신뢰하며, NetworkPolicy로 게이트웨이 외 접근을 막는다(gitops).
 - **초기 관리자**: `ApplicationRunner`. ADMIN이 없고 `AUTH_ADMIN_EMAIL`·`AUTH_ADMIN_PASSWORD`가 있으면 생성한다. 값이 없으면 경고 로그만 남기고 건너뛴다(로컬 편의).
 
@@ -113,6 +113,10 @@ updated: 2026-11-02
 - **JWKS 캐시**: 직접 구현한 `CachingJwkSource`. 5분마다 갱신(계약), 모르는 `kid`면 즉시 재조회하되 10초에 한 번으로 제한(임의 kid로 auth-service에 요청을 모는 것 방지).
 - **응답 제한 시간**: 기본 10초, 연결 2초. 알림 경로는 라우트 metadata로 제한 시간을 끈다(SSE).
 - **알림 티켓**: `/api/v1/notify/stream` 전용 필터. `?ticket` JWT를 `aud: vlm-sse` 검증기로 확인하고, Redis `SET sse:jti:<jti> 1 NX EX 60`이 실패하면(이미 사용) 401.
+  - 보안 설정에서 이 경로(GET)는 접근 토큰 검사를 건너뛰고 필터가 인증한다. 필터는 `UserHeaderFilter` 바로 다음에 실행해 티켓 주인으로 사용자 헤더를 채운다.
+  - 티켓 검증기는 접근 토큰 검증기와 공개키 캐시(`CachingJwkSource`)를 같이 쓴다. `aud`만 `vlm.gateway.jwt.ticket-audience`로 다르다.
+  - 하위 서비스로 보낼 때 `ticket` 쿼리를 지운다(NFR-3, 로그에 티켓이 남지 않게).
+  - EX 60은 티켓 유효기간 30초 + 허용 오차 30초다.
 - **요청 수 제한**: `RequestRateLimiter` + `RedisRateLimiter`, 키는 클라이언트 IP. 분당 10회는 `replenishRate=1, burstCapacity=60, requestedTokens=6`으로 표현한다. 거절 응답을 ProblemDetail로 바꾼다.
   - IP는 ALB가 붙인 `X-Forwarded-For`의 마지막 신뢰 홉을 쓴다(`forwarded-headers-strategy`). 로컬은 원격 주소.
 

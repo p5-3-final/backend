@@ -48,7 +48,7 @@ public class UserHeaderFilter implements GlobalFilter, Ordered {
     return exchange.mutate().request(request).build();
   }
 
-  private static ServerWebExchange withUser(ServerWebExchange exchange, Jwt jwt) {
+  static ServerWebExchange withUser(ServerWebExchange exchange, Jwt jwt) {
     List<String> roles = jwt.getClaimAsStringList("roles");
     ServerHttpRequest request =
         exchange
