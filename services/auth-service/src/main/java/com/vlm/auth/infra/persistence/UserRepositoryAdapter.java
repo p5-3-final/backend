@@ -4,6 +4,8 @@ import com.vlm.auth.domain.AuthErrorCode;
 import com.vlm.auth.domain.User;
 import com.vlm.auth.domain.UserRepository;
 import com.vlm.common.error.BusinessException;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,5 +38,15 @@ class UserRepositoryAdapter implements UserRepository {
   @Override
   public boolean existsByEmail(String email) {
     return jpaRepository.existsByEmail(email);
+  }
+
+  @Override
+  public Optional<User> findByEmail(String email) {
+    return jpaRepository.findByEmail(email);
+  }
+
+  @Override
+  public Optional<User> findByPublicId(UUID publicId) {
+    return jpaRepository.findByPublicId(publicId);
   }
 }

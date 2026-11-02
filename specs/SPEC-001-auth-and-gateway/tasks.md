@@ -22,19 +22,19 @@ updated: 2026-11-02
 - [x] T005 [P] api-gateway 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, 라우트 설정, WireMock 지원 클래스, ArchUnit 테스트 — `services/api-gateway/` (81b4728)
 
 ## Phase 2: US-1 회원가입 (P1)
-- [x] T006 [R-1] 정상 가입 시 USER 계정 생성, 201 — 테스트 `A/test/.../api/SignUpApiTest.java`, 구현 `A/main/.../{api/SignUpController,application/SignUpService,domain/User,infra/persistence}`
-- [x] T007 [R-2] 중복 이메일 409 `AUTH_EMAIL_DUPLICATED` (대소문자 무시, 동시 가입 포함) — 테스트 `SignUpApiTest`, 구현 `SignUpService`
-- [x] T008 [R-3] 이메일 형식 오류 400 `AUTH_INVALID_REQUEST` — 테스트 `SignUpApiTest`, 구현 `api/SignUpRequest`
-- [x] T009 [R-4] 비밀번호 정책 위반 400 `AUTH_PASSWORD_POLICY` — 테스트 `domain/PasswordPolicyTest`, `SignUpApiTest`, 구현 `domain/PasswordPolicy`
-- [x] T010 [R-5] 닉네임 2~20자·한글/영문/숫자 위반 400 — 테스트 `SignUpApiTest`, 구현 `SignUpRequest`
-- [x] T011 [R-6] 비밀번호를 BCrypt 해시로만 저장 — 테스트 `SignUpApiTest`, 구현 `infra/BcryptPasswordHasher`
+- [x] T006 [R-1] 정상 가입 시 USER 계정 생성, 201 — 테스트 `A/test/.../api/SignUpApiTest.java`, 구현 `A/main/.../{api/SignUpController,application/SignUpService,domain/User,infra/persistence}` (26ffffb)
+- [x] T007 [R-2] 중복 이메일 409 `AUTH_EMAIL_DUPLICATED` (대소문자 무시, 동시 가입 포함) — 테스트 `SignUpApiTest`, 구현 `SignUpService` (26ffffb)
+- [x] T008 [R-3] 이메일 형식 오류 400 `AUTH_INVALID_REQUEST` — 테스트 `SignUpApiTest`, 구현 `api/SignUpRequest` (26ffffb)
+- [x] T009 [R-4] 비밀번호 정책 위반 400 `AUTH_PASSWORD_POLICY` — 테스트 `domain/PasswordPolicyTest`, `SignUpApiTest`, 구현 `domain/PasswordPolicy` (26ffffb)
+- [x] T010 [R-5] 닉네임 2~20자·한글/영문/숫자 위반 400 — 테스트 `SignUpApiTest`, 구현 `SignUpRequest` (26ffffb)
+- [x] T011 [R-6] 비밀번호를 BCrypt 해시로만 저장 — 테스트 `SignUpApiTest`, 구현 `infra/BcryptPasswordHasher` (26ffffb)
 
 ## Phase 3: US-2 로그인과 내 정보 (P1)
-- [ ] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys`
-- [ ] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtTokenIssuer`, `domain/RefreshToken`
-- [ ] T014 [R-8] 이메일 없음·비밀번호 틀림을 구분하지 않고 401 — 테스트 `LogInApiTest`, 구현 `LogInService`
-- [ ] T015 [R-9] 로그인 시도마다 기록(시각, 계정, 성공 여부, IP) — 테스트 `LogInApiTest`, 구현 `domain/LoginAudit`, `application/LoginAuditRecorder`
-- [ ] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService`
+- [x] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys`
+- [x] T013 [R-7] 로그인 성공 시 접근 토큰(ES256, 계약 클레임) + 재발급 쿠키 — 테스트 `api/LogInApiTest`, 구현 `application/LogInService`, `infra/token/JwtTokenIssuer`, `domain/RefreshToken`
+- [x] T014 [R-8] 이메일 없음·비밀번호 틀림을 구분하지 않고 401 — 테스트 `LogInApiTest`, 구현 `LogInService`
+- [x] T015 [R-9] 로그인 시도마다 기록(시각, 계정, 성공 여부, IP) — 테스트 `LogInApiTest`, 구현 `domain/LoginAudit`, `application/LoginAuditRecorder`
+- [x] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService`
 
 ## Phase 4: US-3 인증된 요청 전달 (P1)
 - [ ] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig`

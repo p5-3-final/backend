@@ -88,6 +88,8 @@ updated: 2026-11-02
 - **로그인**: 사용자 조회 → 잠금 확인(423) → 비밀번호 확인 → 실패 시 실패 횟수 증가(5회째에 `locked_until = now + 15분`) / 성공 시 초기화 → 로그인 기록 → 토큰 발급.
   - 이메일이 없을 때도 BCrypt 비교를 한 번 수행해 응답 시간으로 계정 존재 여부가 드러나지 않게 한다.
 - **접근 토큰**: `NimbusJwtEncoder` + EC P-256 키. 헤더 `kid`, 클레임은 `access-token.md` 그대로. `iss`는 환경변수.
+  - 서명 키는 PEM 대신 JWK JSON으로 받는다. JDK만으로는 EC 개인키 PEM에서 공개키를 만들 수 없어 BouncyCastle이 필요해지기 때문이다.
+- **로그인 기록**: 실패한 로그인은 예외로 끝나 트랜잭션이 롤백되므로, 기록은 `REQUIRES_NEW` 트랜잭션으로 남긴다. 클라이언트 IP는 `server.forward-headers-strategy=framework`로 게이트웨이의 `X-Forwarded-For`에서 읽는다.
 - **재발급 토큰**: 256비트 난수(base64url). DB에는 SHA-256 해시만 저장. 로그인마다 새 `family_id`를 만들고, 재발급할 때 같은 family로 새 토큰을 만들며 이전 토큰에 `used_at`을 기록한다.
   - `used_at`이 있는 토큰이 다시 오면 그 family 전체에 `revoked_at`을 기록하고 401 `AUTH_REFRESH_REUSED`.
   - 쿠키: `refresh_token`, `Path=/api/v1/auth`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Max-Age=1209600`.
@@ -170,7 +172,7 @@ sequenceDiagram
 
 ## 8. 배포 고려사항
 - **환경변수** (레포 `.env.example`, 루트 `local/.env.example`에 반영)
-  - auth-service: `AUTH_DB_URL`, `AUTH_DB_USERNAME`, `AUTH_DB_PASSWORD`, `AUTH_JWT_ISSUER`, `AUTH_JWT_KEY_ID`, `AUTH_JWT_PRIVATE_KEY`(PEM, 비밀값), `AUTH_JWT_PREVIOUS_PUBLIC_KEYS`(선택), `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`(비밀값)
+  - auth-service: `AUTH_DB_URL`, `AUTH_DB_USERNAME`, `AUTH_DB_PASSWORD`, `AUTH_JWT_ISSUER`, `AUTH_JWT_SIGNING_KEY`(개인키를 포함한 EC P-256 JWK JSON, `kid` 포함, 비밀값), `AUTH_JWT_PREVIOUS_PUBLIC_KEYS`(선택, JWK Set JSON), `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`(비밀값)
   - api-gateway: `GATEWAY_JWKS_URI`, `GATEWAY_JWT_ISSUER`, `GATEWAY_CORS_ALLOWED_ORIGINS`, `GATEWAY_REDIS_HOST`, `GATEWAY_REDIS_PORT`, 서비스별 `*_SERVICE_URI`
 - **로컬 compose** (docs 레포 `local/`): PostgreSQL(auth_db), Redis, auth-service(8081), api-gateway(8080). 별도 docs PR로 추가한다.
 - **운영**: Secrets Manager 경로(infra), gitops `apps/{auth-service,api-gateway}/base` 매니페스트와 auth-service NetworkPolicy(게이트웨이만 허용)는 각 레포 PR로 한다.
