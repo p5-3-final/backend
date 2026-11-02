@@ -28,11 +28,10 @@ Spring Boot 멀티모듈 MSA. 구조와 규칙은 [AGENTS.md](AGENTS.md)에 있�
 
 전체 서비스는 docs 레포 `local/`의 compose로 띄운다. 아래는 auth-service와 api-gateway만 단독으로 띄우는 방법이다.
 
-1. 환경변수 파일을 만든다. `AUTH_DB_PASSWORD`를 정하고, `AUTH_JWT_SIGNING_KEY`에 서명 키를 작은따옴표로 감싸 넣는다.
+1. 환경변수 파일을 만든다. 예시 파일에 로컬 전용 샘플값(DB 비밀번호, 서명 키, 초기 관리자)이 들어 있어 복사만 하면 된다. 서명 키를 새로 만들려면 `generateSigningKey` 출력을 `AUTH_JWT_SIGNING_KEY`에 작은따옴표로 감싸 넣는다.
 
    ```bash
    cp .env.example .env
-   ./gradlew -q :services:auth-service:generateSigningKey   # 출력값을 .env에 넣는다
    ```
 
 2. 셸에 환경변수를 올리고 PostgreSQL과 Redis를 띄운다.
