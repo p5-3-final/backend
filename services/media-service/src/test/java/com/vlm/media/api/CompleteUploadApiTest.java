@@ -14,6 +14,8 @@ import com.vlm.media.support.StorageUploads;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
@@ -101,6 +103,20 @@ class CompleteUploadApiTest {
         .andExpect(jsonPath("$.code").value("MEDIA_VIDEO_NOT_FOUND"));
     mvc.perform(asUser(completeRequest(UUID.randomUUID().toString()), ownerId))
         .andExpect(status().isNotFound());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"EXPIRED", "DELETED"})
+  @DisplayName("[SPEC-003 R-12] 만료·삭제된 영상에 완료 요청이 오면 409 MEDIA_INVALID_STATE를 반환한다")
+  void rejectsExpiredOrDeleted(String state) throws Exception {
+    JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
+    StorageUploads.postForm(created.get("upload"), new byte[1000]);
+    jdbc.update("UPDATE videos SET status = ? WHERE public_id = ?::uuid", state, id(created));
+
+    mvc.perform(asUser(completeRequest(id(created)), ownerId))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("MEDIA_INVALID_STATE"));
+    assertThat(statusOf(created)).isEqualTo(state);
   }
 
   private String statusOf(JsonNode created) {

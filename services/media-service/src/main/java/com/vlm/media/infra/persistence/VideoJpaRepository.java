@@ -3,6 +3,7 @@ package com.vlm.media.infra.persistence;
 import com.vlm.media.domain.Video;
 import com.vlm.media.domain.VideoStatus;
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,4 +34,16 @@ interface VideoJpaRepository extends JpaRepository<Video, Long> {
           """,
       nativeQuery = true)
   List<Video> lockStorageCleanupTargets(@Param("limit") int limit);
+
+  @Query(
+      value =
+          """
+          SELECT * FROM videos
+          WHERE status = 'UPLOADING' AND expires_at < :now
+          ORDER BY expires_at
+          LIMIT :limit
+          FOR UPDATE SKIP LOCKED
+          """,
+      nativeQuery = true)
+  List<Video> lockExpiredUploads(@Param("now") Instant now, @Param("limit") int limit);
 }

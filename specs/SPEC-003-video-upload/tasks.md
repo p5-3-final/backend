@@ -47,15 +47,15 @@ updated: 2026-11-03
 
 ## Phase 5: US-4 영상 삭제 (P2)
 
-- [x] T019 [R-18] 소유자가 삭제하면 `DELETED`, 204, 목록·상세에서 사라짐 — 테스트 `M/test/.../api/DeleteVideoApiTest.java`, 구현 `application/DeleteVideoService`
-- [x] T020 [R-17] ADMIN은 남의 영상도 상세 조회·삭제 가능 — 테스트 `GetVideoApiTest`, `DeleteVideoApiTest`, 구현 `domain/VideoAccess`
-- [x] T021 [R-19] [R-21] 삭제 시 `video.deleted`를 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoDeletedEventTest.java`, 구현 `DeleteVideoService`, `VideoEvents`
-- [x] T022 [R-20] 삭제된 영상의 저장소 파일과 끝나지 않은 조각 정리, 실패하면 다음 주기에 재시도 — 테스트 `M/test/.../application/StorageCleanupTest.java`, 구현 `application/StorageCleanupJob`
+- [x] T019 [R-18] 소유자가 삭제하면 `DELETED`, 204, 목록·상세에서 사라짐 — 테스트 `M/test/.../api/DeleteVideoApiTest.java`, 구현 `application/DeleteVideoService` (bbba357)
+- [x] T020 [R-17] ADMIN은 남의 영상도 상세 조회·삭제 가능 — 테스트 `GetVideoApiTest`, `DeleteVideoApiTest`, 구현 `domain/VideoAccess` (bbba357)
+- [x] T021 [R-19] [R-21] 삭제 시 `video.deleted`를 한 번 기록, payload가 계약 스키마와 일치 — 테스트 `M/test/.../event/VideoDeletedEventTest.java`, 구현 `DeleteVideoService`, `VideoEvents` (bbba357)
+- [x] T022 [R-20] 삭제된 영상의 저장소 파일과 끝나지 않은 조각 정리, 실패하면 다음 주기에 재시도 — 테스트 `M/test/.../application/StorageCleanupTest.java`, 구현 `application/StorageCleanupJob` (bbba357)
 
 ## Phase 6: US-5 끝나지 않은 업로드 정리 (P2)
 
-- [ ] T023 [R-13] `UPLOADING` 24시간 경과 시 `EXPIRED`, 저장소 정리 — 테스트 `M/test/.../application/UploadExpiryTest.java`, 구현 `application/UploadExpiryJob`
-- [ ] T024 [R-12] `EXPIRED`·`DELETED` 영상의 완료 요청은 409 `MEDIA_INVALID_STATE` — 테스트 `M/test/.../domain/VideoTest.java`, `CompleteUploadApiTest`, 구현 `domain/Video`
+- [x] T023 [R-13] `UPLOADING` 24시간 경과 시 `EXPIRED`, 저장소 정리 — 테스트 `M/test/.../application/UploadExpiryTest.java`, 구현 `application/UploadExpiryJob`
+- [x] T024 [R-12] `EXPIRED`·`DELETED` 영상의 완료 요청은 409 `MEDIA_INVALID_STATE` — 테스트 `M/test/.../domain/VideoTest.java`, `CompleteUploadApiTest`, 구현 `domain/Video`
 
 ## Phase 7: 마무리
 

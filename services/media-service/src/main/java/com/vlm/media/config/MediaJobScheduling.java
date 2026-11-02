@@ -1,6 +1,7 @@
 package com.vlm.media.config;
 
 import com.vlm.media.application.StorageCleanupJob;
+import com.vlm.media.application.UploadExpiryJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 @RequiredArgsConstructor
 class MediaJobScheduling {
 
+  private final UploadExpiryJob uploadExpiryJob;
   private final StorageCleanupJob storageCleanupJob;
+
+  @Scheduled(fixedDelayString = "${vlm.media.jobs.expiry-interval-ms:300000}")
+  void expireUploads() {
+    uploadExpiryJob.expire();
+  }
 
   @Scheduled(fixedDelayString = "${vlm.media.jobs.cleanup-interval-ms:60000}")
   void cleanUpStorage() {
