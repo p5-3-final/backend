@@ -36,3 +36,7 @@ vlm:
       audience: vlm-api
       signing-key: ${AUTH_JWT_SIGNING_KEY}
       previous-public-keys: ${AUTH_JWT_PREVIOUS_PUBLIC_KEYS:}
+    # 비어 있으면 초기 관리자를 만들지 않고 경고만 남긴다(로컬 편의).
+    admin:
+      email: ${AUTH_ADMIN_EMAIL:}
+      password: ${AUTH_ADMIN_PASSWORD:}

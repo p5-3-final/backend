@@ -67,6 +67,11 @@ public class User {
     return new User(email, passwordHash, nickname, Role.USER);
   }
 
+  /** 초기 관리자 계정을 만든다(SPEC-001 R-31). */
+  public static User createAdmin(String email, String passwordHash, String nickname) {
+    return new User(email, passwordHash, nickname, Role.ADMIN);
+  }
+
   public boolean isLocked(Instant now) {
     return lockedUntil != null && now.isBefore(lockedUntil);
   }

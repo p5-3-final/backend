@@ -103,6 +103,9 @@ updated: 2026-11-02
 - **알림 티켓**: 같은 서명 키로 `aud: vlm-sse`, 30초 JWT를 발급한다. 저장하지 않는다. 접근 토큰과 클레임 구성이 같으므로 서명은 `UserTokenSigner` 하나로 하고, 역할은 헤더가 아니라 DB에서 읽는다.
 - **내 정보**: `X-User-Id`(UUID)로 사용자를 조회한다. 게이트웨이가 넣은 헤더를 신뢰하며, NetworkPolicy로 게이트웨이 외 접근을 막는다(gitops).
 - **초기 관리자**: `ApplicationRunner`. ADMIN이 없고 `AUTH_ADMIN_EMAIL`·`AUTH_ADMIN_PASSWORD`가 있으면 생성한다. 값이 없으면 경고 로그만 남기고 건너뛴다(로컬 편의).
+  - 비밀번호가 가입 비밀번호 정책에 맞지 않으면 `IllegalStateException`으로 시작을 멈춘다(약한 관리자 비밀번호로 운영하지 않게).
+  - 그 이메일로 일반 계정이 이미 있으면 관리자로 올리지 않고 경고 후 건너뛴다. 이메일은 소문자로 저장하고, 닉네임은 `관리자`다.
+  - 여러 파드가 동시에 시작하면 이메일 유니크 제약으로 한쪽이 실패하고, 재시작한 뒤 관리자가 있으므로 건너뛴다.
 
 ### api-gateway 구성
 - **라우트**: `/api/v1/auth/**` → auth-service, `/api/v1/media/**` → media-service, `/api/v1/jobs/**` → pipeline-service, `/api/v1/analysis/**` → analysis-api, `/api/v1/search/**` → search-service, `/api/v1/notify/**` → notification-service. 대상 주소는 환경변수다. 아직 없는 서비스는 503이 정상이다.

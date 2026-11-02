@@ -61,11 +61,11 @@ updated: 2026-11-02
 - [x] T034 [R-28] 티켓 없음·만료·재사용·접근 토큰 제출 401 `AUTH_TICKET_INVALID` — 테스트 `SseTicketTest`, 구현 `SseTicketFilter` (d0bbb71)
 
 ## Phase 7: US-6 로그인 남용 방지 (P2)
-- [x] T035 [R-29] 연속 5회 실패 시 15분간 423 `AUTH_ACCOUNT_LOCKED`, 성공 시 횟수 초기화 — 테스트 `domain/AccountLockTest`, `LogInApiTest`, 구현 `domain/User`, `LogInService`
-- [x] T036 [P] [R-30] IP당 로그인·가입 분당 10회 초과 시 429 `GATEWAY_RATE_LIMITED` + `Retry-After` — 테스트 `RateLimitTest`(Testcontainers Redis), 구현 라우트 `RequestRateLimiter`, `config/RateLimitConfig`, `error/RateLimitedResponseFilter`
+- [x] T035 [R-29] 연속 5회 실패 시 15분간 423 `AUTH_ACCOUNT_LOCKED`, 성공 시 횟수 초기화 — 테스트 `domain/AccountLockTest`, `LogInApiTest`, 구현 `domain/User`, `LogInService` (f74d91a)
+- [x] T036 [P] [R-30] IP당 로그인·가입 분당 10회 초과 시 429 `GATEWAY_RATE_LIMITED` + `Retry-After` — 테스트 `RateLimitTest`(Testcontainers Redis), 구현 라우트 `RequestRateLimiter`, `config/RateLimitConfig`, `error/RateLimitedResponseFilter` (f74d91a)
 
 ## Phase 8: 운영 준비
-- [ ] T037 [R-31] ADMIN이 없으면 환경변수로 초기 관리자 생성, 값이 없으면 경고 후 건너뜀 — 테스트 `A/test/.../application/InitialAdminTest.java`, 구현 `application/InitialAdminCreator`
+- [x] T037 [R-31] ADMIN이 없으면 환경변수로 초기 관리자 생성, 값이 없으면 경고 후 건너뜀 — 테스트 `A/test/.../application/InitialAdminTest.java`, 구현 `application/{InitialAdminCreator,InitialAdminProperties}`
 
 ## Phase 9: 마무리
 - [ ] T050 auth-service 응답과 `auth-service.yaml` 스키마 일치 확인 — 테스트 `A/test/.../contract/AuthContractTest.java`
