@@ -1,0 +1,11 @@
+spring:
+  sql:
+    init:
+      mode: always
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+vlm:
+  outbox:
+    # 테스트는 publishPending()을 직접 불러 주기 작업과 겹치지 않게 한다.
+    scheduling-enabled: false

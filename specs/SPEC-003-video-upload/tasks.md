@@ -17,9 +17,9 @@ updated: 2026-11-03
 
 ## Phase 1: 준비
 
-- [ ] T001 버전 카탈로그에 AWS SDK BOM, spring-kafka, Testcontainers Kafka, JSON Schema 검증기 추가 — `gradle/libs.versions.toml`
-- [ ] T002 [NFR-3] Outbox 기록·발행: 같은 트랜잭션 기록, 1초 주기 발행(키·`traceparent` 헤더), 실패 시 같은 eventId로 재시도 — 테스트 `CM/test/.../OutboxPublisherTest.java`(Testcontainers PostgreSQL·Kafka), 구현 `CM/main/java/com/vlm/common/messaging/`
-- [ ] T003 media-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611031200__create_media_tables.sql`, ArchUnit 테스트, 테스트 지원(PostgreSQL·Kafka·SeaweedFS 컨테이너와 버킷), 저장소 설정 테스트(주소를 비우면 S3 기본 주소·가상 호스트 방식, 넣으면 그 주소·path-style) — `services/media-service/`, 테스트 `M/test/.../infra/storage/S3ClientConfigTest.java`
+- [x] T001 버전 카탈로그에 AWS SDK BOM, spring-kafka, Testcontainers Kafka, JSON Schema 검증기 추가 — `gradle/libs.versions.toml`
+- [x] T002 [NFR-3] Outbox 기록·발행: 같은 트랜잭션 기록, 1초 주기 발행(키·`traceparent` 헤더), 실패 시 같은 eventId로 재시도 — 테스트 `CM/test/.../OutboxPublisherTest.java`(Testcontainers PostgreSQL·Kafka), 구현 `CM/main/java/com/vlm/common/messaging/`
+- [x] T003 media-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611031200__create_media_tables.sql`, ArchUnit 테스트, 테스트 지원(PostgreSQL·Kafka·SeaweedFS 컨테이너와 버킷), 저장소 설정 테스트(주소를 비우면 S3 기본 주소·가상 호스트 방식, 넣으면 그 주소·path-style) — `services/media-service/`, 테스트 `M/test/.../infra/storage/S3ClientConfigTest.java`
 
 ## Phase 2: US-1 작은 영상 업로드 (P1)
 
