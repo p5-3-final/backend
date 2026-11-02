@@ -36,14 +36,14 @@ updated: 2026-11-03
 
 ## Phase 3: US-2 큰 영상 멀티파트 업로드 (P1)
 
-- [x] T014 [R-3] [NFR-6] 100MB 초과면 멀티파트 시작, 조각 크기(64MiB)와 조각별 주소(1시간) 반환 — 테스트 `M/test/.../domain/UploadPlanTest.java`, `M/test/.../api/MultipartUploadTest.java`, 구현 `domain/UploadPlan`, `S3UploadStorage`
-- [x] T015 [R-8] 조각 목록으로 완료 요청 시 합친 뒤 `UPLOADED` — 테스트 `MultipartUploadTest`, 구현 `CompleteUploadService`, `S3UploadStorage`
+- [x] T014 [R-3] [NFR-6] 100MB 초과면 멀티파트 시작, 조각 크기(64MiB)와 조각별 주소(1시간) 반환 — 테스트 `M/test/.../domain/UploadPlanTest.java`, `M/test/.../api/MultipartUploadTest.java`, 구현 `domain/UploadPlan`, `S3UploadStorage` (d24603a)
+- [x] T015 [R-8] 조각 목록으로 완료 요청 시 합친 뒤 `UPLOADED` — 테스트 `MultipartUploadTest`, 구현 `CompleteUploadService`, `S3UploadStorage` (d24603a)
 
 ## Phase 4: US-3 내 영상 보기 (P1)
 
-- [ ] T016 [R-14] 내 영상만 최신순, 기본 20·최대 100개, 삭제 제외 — 테스트 `M/test/.../api/ListVideosApiTest.java`, 구현 `application/VideoQueryService`, `infra/persistence`
-- [ ] T017 [R-15] 상세에 ID·파일 이름·크기·형식·상태·시각 — 테스트 `M/test/.../api/GetVideoApiTest.java`, 구현 `VideoQueryService`
-- [ ] T018 [R-16] 없음·삭제됨·권한 없음은 구분 없이 404 `MEDIA_VIDEO_NOT_FOUND` — 테스트 `GetVideoApiTest`, 구현 `domain/VideoAccess`
+- [x] T016 [R-14] 내 영상만 최신순, 기본 20·최대 100개, 삭제 제외 — 테스트 `M/test/.../api/ListVideosApiTest.java`, 구현 `application/VideoQueryService`, `infra/persistence`
+- [x] T017 [R-15] 상세에 ID·파일 이름·크기·형식·상태·시각 — 테스트 `M/test/.../api/GetVideoApiTest.java`, 구현 `VideoQueryService`
+- [x] T018 [R-16] 없음·삭제됨·권한 없음은 구분 없이 404 `MEDIA_VIDEO_NOT_FOUND` — 테스트 `GetVideoApiTest`, 구현 `domain/VideoAccess`
 
 ## Phase 5: US-4 영상 삭제 (P2)
 

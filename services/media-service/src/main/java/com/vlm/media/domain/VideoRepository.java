@@ -9,6 +9,9 @@ public interface VideoRepository {
 
   Optional<Video> findByPublicId(UUID publicId);
 
+  /** 소유자의 삭제되지 않은 영상을 만든 시각 최신순으로 조회한다. */
+  VideoPage findVisibleByOwner(UUID ownerId, int page, int size);
+
   /** 행을 잠그고 조회한다. 같은 영상의 상태 전이를 한 요청씩 처리하려고 쓴다(SPEC-003 NFR-2). */
   Optional<Video> findByPublicIdForUpdate(UUID publicId);
 }
