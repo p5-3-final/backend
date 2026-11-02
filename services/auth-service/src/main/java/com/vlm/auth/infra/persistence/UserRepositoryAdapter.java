@@ -1,6 +1,7 @@
 package com.vlm.auth.infra.persistence;
 
 import com.vlm.auth.domain.AuthErrorCode;
+import com.vlm.auth.domain.Role;
 import com.vlm.auth.domain.User;
 import com.vlm.auth.domain.UserRepository;
 import com.vlm.common.error.BusinessException;
@@ -53,5 +54,10 @@ class UserRepositoryAdapter implements UserRepository {
   @Override
   public Optional<User> findById(Long id) {
     return jpaRepository.findById(id);
+  }
+
+  @Override
+  public boolean existsByRole(Role role) {
+    return jpaRepository.existsByRole(role);
   }
 }

@@ -16,6 +16,8 @@ public interface UserRepository {
 
   boolean existsByEmail(String email);
 
+  boolean existsByRole(Role role);
+
   /** 같은 계정의 로그인 실패 횟수가 동시 요청으로 덮어써지지 않도록 행을 잠그고 조회한다. */
   Optional<User> findByEmailForUpdate(String email);
 
