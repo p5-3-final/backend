@@ -36,4 +36,27 @@ public final class AuthApi {
                 """
                     .formatted(email, password)));
   }
+
+  /** 로그인하고 응답 쿠키에서 재발급 토큰 원문을 꺼낸다. */
+  public static String logInForRefreshToken(MockMvc mockMvc, String email, String password)
+      throws Exception {
+    String setCookie =
+        logIn(mockMvc, email, password)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getHeader("Set-Cookie");
+    return refreshTokenFrom(java.util.Objects.requireNonNull(setCookie));
+  }
+
+  /** {@code Set-Cookie: refresh_token=<값>; ...}에서 값을 꺼낸다. */
+  public static String refreshTokenFrom(String setCookie) {
+    return setCookie.substring("refresh_token=".length(), setCookie.indexOf(';'));
+  }
+
+  public static ResultActions refresh(MockMvc mockMvc, String refreshToken) throws Exception {
+    return mockMvc.perform(
+        post("/api/v1/auth/refresh")
+            .cookie(new jakarta.servlet.http.Cookie("refresh_token", refreshToken)));
+  }
 }

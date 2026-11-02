@@ -34,7 +34,7 @@ public class LogInService {
   private final Clock clock;
 
   @Transactional
-  public LogInResult logIn(LogInCommand command) {
+  public IssuedTokens logIn(LogInCommand command) {
     String email = command.email().trim().toLowerCase(Locale.ROOT);
     Optional<User> found = userRepository.findByEmail(email);
     if (found.isEmpty()) {
@@ -53,6 +53,6 @@ public class LogInService {
     IssuedAccessToken accessToken = accessTokenIssuer.issue(user);
     RefreshTokenSecret secret = RefreshTokenSecret.generate();
     refreshTokenRepository.save(RefreshToken.startFamily(userId, secret.hash(), clock.instant()));
-    return new LogInResult(accessToken.value(), accessToken.expiresInSeconds(), secret.raw());
+    return new IssuedTokens(accessToken.value(), accessToken.expiresInSeconds(), secret.raw());
   }
 }

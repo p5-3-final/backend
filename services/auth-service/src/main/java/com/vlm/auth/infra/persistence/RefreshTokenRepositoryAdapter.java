@@ -2,6 +2,9 @@ package com.vlm.auth.infra.persistence;
 
 import com.vlm.auth.domain.RefreshToken;
 import com.vlm.auth.domain.RefreshTokenRepository;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -14,5 +17,15 @@ class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
   @Override
   public RefreshToken save(RefreshToken refreshToken) {
     return jpaRepository.save(refreshToken);
+  }
+
+  @Override
+  public Optional<RefreshToken> findByTokenHashForUpdate(String tokenHash) {
+    return jpaRepository.findWithLockByTokenHash(tokenHash);
+  }
+
+  @Override
+  public void revokeFamily(UUID familyId, Instant now) {
+    jpaRepository.revokeFamily(familyId, now);
   }
 }

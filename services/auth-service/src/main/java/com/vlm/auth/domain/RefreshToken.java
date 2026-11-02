@@ -62,4 +62,26 @@ public class RefreshToken {
   public static RefreshToken startFamily(Long userId, String tokenHash, Instant now) {
     return new RefreshToken(userId, UUID.randomUUID(), tokenHash, now);
   }
+
+  public boolean isUsed() {
+    return usedAt != null;
+  }
+
+  public boolean isExpired(Instant now) {
+    return !now.isBefore(expiresAt);
+  }
+
+  public boolean isRevoked() {
+    return revokedAt != null;
+  }
+
+  /** 재발급에 쓰였다고 표시한다. 같은 토큰이 다시 오면 재사용으로 본다(SPEC-001 R-23). */
+  public void markUsed(Instant now) {
+    this.usedAt = now;
+  }
+
+  /** 같은 로그인 계열로 새 토큰을 만든다(회전). */
+  public RefreshToken rotate(String newTokenHash, Instant now) {
+    return new RefreshToken(userId, familyId, newTokenHash, now);
+  }
 }

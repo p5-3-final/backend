@@ -43,17 +43,17 @@ updated: 2026-11-02
 - [x] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig` (7a079e7)
 - [x] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint` (7a079e7)
 - [x] T022 [R-17] 클라이언트가 보낸 `X-User-*` 헤더 제거 (공개·보호 경로 모두) — 테스트 `HeaderSpoofingTest`, 구현 `UserHeaderFilter` (7a079e7)
-- [x] T023 [P] [R-18] 등록되지 않은 경로 404 `GATEWAY_ROUTE_NOT_FOUND` — 테스트 `GatewayErrorTest`, 구현 `error/GatewayErrorHandler`
-- [x] T024 [R-19] 하위 서비스 응답 시간 초과 504 `GATEWAY_TIMEOUT` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`, 라우트 응답 시간 설정
-- [x] T025 [R-20] 하위 서비스 연결 불가 503 `GATEWAY_UNAVAILABLE` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`
-- [x] T026 [P] [R-21] 허용 목록 밖 출처에는 CORS 허용 헤더 없음, 허용 출처는 자격 증명 허용 — 테스트 `CorsTest`, 구현 `application.yml` globalcors
-- [x] T027 [NFR-5] 모르는 `kid`면 JWKS 즉시 재조회, 교체 전 키 토큰 계속 허용 — 테스트 `KeyRotationTest`, 구현 `JwtDecoderConfig`
+- [x] T023 [P] [R-18] 등록되지 않은 경로 404 `GATEWAY_ROUTE_NOT_FOUND` — 테스트 `GatewayErrorTest`, 구현 `error/GatewayErrorHandler` (10cf697)
+- [x] T024 [R-19] 하위 서비스 응답 시간 초과 504 `GATEWAY_TIMEOUT` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`, 라우트 응답 시간 설정 (10cf697)
+- [x] T025 [R-20] 하위 서비스 연결 불가 503 `GATEWAY_UNAVAILABLE` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler` (10cf697)
+- [x] T026 [P] [R-21] 허용 목록 밖 출처에는 CORS 허용 헤더 없음, 허용 출처는 자격 증명 허용 — 테스트 `CorsTest`, 구현 `application.yml` globalcors (10cf697)
+- [x] T027 [NFR-5] 모르는 `kid`면 JWKS 즉시 재조회, 교체 전 키 토큰 계속 허용 — 테스트 `KeyRotationTest`, 구현 `JwtDecoderConfig` (10cf697)
 
 ## Phase 5: US-4 로그인 유지와 로그아웃 (P2)
-- [ ] T028 [R-22] 재발급 시 새 접근·재발급 토큰, 이전 토큰 무효 — 테스트 `A/test/.../api/RefreshApiTest.java`, 구현 `application/TokenRefreshService`
-- [ ] T029 [R-23] 사용된 재발급 토큰 재제출 시 family 전체 폐기, 401 `AUTH_REFRESH_REUSED` — 테스트 `RefreshApiTest`, 구현 `TokenRefreshService`, `domain/RefreshToken`
-- [ ] T030 [R-24] 재발급 토큰 없음·만료·폐기 401 `AUTH_REFRESH_INVALID` — 테스트 `RefreshApiTest`, 구현 `TokenRefreshService`
-- [ ] T031 [R-25] 로그아웃 시 재발급 토큰 폐기, 쿠키 삭제, 204 — 테스트 `LogOutApiTest`, 구현 `api/LogOutController`, `application/LogOutService`
+- [x] T028 [R-22] 재발급 시 새 접근·재발급 토큰, 이전 토큰 무효 — 테스트 `A/test/.../api/RefreshApiTest.java`, 구현 `application/TokenRefreshService`
+- [x] T029 [R-23] 사용된 재발급 토큰 재제출 시 family 전체 폐기, 401 `AUTH_REFRESH_REUSED` — 테스트 `RefreshApiTest`, 구현 `TokenRefreshService`, `domain/RefreshToken`
+- [x] T030 [R-24] 재발급 토큰 없음·만료·폐기 401 `AUTH_REFRESH_INVALID` — 테스트 `RefreshApiTest`, 구현 `TokenRefreshService`
+- [x] T031 [R-25] 로그아웃 시 재발급 토큰 폐기, 쿠키 삭제, 204 — 테스트 `LogOutApiTest`, 구현 `api/LogOutController`, `api/UserIdHeader`, `application/LogOutService`
 
 ## Phase 6: US-5 실시간 알림 연결 인증 (P2)
 - [ ] T032 [R-26] 30초 티켓(JWT, `aud: vlm-sse`) 발급 — 테스트 `A/test/.../api/SseTicketApiTest.java`, 구현 `application/SseTicketIssuer`

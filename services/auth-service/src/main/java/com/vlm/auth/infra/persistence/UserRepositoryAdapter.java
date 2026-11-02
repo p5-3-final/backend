@@ -49,4 +49,9 @@ class UserRepositoryAdapter implements UserRepository {
   public Optional<User> findByPublicId(UUID publicId) {
     return jpaRepository.findByPublicId(publicId);
   }
+
+  @Override
+  public Optional<User> findById(Long id) {
+    return jpaRepository.findById(id);
+  }
 }

@@ -1,7 +1,7 @@
 package com.vlm.auth.api;
 
+import com.vlm.auth.application.IssuedTokens;
 import com.vlm.auth.application.LogInCommand;
-import com.vlm.auth.application.LogInResult;
 import com.vlm.auth.application.LogInService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -21,7 +21,7 @@ class LogInController {
   @PostMapping("/api/v1/auth/login")
   ResponseEntity<TokenResponse> logIn(
       @Valid @RequestBody LogInRequest request, HttpServletRequest servletRequest) {
-    LogInResult result =
+    IssuedTokens result =
         logInService.logIn(
             new LogInCommand(request.email(), request.password(), servletRequest.getRemoteAddr()));
     return ResponseEntity.ok()
