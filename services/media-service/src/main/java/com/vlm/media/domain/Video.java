@@ -133,6 +133,13 @@ public class Video {
     this.uploadedAt = now;
   }
 
+  /** 기한 안에 끝나지 않은 업로드를 만료로 바꾼다(SPEC-003 R-13). "업로드 중"이 아니면 그대로 둔다. */
+  public void expire() {
+    if (status == VideoStatus.UPLOADING) {
+      this.status = VideoStatus.EXPIRED;
+    }
+  }
+
   /** 삭제 상태로 바꾼다(SPEC-003 R-18). 어느 상태에서든 지울 수 있다. */
   public void delete(Instant now) {
     this.status = VideoStatus.DELETED;

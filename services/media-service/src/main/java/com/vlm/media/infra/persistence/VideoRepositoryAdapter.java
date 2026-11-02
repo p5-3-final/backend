@@ -4,6 +4,7 @@ import com.vlm.media.domain.Video;
 import com.vlm.media.domain.VideoPage;
 import com.vlm.media.domain.VideoRepository;
 import com.vlm.media.domain.VideoStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,5 +50,10 @@ class VideoRepositoryAdapter implements VideoRepository {
   @Override
   public List<Video> lockStorageCleanupTargets(int limit) {
     return jpaRepository.lockStorageCleanupTargets(limit);
+  }
+
+  @Override
+  public List<Video> lockExpiredUploads(Instant now, int limit) {
+    return jpaRepository.lockExpiredUploads(now, limit);
   }
 }

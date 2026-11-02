@@ -1,5 +1,6 @@
 package com.vlm.media.domain;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,4 +19,7 @@ public interface VideoRepository {
 
   /** 저장소 정리가 끝나지 않은 만료·삭제 영상을 다른 트랜잭션이 잠근 행은 건너뛰고 잠가 가져온다. */
   List<Video> lockStorageCleanupTargets(int limit);
+
+  /** 만료 기한이 지난 "업로드 중" 영상을 다른 트랜잭션이 잠근 행은 건너뛰고 잠가 가져온다. */
+  List<Video> lockExpiredUploads(Instant now, int limit);
 }
