@@ -27,11 +27,17 @@ backend/
 ├── gradle/libs.versions.toml     # 의존성 버전은 여기서만 관리
 ├── libs/
 │   ├── common-core/              # 공통 예외, 오류 코드, 유틸 (도메인 로직 금지, Spring 의존 최소화)
-│   └── common-web/               # ProblemDetail 핸들러, 로깅·추적 필터, 공통 web 설정
+│   ├── common-web/               # ProblemDetail 핸들러, 로깅·추적 필터, 공통 web 설정
+│   └── common-messaging/         # 이벤트 envelope, Outbox, 멱등 소비(eventId), retry·DLQ 설정
 ├── services/
-│   ├── api-gateway/              # Spring Cloud Gateway (WebFlux): 라우팅, JWT 검증, CORS
-│   ├── user-service/
-│   └── <domain>-service/
+│   ├── api-gateway/              # Spring Cloud Gateway (WebFlux): 라우팅, JWT 검증(JWKS), CORS
+│   ├── auth-service/             # 회원, 로그인, 토큰 발급, 역할
+│   ├── media-service/            # 업로드, 완료 확인, 사전 견적, 원본 관리
+│   ├── pipeline-service/         # 청크 스케줄링, 공정성, 완료 판정, 재분석
+│   ├── analysis-api/             # 분석 결과 조회, 활성 버전, 클릭 조회, 타임라인
+│   ├── analysis-loader/          # 분석 결과·위치 시계열 적재 (analysis-api와 같은 DB, 분리 배포)
+│   ├── search-service/           # 텍스트 구간 탐색 (pgvector)
+│   └── notification-service/     # 실시간 알림 (WebFlux, SSE)
 ├── specs/SPEC-NNN-*/             # plan.md, tasks.md
 └── .github/workflows/<service>.yml
 ```
@@ -50,12 +56,12 @@ backend/
 ## 명령어
 ```bash
 ./gradlew build                                   # 전체 빌드 + 테스트
-./gradlew :services:user-service:test             # 서비스 하나 테스트
-./gradlew :services:user-service:test --tests '*SignUp*'
-./gradlew :services:user-service:bootRun --args='--spring.profiles.active=local'
+./gradlew :services:auth-service:test             # 서비스 하나 테스트
+./gradlew :services:auth-service:test --tests '*SignUp*'
+./gradlew :services:auth-service:bootRun --args='--spring.profiles.active=local'
 ./gradlew spotlessApply                           # 포맷 (커밋 전 필수)
 ./gradlew spotlessCheck                          # 포맷 검사 (Error Prone·NullAway는 컴파일할 때 실행된다)
-./gradlew :services:user-service:bootBuildImage   # 컨테이너 이미지
+./gradlew :services:auth-service:bootBuildImage   # 컨테이너 이미지
 ```
 작업을 끝내기 전에 `spotlessCheck`와 변경한 서비스의 `build`(컴파일 검사와 테스트 포함)를 실행한다.
 
