@@ -6,7 +6,11 @@ import com.vlm.common.error.ErrorCode;
 public enum GatewayErrorCode implements ErrorCode {
   TOKEN_MISSING(401, "AUTH_TOKEN_MISSING", "인증이 필요합니다."),
   TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "접근 토큰이 올바르지 않습니다."),
-  TOKEN_EXPIRED(401, "AUTH_TOKEN_EXPIRED", "접근 토큰이 만료되었습니다.");
+  TOKEN_EXPIRED(401, "AUTH_TOKEN_EXPIRED", "접근 토큰이 만료되었습니다."),
+  ROUTE_NOT_FOUND(404, "GATEWAY_ROUTE_NOT_FOUND", "요청한 경로를 찾을 수 없습니다."),
+  TIMEOUT(504, "GATEWAY_TIMEOUT", "서비스가 제한 시간 안에 응답하지 않았습니다."),
+  UNAVAILABLE(503, "GATEWAY_UNAVAILABLE", "서비스에 연결할 수 없습니다."),
+  INTERNAL_ERROR(500, "GATEWAY_INTERNAL_ERROR", "요청을 처리하지 못했습니다.");
 
   private final int status;
   private final String code;

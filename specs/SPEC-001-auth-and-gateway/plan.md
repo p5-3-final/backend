@@ -105,7 +105,9 @@ updated: 2026-11-02
   - 실패 응답은 `ServerAuthenticationEntryPoint`에서 ProblemDetail로 만든다. 토큰 없음 / 만료(`JwtValidationException` 중 `exp`) / 그 밖의 실패를 `AUTH_TOKEN_MISSING` / `AUTH_TOKEN_EXPIRED` / `AUTH_TOKEN_INVALID`로 나눈다.
 - **사용자 헤더**: 모든 요청에서 `X-User-Id`, `X-User-Roles`를 먼저 지운 뒤(R-17), 인증된 요청에만 `sub`·`roles`로 다시 넣는다(R-12).
 - **오류**: `ErrorWebExceptionHandler`로 라우트 없음 404, 응답 시간 초과 504(`spring.cloud.gateway.httpclient.response-timeout`), 연결 실패 503을 ProblemDetail로 바꾼다.
-- **CORS**: `spring.cloud.gateway.globalcors`, 허용 출처는 환경변수(frontend 주소), `allowCredentials=true`(재발급 쿠키).
+- **CORS**: Spring Security의 CORS 필터(`CorsConfigurationSource`). 인증보다 먼저 처리해야 토큰 없는 사전 요청이 401로 막히지 않는다. 게이트웨이 globalcors는 헤더 중복을 피하려고 쓰지 않는다. 허용 출처는 환경변수(frontend 주소), `allowCredentials=true`(재발급 쿠키).
+- **JWKS 캐시**: 직접 구현한 `CachingJwkSource`. 5분마다 갱신(계약), 모르는 `kid`면 즉시 재조회하되 10초에 한 번으로 제한(임의 kid로 auth-service에 요청을 모는 것 방지).
+- **응답 제한 시간**: 기본 10초, 연결 2초. 알림 경로는 라우트 metadata로 제한 시간을 끈다(SSE).
 - **알림 티켓**: `/api/v1/notify/stream` 전용 필터. `?ticket` JWT를 `aud: vlm-sse` 검증기로 확인하고, Redis `SET sse:jti:<jti> 1 NX EX 60`이 실패하면(이미 사용) 401.
 - **요청 수 제한**: `RequestRateLimiter` + `RedisRateLimiter`, 키는 클라이언트 IP. 분당 10회는 `replenishRate=1, burstCapacity=60, requestedTokens=6`으로 표현한다. 거절 응답을 ProblemDetail로 바꾼다.
   - IP는 ALB가 붙인 `X-Forwarded-For`의 마지막 신뢰 홉을 쓴다(`forwarded-headers-strategy`). 로컬은 원격 주소.

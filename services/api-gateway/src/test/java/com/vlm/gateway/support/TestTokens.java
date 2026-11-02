@@ -30,6 +30,9 @@ public final class TestTokens {
   public static final String AUDIENCE = "vlm-api";
   public static final ECKey SIGNING_KEY = generate("gateway-test");
 
+  /** 키 교체 후 새로 쓰는 키. 처음에는 JWKS에 없다. */
+  public static final ECKey NEXT_KEY = generate("gateway-next");
+
   /** JWKS에 없는 키. 서명 위조 테스트에 쓴다. */
   public static final ECKey UNKNOWN_KEY = generate("unknown");
 
@@ -39,7 +42,15 @@ public final class TestTokens {
   private TestTokens() {}
 
   public static String jwks() {
-    return new JWKSet(SIGNING_KEY.toPublicJWK()).toString();
+    return jwks(SIGNING_KEY);
+  }
+
+  public static String jwks(ECKey... keys) {
+    return new JWKSet(
+            java.util.Arrays.stream(keys)
+                .map(k -> (com.nimbusds.jose.jwk.JWK) k.toPublicJWK())
+                .toList())
+        .toString();
   }
 
   /** 유효한 접근 토큰. */

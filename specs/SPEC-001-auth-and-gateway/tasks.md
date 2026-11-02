@@ -37,17 +37,17 @@ updated: 2026-11-02
 - [x] T016 [R-10] `X-User-Id`로 내 정보 반환 — 테스트 `api/MeApiTest`, 구현 `api/MeController`, `application/MeService` (25f801e)
 
 ## Phase 4: US-3 인증된 요청 전달 (P1)
-- [x] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig`
-- [x] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`(테스트용 EC 키 쌍·토큰 서명 지원 클래스 포함), 구현 `config/SecurityConfig`, `filter/UserHeaderFilter`
-- [x] T019 [R-14] 토큰 없음 401 `AUTH_TOKEN_MISSING` — 테스트 `TokenRejectionTest`, 구현 `error/ProblemAuthenticationEntryPoint`
-- [x] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig`
-- [x] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint`
-- [x] T022 [R-17] 클라이언트가 보낸 `X-User-*` 헤더 제거 (공개·보호 경로 모두) — 테스트 `HeaderSpoofingTest`, 구현 `UserHeaderFilter`
-- [ ] T023 [P] [R-18] 등록되지 않은 경로 404 `GATEWAY_ROUTE_NOT_FOUND` — 테스트 `GatewayErrorTest`, 구현 `error/GatewayErrorHandler`
-- [ ] T024 [R-19] 하위 서비스 응답 시간 초과 504 `GATEWAY_TIMEOUT` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`, 라우트 응답 시간 설정
-- [ ] T025 [R-20] 하위 서비스 연결 불가 503 `GATEWAY_UNAVAILABLE` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`
-- [ ] T026 [P] [R-21] 허용 목록 밖 출처에는 CORS 허용 헤더 없음, 허용 출처는 자격 증명 허용 — 테스트 `CorsTest`, 구현 `application.yml` globalcors
-- [ ] T027 [NFR-5] 모르는 `kid`면 JWKS 즉시 재조회, 교체 전 키 토큰 계속 허용 — 테스트 `KeyRotationTest`, 구현 `JwtDecoderConfig`
+- [x] T017 [R-13] 공개 경로(signup, login, refresh, health)는 토큰 없이 전달 — 테스트 `G/test/.../PublicRoutingTest.java`, 구현 `G/main/.../config/SecurityConfig` (7a079e7)
+- [x] T018 [R-12] 유효한 토큰이면 해당 서비스로 전달하고 `X-User-Id`·`X-User-Roles` 부착 — 테스트 `AuthenticatedRoutingTest`(테스트용 EC 키 쌍·토큰 서명 지원 클래스 포함), 구현 `config/SecurityConfig`, `filter/UserHeaderFilter` (7a079e7)
+- [x] T019 [R-14] 토큰 없음 401 `AUTH_TOKEN_MISSING` — 테스트 `TokenRejectionTest`, 구현 `error/ProblemAuthenticationEntryPoint` (7a079e7)
+- [x] T020 [R-15] 서명·`iss`·`aud`·`alg` 불일치 401 `AUTH_TOKEN_INVALID` — 테스트 `TokenRejectionTest`, 구현 `config/JwtDecoderConfig` (7a079e7)
+- [x] T021 [R-16] 만료 401 `AUTH_TOKEN_EXPIRED` (허용 오차 30초) — 테스트 `TokenRejectionTest`, 구현 `ProblemAuthenticationEntryPoint` (7a079e7)
+- [x] T022 [R-17] 클라이언트가 보낸 `X-User-*` 헤더 제거 (공개·보호 경로 모두) — 테스트 `HeaderSpoofingTest`, 구현 `UserHeaderFilter` (7a079e7)
+- [x] T023 [P] [R-18] 등록되지 않은 경로 404 `GATEWAY_ROUTE_NOT_FOUND` — 테스트 `GatewayErrorTest`, 구현 `error/GatewayErrorHandler`
+- [x] T024 [R-19] 하위 서비스 응답 시간 초과 504 `GATEWAY_TIMEOUT` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`, 라우트 응답 시간 설정
+- [x] T025 [R-20] 하위 서비스 연결 불가 503 `GATEWAY_UNAVAILABLE` — 테스트 `GatewayErrorTest`, 구현 `GatewayErrorHandler`
+- [x] T026 [P] [R-21] 허용 목록 밖 출처에는 CORS 허용 헤더 없음, 허용 출처는 자격 증명 허용 — 테스트 `CorsTest`, 구현 `application.yml` globalcors
+- [x] T027 [NFR-5] 모르는 `kid`면 JWKS 즉시 재조회, 교체 전 키 토큰 계속 허용 — 테스트 `KeyRotationTest`, 구현 `JwtDecoderConfig`
 
 ## Phase 5: US-4 로그인 유지와 로그아웃 (P2)
 - [ ] T028 [R-22] 재발급 시 새 접근·재발급 토큰, 이전 토큰 무효 — 테스트 `A/test/.../api/RefreshApiTest.java`, 구현 `application/TokenRefreshService`
