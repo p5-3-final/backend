@@ -22,5 +22,6 @@ paths:
 
 ## 설정 단위 예외 (이 목록만 허용)
 - NullAway 검사 대상은 `com.vlm` 패키지로 한정한다(외부·생성 코드 제외).
+- NullAway는 `@Entity` 클래스의 기본 생성자에서 필드 초기화를 검사하지 않는다(`ExternalInitAnnotations`). JPA가 기본 생성자로 만든 뒤 필드를 채우기 때문이다.
 - NullAway는 테스트 코드(`compileTestJava`)를 검사하지 않는다. Mockito·AssertJ 사용 패턴에서 오탐이 많다.
 - javac lint에서 `processing`만 끈다. Lombok 프로세서가 처리하지 않는 어노테이션마다 경고가 나서 `-Werror`와 함께 쓸 수 없다.

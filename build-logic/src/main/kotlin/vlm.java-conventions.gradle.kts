@@ -42,6 +42,8 @@ tasks.withType<JavaCompile>().configureEach {
         check("NullAway", CheckSeverity.ERROR)
         // lint.md 설정 단위 예외: NullAway 대상은 com.vlm 패키지로 한정한다.
         option("NullAway:AnnotatedPackages", "com.vlm")
+        // JPA 엔티티는 기본 생성자로 만든 뒤 Hibernate가 필드를 채운다. 이 생성자의 필드 초기화 검사만 제외한다.
+        option("NullAway:ExternalInitAnnotations", "jakarta.persistence.Entity")
     }
 }
 

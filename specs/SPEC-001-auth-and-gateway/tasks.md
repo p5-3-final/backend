@@ -15,19 +15,19 @@ updated: 2026-11-02
 경로 약어: `A` = `services/auth-service/src`, `G` = `services/api-gateway/src`
 
 ## Phase 1: 준비
-- [x] T001 버전 카탈로그에 WireMock·Testcontainers·JSpecify 추가 — `gradle/libs.versions.toml`, `build-logic`
-- [x] T002 [P] 공통 오류 타입 `ErrorCode`, `BusinessException` — 테스트 `libs/common-core/src/test/.../BusinessExceptionTest.java`, 구현 `libs/common-core/src/main/java/com/vlm/common/error/`
-- [x] T003 [P] MVC용 ProblemDetail 핸들러(`code`, `traceId`, Bean Validation 변환) — 테스트 `libs/common-web/src/test/.../ProblemDetailExceptionHandlerTest.java`, 구현 `libs/common-web/src/main/java/com/vlm/common/web/`
-- [x] T004 auth-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611021200__create_auth_tables.sql`, ArchUnit 테스트 — `services/auth-service/`
-- [x] T005 [P] api-gateway 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, 라우트 설정, WireMock 지원 클래스, ArchUnit 테스트 — `services/api-gateway/`
+- [x] T001 버전 카탈로그에 WireMock·Testcontainers·JSpecify 추가 — `gradle/libs.versions.toml`, `build-logic` (81b4728)
+- [x] T002 [P] 공통 오류 타입 `ErrorCode`, `BusinessException` — 테스트 `libs/common-core/src/test/.../BusinessExceptionTest.java`, 구현 `libs/common-core/src/main/java/com/vlm/common/error/` (81b4728)
+- [x] T003 [P] MVC용 ProblemDetail 핸들러(`code`, `traceId`, Bean Validation 변환) — 테스트 `libs/common-web/src/test/.../ProblemDetailExceptionHandlerTest.java`, 구현 `libs/common-web/src/main/java/com/vlm/common/web/` (81b4728)
+- [x] T004 auth-service 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, `application{,-local}.yml`, 마이그레이션 `V202611021200__create_auth_tables.sql`, ArchUnit 테스트 — `services/auth-service/` (81b4728)
+- [x] T005 [P] api-gateway 모듈 생성: settings 등록, 빌드 파일, 애플리케이션 클래스, 라우트 설정, WireMock 지원 클래스, ArchUnit 테스트 — `services/api-gateway/` (81b4728)
 
 ## Phase 2: US-1 회원가입 (P1)
-- [ ] T006 [R-1] 정상 가입 시 USER 계정 생성, 201 — 테스트 `A/test/.../api/SignUpApiTest.java`, 구현 `A/main/.../{api/SignUpController,application/SignUpService,domain/User,infra/persistence}`
-- [ ] T007 [R-2] 중복 이메일 409 `AUTH_EMAIL_DUPLICATED` (대소문자 무시, 동시 가입 포함) — 테스트 `SignUpApiTest`, 구현 `SignUpService`
-- [ ] T008 [R-3] 이메일 형식 오류 400 `AUTH_INVALID_REQUEST` — 테스트 `SignUpApiTest`, 구현 `api/SignUpRequest`
-- [ ] T009 [R-4] 비밀번호 정책 위반 400 `AUTH_PASSWORD_POLICY` — 테스트 `domain/PasswordPolicyTest`, `SignUpApiTest`, 구현 `domain/PasswordPolicy`
-- [ ] T010 [R-5] 닉네임 2~20자·한글/영문/숫자 위반 400 — 테스트 `SignUpApiTest`, 구현 `SignUpRequest`
-- [ ] T011 [R-6] 비밀번호를 BCrypt 해시로만 저장 — 테스트 `SignUpApiTest`, 구현 `infra/BcryptPasswordHasher`
+- [x] T006 [R-1] 정상 가입 시 USER 계정 생성, 201 — 테스트 `A/test/.../api/SignUpApiTest.java`, 구현 `A/main/.../{api/SignUpController,application/SignUpService,domain/User,infra/persistence}`
+- [x] T007 [R-2] 중복 이메일 409 `AUTH_EMAIL_DUPLICATED` (대소문자 무시, 동시 가입 포함) — 테스트 `SignUpApiTest`, 구현 `SignUpService`
+- [x] T008 [R-3] 이메일 형식 오류 400 `AUTH_INVALID_REQUEST` — 테스트 `SignUpApiTest`, 구현 `api/SignUpRequest`
+- [x] T009 [R-4] 비밀번호 정책 위반 400 `AUTH_PASSWORD_POLICY` — 테스트 `domain/PasswordPolicyTest`, `SignUpApiTest`, 구현 `domain/PasswordPolicy`
+- [x] T010 [R-5] 닉네임 2~20자·한글/영문/숫자 위반 400 — 테스트 `SignUpApiTest`, 구현 `SignUpRequest`
+- [x] T011 [R-6] 비밀번호를 BCrypt 해시로만 저장 — 테스트 `SignUpApiTest`, 구현 `infra/BcryptPasswordHasher`
 
 ## Phase 3: US-2 로그인과 내 정보 (P1)
 - [ ] T012 [R-11] JWKS 경로에서 현재·이전 공개키 반환, 개인키 비노출 — 테스트 `A/test/.../api/JwksApiTest.java`, 구현 `api/JwksController`, `infra/token/SigningKeys`
