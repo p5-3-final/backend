@@ -16,7 +16,10 @@ import com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers;
 import com.atlassian.oai.validator.report.LevelResolver;
 import com.atlassian.oai.validator.report.ValidationReport;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.vlm.media.application.NormalizationEventService;
+import com.vlm.media.domain.RejectReason;
 import com.vlm.media.support.IntegrationTest;
+import com.vlm.media.support.Normalizations;
 import com.vlm.media.support.StorageUploads;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +46,7 @@ class MediaContractTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
+  @Autowired NormalizationEventService normalization;
 
   private final UUID ownerId = UUID.randomUUID();
   private ResultMatcher matchesContract;
@@ -165,6 +169,24 @@ class MediaContractTest {
     JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
 
     perform(asUser(getRequest(id(created)), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-007 R-21] 준비됨 영상의 상세 응답이 계약과 일치한다")
+  void getReady() throws Exception {
+    String id = id(createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4"));
+    Normalizations.ready(normalization, jdbc, id);
+
+    perform(asUser(getRequest(id), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-007 R-21] 거절된 영상의 상세 응답이 계약과 일치한다")
+  void getRejected() throws Exception {
+    String id = id(createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4"));
+    Normalizations.rejected(normalization, jdbc, id, RejectReason.DECODE_FAILED);
+
+    perform(asUser(getRequest(id), ownerId)).andExpect(status().isOk());
   }
 
   @Test

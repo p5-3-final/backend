@@ -1,6 +1,8 @@
 package com.vlm.media.api;
 
+import com.vlm.media.domain.RejectReason;
 import com.vlm.media.domain.Video;
+import com.vlm.media.domain.VideoStatus;
 import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -14,9 +16,15 @@ record VideoResponse(
     String contentType,
     String status,
     Instant createdAt,
-    @Nullable Instant uploadedAt) {
+    @Nullable Instant uploadedAt,
+    @Nullable Double durationSec,
+    @Nullable Integer estimatedProcessingSec,
+    @Nullable RejectReason rejectReason) {
 
   static VideoResponse from(Video video) {
+    // SPEC-007 R-21: 길이·예상 시간은 READY, 거절 사유는 REJECTED일 때만 보인다.
+    boolean ready = video.getStatus() == VideoStatus.READY;
+    Long durationMs = ready ? video.getDurationMs() : null;
     return new VideoResponse(
         video.getPublicId(),
         video.getOwnerId(),
@@ -25,6 +33,9 @@ record VideoResponse(
         video.getContentType(),
         video.getStatus().name(),
         video.getCreatedAt(),
-        video.getUploadedAt());
+        video.getUploadedAt(),
+        durationMs == null ? null : durationMs / 1000.0,
+        ready ? video.getEstimatedProcessingSec() : null,
+        video.getStatus() == VideoStatus.REJECTED ? video.getRejectReason() : null);
   }
 }

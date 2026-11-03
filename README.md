@@ -81,6 +81,14 @@ curl -s localhost:8082/api/v1/media/videos -H "X-User-Id: $(uuidgen)" -H 'X-User
 
 업로드부터 이벤트 확인까지의 예시는 docs 레포 `local/README.md`의 "영상 업로드"에 있다.
 
+### 정규화 결과 수신 (SPEC-007)
+
+media-service는 그룹 `media-service`로 `video.normalizing`(v1)과 `video.normalized`(v2)를 받아 상태를 `UPLOADED → NORMALIZING → READY / REJECTED`로 바꾼다.
+
+- 토픽은 미리 만들어 둔다. 소비자는 토픽을 자동으로 만들지 않으므로, 토픽이 없으면 리스너는 할당 없이 기다린다.
+- 계약을 어긴 메시지(키와 sourceId 불일치, v1 결과, 다른 영상 폴더의 경로 등)는 경고 로그를 남기고 건너뛴다. DB 장애 같은 일시 오류는 offset을 멈춘 채 1초부터 최대 30초 간격으로 계속 다시 시도한다.
+- 설정: `vlm.media.normalization.estimate-factor`(예상 처리 시간 계수, 기본 1.0), `vlm.media.normalization.consumer-enabled`(기본 true)
+
 ## 문서
 
 - 기능 spec과 계약: docs 레포 `docs/specs/`, `docs/contracts/`

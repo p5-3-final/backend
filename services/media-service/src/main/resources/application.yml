@@ -41,3 +41,8 @@ vlm:
       endpoint: ${MEDIA_S3_ENDPOINT:}
       public-endpoint: ${MEDIA_S3_PUBLIC_ENDPOINT:}
       path-style: ${MEDIA_S3_PATH_STYLE:false}
+    normalization:
+      # 영상 1초당 예상 처리 초(SPEC-007 R-20). 처리 실측 전 임시값이며 측정한 뒤 바꾼다.
+      estimate-factor: 1.0
+      # video.normalizing·video.normalized 수신. 끄면 영상이 UPLOADED에 머문다.
+      consumer-enabled: true

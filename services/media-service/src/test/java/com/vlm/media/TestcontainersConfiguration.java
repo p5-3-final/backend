@@ -2,6 +2,7 @@ package com.vlm.media;
 
 import java.net.URI;
 import java.time.Duration;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +40,17 @@ public class TestcontainersConfiguration {
   @ServiceConnection
   KafkaContainer kafkaContainer() {
     return new KafkaContainer("apache/kafka:4.3.2");
+  }
+
+  // 운영은 토픽을 미리 만들고 자동 생성을 끈다. 테스트도 리스너가 붙기 전에 만들어 둔다.
+  @Bean
+  NewTopic normalizingTopic() {
+    return new NewTopic("video.normalizing", 1, (short) 1);
+  }
+
+  @Bean
+  NewTopic normalizedTopic() {
+    return new NewTopic("video.normalized", 1, (short) 1);
   }
 
   @Bean

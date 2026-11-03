@@ -9,7 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.vlm.media.application.NormalizationEventService;
+import com.vlm.media.domain.RejectReason;
 import com.vlm.media.support.IntegrationTest;
+import com.vlm.media.support.Normalizations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +29,7 @@ class ListVideosApiTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
+  @Autowired NormalizationEventService normalization;
 
   private final UUID ownerId = UUID.randomUUID();
 
@@ -40,6 +44,24 @@ class ListVideosApiTest {
     assertThat(ids(body)).containsExactly(created.get(2), created.get(1), created.get(0));
     assertThat(body.at("/page/totalElements").asLong()).isEqualTo(3);
     assertThat(body.at("/page/totalPages").asInt()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("[SPEC-007 R-21] 목록에도 준비됨 영상의 길이·예상 시간과 거절된 영상의 사유를 담는다")
+  void listIncludesNormalizationFields() throws Exception {
+    List<String> created = createVideos(ownerId, 2);
+    Normalizations.ready(normalization, jdbc, created.get(0));
+    Normalizations.rejected(normalization, jdbc, created.get(1), RejectReason.TOO_SHORT);
+
+    JsonNode body = json(mvc.perform(asUser(listRequest(), ownerId)).andExpect(status().isOk()));
+
+    JsonNode rejected = body.at("/items/0");
+    JsonNode ready = body.at("/items/1");
+    assertThat(rejected.get("rejectReason").asText()).isEqualTo("TOO_SHORT");
+    assertThat(rejected.get("durationSec").isNull()).isTrue();
+    assertThat(ready.get("durationSec").asDouble()).isEqualTo(612.48);
+    assertThat(ready.get("estimatedProcessingSec").asInt()).isEqualTo(613);
+    assertThat(ready.get("rejectReason").isNull()).isTrue();
   }
 
   @Test
