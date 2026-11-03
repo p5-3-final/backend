@@ -31,7 +31,7 @@ updated: 2026-11-03
 
 ## Phase 4: US-1·US-2 조회 응답 (P1)
 
-- [ ] T008 [R-21] 응답 필드(길이·예상 시간·거절 사유) — 테스트 `api/GetVideoApiTest`, `api/ListVideosApiTest`, `contract/MediaContractTest`, 구현 `api/VideoResponse`
+- [x] T008 [R-21] 응답 필드(길이·예상 시간·거절 사유) — 테스트 `api/GetVideoApiTest`, `api/ListVideosApiTest`, `contract/MediaContractTest`, 구현 `api/VideoResponse`
 
 ## Phase 5: 마무리
 
