@@ -5,6 +5,10 @@ spring:
     url: ${PIPELINE_DB_URL}
     username: ${PIPELINE_DB_USERNAME}
     password: ${PIPELINE_DB_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
   flyway:
     enabled: true
 management:
@@ -20,3 +24,14 @@ logging:
   structured:
     format:
       console: ecs
+
+pipeline:
+  intake:
+    enabled: ${PIPELINE_INTAKE_ENABLED:false}
+    group-id: ${PIPELINE_INTAKE_GROUP_ID:pipeline-normalized-intake-v2}
+    profile-version: ${PIPELINE_INTAKE_PROFILE_VERSION:}
+    mode: ${PIPELINE_INTAKE_MODE:production}
+    inference-profile-version: ${PIPELINE_INTAKE_INFERENCE_PROFILE_VERSION:}
+    max-duration-ms: ${PIPELINE_INTAKE_MAX_DURATION_MS:14400000}
+    retry-interval-ms: ${PIPELINE_INTAKE_RETRY_INTERVAL_MS:1000}
+    retry-attempts: ${PIPELINE_INTAKE_RETRY_ATTEMPTS:2}
