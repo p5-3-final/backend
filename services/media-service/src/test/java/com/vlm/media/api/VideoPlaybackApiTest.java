@@ -10,15 +10,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vlm.media.support.IntegrationTest;
+import com.vlm.media.support.StoragePuts;
 import com.vlm.media.support.StorageUploads;
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestClient;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @IntegrationTest
 class VideoPlaybackApiTest {
@@ -26,6 +31,7 @@ class VideoPlaybackApiTest {
   private static final RestClient HTTP = RestClient.create();
 
   @Autowired MockMvc mvc;
+  @Autowired S3Client s3;
 
   private final UUID ownerId = UUID.randomUUID();
 
@@ -41,6 +47,54 @@ class VideoPlaybackApiTest {
     assertThat(playback.get("expiresAt").asText()).isNotBlank();
     assertThat(read(playback.get("url").asText()).getBody()).isEqualTo(content);
     assertThat(read(playback.get("downloadUrl").asText()).getBody()).isEqualTo(content);
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-2] 두 주소를 발급 시점부터 1시간 동안만 유효하게 서명한다")
+  void urlsExpireInOneHour() throws Exception {
+    String id = uploadedVideo("a.mp4", content(10), "video/mp4");
+    Instant before = Instant.now();
+
+    JsonNode playback =
+        json(mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk()));
+
+    assertThat(playback.get("url").asText()).contains("X-Amz-Expires=3600");
+    assertThat(playback.get("downloadUrl").asText()).contains("X-Amz-Expires=3600");
+    assertThat(Instant.parse(playback.get("expiresAt").asText()))
+        .isBetween(before.plus(Duration.ofHours(1)), Instant.now().plus(Duration.ofHours(1)));
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-3] 재생 주소의 응답 형식은 저장된 파일 형식과 상관없이 업로드 때 신고한 형식이다")
+  void playbackUsesDeclaredContentType() throws Exception {
+    // 저장소에 형식 없이 들어간 파일(application/octet-stream)이어도 신고한 형식으로 내보내야 브라우저가 재생한다.
+    String id =
+        createVideo(mvc, ownerId, "lobby.mov", 10, "video/quicktime").at("/video/id").asText();
+    StoragePuts.put(s3, "sources/" + id + "/original", content(10));
+    mvc.perform(asUser(completeRequest(id), ownerId)).andExpect(status().isOk());
+
+    JsonNode playback =
+        json(mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk()));
+
+    assertThat(read(playback.get("url").asText()).getHeaders().getContentType())
+        .hasToString("video/quicktime");
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-1] 내려받기 주소는 원래 파일 이름(한글 포함)으로 내려받게 한다")
+  void downloadUsesOriginalFileName() throws Exception {
+    String id = uploadedVideo("주차장 \"입구\".mp4", content(10), "video/mp4");
+
+    JsonNode playback =
+        json(mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk()));
+
+    ContentDisposition disposition =
+        read(playback.get("downloadUrl").asText()).getHeaders().getContentDisposition();
+    assertThat(disposition.isAttachment()).isTrue();
+    assertThat(disposition.getFilename()).isEqualTo("주차장 \"입구\".mp4");
+    assertThat(
+            read(playback.get("url").asText()).getHeaders().getContentDisposition().isAttachment())
+        .isFalse();
   }
 
   private String uploadedVideo(String fileName, byte[] content, String contentType)

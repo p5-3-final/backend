@@ -155,7 +155,17 @@ class S3UploadStorage implements UploadStorage {
         .presignGetObject(
             r ->
                 r.signatureDuration(ttl)
-                    .getObjectRequest(g -> g.bucket(properties.bucket()).key(storageKey)))
+                    .getObjectRequest(
+                        g -> {
+                          // SPEC-006 R-3: 저장된 메타데이터는 업로드 경로에 따라 다를 수 있어 응답 형식을 주소에서 정한다.
+                          g.bucket(properties.bucket())
+                              .key(storageKey)
+                              .responseContentType(contentType);
+                          if (downloadFileName != null) {
+                            g.responseContentDisposition(
+                                ContentDispositions.attachment(downloadFileName));
+                          }
+                        }))
         .url()
         .toString();
   }
