@@ -149,6 +149,18 @@ class S3UploadStorage implements UploadStorage {
   }
 
   @Override
+  public String presignRead(
+      String storageKey, String contentType, @Nullable String downloadFileName, Duration ttl) {
+    return presigner
+        .presignGetObject(
+            r ->
+                r.signatureDuration(ttl)
+                    .getObjectRequest(g -> g.bucket(properties.bucket()).key(storageKey)))
+        .url()
+        .toString();
+  }
+
+  @Override
   public OptionalLong objectSize(String storageKey) {
     try {
       return OptionalLong.of(
