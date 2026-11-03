@@ -1,11 +1,13 @@
 package com.vlm.media.api;
 
+import static com.vlm.media.support.MediaApi.asAdmin;
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
 import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,7 +46,7 @@ class VideoPlaybackApiTest {
   @Test
   @DisplayName("[SPEC-006 R-1] 업로드가 끝난 영상이면 재생·내려받기 주소와 만료 시각을 반환하고 두 주소로 올린 파일을 읽는다")
   void issuesPlaybackUrls() throws Exception {
-    byte[] content = content(1000);
+    byte[] content = bytes(1000);
     String id = uploadedVideo("parking.mp4", content, "video/mp4");
 
     JsonNode playback =
@@ -57,7 +60,7 @@ class VideoPlaybackApiTest {
   @Test
   @DisplayName("[SPEC-006 R-2] 두 주소를 발급 시점부터 1시간 동안만 유효하게 서명한다")
   void urlsExpireInOneHour() throws Exception {
-    String id = uploadedVideo("a.mp4", content(10), "video/mp4");
+    String id = uploadedVideo("a.mp4", bytes(10), "video/mp4");
     Instant before = Instant.now();
 
     JsonNode playback =
@@ -75,7 +78,7 @@ class VideoPlaybackApiTest {
     // 저장소에 형식 없이 들어간 파일(application/octet-stream)이어도 신고한 형식으로 내보내야 브라우저가 재생한다.
     String id =
         createVideo(mvc, ownerId, "lobby.mov", 10, "video/quicktime").at("/video/id").asText();
-    StoragePuts.put(s3, "sources/" + id + "/original", content(10));
+    StoragePuts.put(s3, "sources/" + id + "/original", bytes(10));
     mvc.perform(asUser(completeRequest(id), ownerId)).andExpect(status().isOk());
 
     JsonNode playback =
@@ -88,7 +91,7 @@ class VideoPlaybackApiTest {
   @Test
   @DisplayName("[SPEC-006 R-1] 내려받기 주소는 원래 파일 이름(한글 포함)으로 내려받게 한다")
   void downloadUsesOriginalFileName() throws Exception {
-    String id = uploadedVideo("주차장 \"입구\".mp4", content(10), "video/mp4");
+    String id = uploadedVideo("주차장 \"입구\".mp4", bytes(10), "video/mp4");
 
     JsonNode playback =
         json(mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk()));
@@ -127,10 +130,60 @@ class VideoPlaybackApiTest {
   @ValueSource(strings = {"NORMALIZING", "READY", "REJECTED"})
   @DisplayName("[SPEC-006 R-1] 업로드 완료 이후 단계의 영상도 재생 주소를 발급한다")
   void laterStagesArePlayable(String laterStatus) throws Exception {
-    String id = uploadedVideo("a.mp4", content(10), "video/mp4");
+    String id = uploadedVideo("a.mp4", bytes(10), "video/mp4");
     setStatus(id, laterStatus);
 
     mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-5] 없는 영상이면 404 MEDIA_VIDEO_NOT_FOUND를 반환한다")
+  void missingVideoIsNotFound() throws Exception {
+    mvc.perform(asUser(playbackRequest(UUID.randomUUID().toString()), ownerId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_VIDEO_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-5] 삭제된 영상이면 404 MEDIA_VIDEO_NOT_FOUND를 반환한다")
+  void deletedVideoIsNotFound() throws Exception {
+    String id = uploadedVideo("a.mp4", bytes(10), "video/mp4");
+    setStatus(id, "DELETED");
+
+    mvc.perform(asUser(playbackRequest(id), ownerId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_VIDEO_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-5] 소유자도 ADMIN도 아니면 업로드 중인 영상이어도 404 MEDIA_VIDEO_NOT_FOUND를 반환한다")
+  void otherUsersVideoIsNotFound() throws Exception {
+    String id = createVideo(mvc, ownerId, "a.mp4", 10, "video/mp4").at("/video/id").asText();
+
+    mvc.perform(asUser(playbackRequest(id), UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_VIDEO_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-5] ADMIN은 다른 사용자의 영상도 재생 주소를 받는다")
+  void adminCanPlayOthersVideo() throws Exception {
+    String id = uploadedVideo("a.mp4", bytes(10), "video/mp4");
+
+    mvc.perform(asAdmin(playbackRequest(id), UUID.randomUUID())).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 NFR-1] 재생 주소 발급 응답은 JSON이고 영상 바이트를 담지 않는다")
+  void responseIsJsonNotBytes() throws Exception {
+    String id = uploadedVideo("a.mp4", bytes(1000), "video/mp4");
+
+    mvc.perform(asUser(playbackRequest(id), ownerId))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(
+            result ->
+                assertThat(result.getResponse().getContentAsByteArray()).hasSizeLessThan(1000));
   }
 
   private void setStatus(String id, String newStatus) {
@@ -150,7 +203,7 @@ class VideoPlaybackApiTest {
     return HTTP.get().uri(URI.create(url)).retrieve().toEntity(byte[].class);
   }
 
-  private static byte[] content(int size) {
+  private static byte[] bytes(int size) {
     byte[] bytes = new byte[size];
     for (int i = 0; i < size; i++) {
       bytes[i] = (byte) i;
