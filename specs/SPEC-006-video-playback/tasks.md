@@ -17,26 +17,26 @@ updated: 2026-11-03
 
 ## Phase 1: US-1 내 영상 재생 (P1)
 
-- [ ] T001 [R-1] 업로드 완료된 영상의 재생·내려받기 주소와 만료 시각 반환, 두 주소로 GET하면 올린 바이트 — 테스트 `M/test/.../api/VideoPlaybackApiTest.java`, 구현 `api/{VideoController,VideoPlaybackResponse}`, `application/PlaybackService`, `domain/UploadStorage`, `infra/storage/S3UploadStorage`
-- [ ] T002 [R-2] 두 주소 유효 시간 1시간(`X-Amz-Expires=3600`), `expiresAt` = 발급 시각 + 1시간 — 테스트 `VideoPlaybackApiTest`, 구현 `PlaybackService`
-- [ ] T003 [R-3] 재생 주소 응답의 Content-Type이 신고한 형식, 내려받기 주소는 `attachment`와 원래 파일 이름(한글 포함) — 테스트 `VideoPlaybackApiTest`, `M/test/.../infra/storage/ContentDispositionTest.java`, 구현 `S3UploadStorage`
+- [x] T001 [R-1] 업로드 완료된 영상의 재생·내려받기 주소와 만료 시각 반환, 두 주소로 GET하면 올린 바이트 — 테스트 `M/test/.../api/VideoPlaybackApiTest.java`, 구현 `api/{VideoController,VideoPlaybackResponse}`, `application/PlaybackService`, `domain/UploadStorage`, `infra/storage/S3UploadStorage` (740d6a9)
+- [x] T002 [R-2] 두 주소 유효 시간 1시간(`X-Amz-Expires=3600`), `expiresAt` = 발급 시각 + 1시간 — 테스트 `VideoPlaybackApiTest`, 구현 `PlaybackService` (713aedc, T001에서 유효 시간을 함께 구현해 Red 없이 통과)
+- [x] T003 [R-3] 재생 주소 응답의 Content-Type이 신고한 형식, 내려받기 주소는 `attachment`와 원래 파일 이름(한글 포함) — 테스트 `VideoPlaybackApiTest`, `M/test/.../infra/storage/ContentDispositionsTest.java`, 구현 `S3UploadStorage`, `ContentDispositions` (713aedc)
 
 ## Phase 2: US-2 재생할 수 없는 영상 (P1)
 
-- [ ] T004 [R-4] `UPLOADING`·`EXPIRED`면 409 `MEDIA_NOT_PLAYABLE`, 완료 이후 4개 상태는 재생 가능 — 테스트 `M/test/.../domain/VideoTest.java`, `VideoPlaybackApiTest`, 구현 `domain/{Video,MediaErrorCode}`, `PlaybackService`
-- [ ] T005 [R-5] 없음·삭제·남의 영상은 404 `MEDIA_VIDEO_NOT_FOUND`, ADMIN은 남의 영상도 발급 — 테스트 `VideoPlaybackApiTest`, 구현 `PlaybackService`(`VideoAccess`)
+- [x] T004 [R-4] `UPLOADING`·`EXPIRED`면 409 `MEDIA_NOT_PLAYABLE`, 완료 이후 4개 상태는 재생 가능 — 테스트 `VideoPlaybackApiTest`, 구현 `domain/MediaErrorCode`, `PlaybackService`(`Video#isUploadCompleted`) (faa9cc7)
+- [x] T005 [R-5] 없음·삭제·남의 영상은 404 `MEDIA_VIDEO_NOT_FOUND`, ADMIN은 남의 영상도 발급 — 테스트 `VideoPlaybackApiTest`, 구현 `PlaybackService`(`VideoAccess`) (5b32082, T001에서 상세 조회와 같은 권한 규칙을 써서 Red 없이 통과)
 
 ## Phase 3: 마무리
 
-- [ ] T006 `getVideoPlayback` 200·404·409 응답이 `media-service.yaml` 1.1.0과 일치 — 테스트 `M/test/.../contract/MediaContractTest.java`
-- [ ] T007 [P] [NFR-1] 재생 주소 발급 응답이 JSON이고 영상 바이트를 담지 않음 — 테스트 `VideoPlaybackApiTest`
-- [ ] T008 [P] [NFR-2] 재생 주소 발급 p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
-- [ ] T009 [P] [NFR-3] 재생·내려받기 주소의 서명이 로그에 없음 — 테스트 `M/test/.../SensitiveLogTest.java`
-- [ ] T010 README API 목록에 재생 주소 발급 추가
+- [x] T006 `getVideoPlayback` 200·404·409 응답이 `media-service.yaml` 1.1.0과 일치 — 테스트 `M/test/.../contract/MediaContractTest.java`
+- [x] T007 [P] [NFR-1] 재생 주소 발급 응답이 JSON이고 영상 바이트를 담지 않음 — 테스트 `VideoPlaybackApiTest` (5b32082)
+- [x] T008 [P] [NFR-2] 재생 주소 발급 p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
+- [x] T009 [P] [NFR-3] 재생·내려받기 주소의 서명이 로그에 없음 — 테스트 `M/test/.../SensitiveLogTest.java`
+- [x] T010 README API 목록에 재생 주소 발급 추가
 
 ## 완료 조건 (Definition of Done)
 
-- [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
-- [ ] lint, 타입 검사, 전체 테스트 통과
-- [ ] plan.md와 실제 구현이 일치함
+- [x] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
+- [x] lint, 타입 검사, 전체 테스트 통과
+- [x] plan.md와 실제 구현이 일치함
 - [ ] docs 레포 spec 상태 갱신 (`Implementing` / `Done`)

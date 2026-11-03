@@ -4,6 +4,8 @@ import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
 import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.deleteRequest;
+import static com.vlm.media.support.MediaApi.json;
+import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -70,6 +72,25 @@ class SensitiveLogTest {
       assertThat(output.getAll()).doesNotContain(secret);
     }
     assertThat(output.getAll()).doesNotContain(CONTENT_MARKER);
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 NFR-3] 재생·내려받기 주소의 서명을 로그에 남기지 않는다")
+  void doesNotLogPlaybackSignatures(CapturedOutput output) throws Exception {
+    JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
+    StorageUploads.postForm(created.get("upload"), content(1000));
+    mvc.perform(asUser(completeRequest(id(created)), ownerId));
+
+    JsonNode playback = json(mvc.perform(asUser(playbackRequest(id(created)), ownerId)));
+    List<String> secrets =
+        List.of(
+            signatureOf(playback.get("url").asText()),
+            signatureOf(playback.get("downloadUrl").asText()));
+
+    assertThat(secrets).doesNotContain("", "null");
+    for (String secret : secrets) {
+      assertThat(output.getAll()).doesNotContain(secret);
+    }
   }
 
   private static byte[] content(int size) {

@@ -4,6 +4,7 @@ import com.vlm.media.application.CompleteUploadService;
 import com.vlm.media.application.CreateVideoService;
 import com.vlm.media.application.CreatedVideo;
 import com.vlm.media.application.DeleteVideoService;
+import com.vlm.media.application.PlaybackService;
 import com.vlm.media.application.VideoQueryService;
 import com.vlm.media.domain.UploadStorage.UploadedPart;
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ class VideoController {
   private final CompleteUploadService completeUploadService;
   private final VideoQueryService videoQueryService;
   private final DeleteVideoService deleteVideoService;
+  private final PlaybackService playbackService;
 
   @PostMapping(VIDEOS)
   ResponseEntity<CreateVideoResponse> create(
@@ -65,6 +67,15 @@ class VideoController {
       @PathVariable UUID videoId) {
     return VideoResponse.from(
         videoQueryService.get(videoId, UserHeaders.userId(userId), UserHeaders.isAdmin(roles)));
+  }
+
+  @GetMapping(VIDEOS + "/{videoId}/playback")
+  VideoPlaybackResponse playback(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
+      @RequestHeader(value = UserHeaders.USER_ROLES, required = false) @Nullable String roles,
+      @PathVariable UUID videoId) {
+    return VideoPlaybackResponse.from(
+        playbackService.issue(videoId, UserHeaders.userId(userId), UserHeaders.isAdmin(roles)));
   }
 
   @DeleteMapping(VIDEOS + "/{videoId}")

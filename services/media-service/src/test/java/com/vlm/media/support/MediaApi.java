@@ -62,6 +62,10 @@ public final class MediaApi {
     return delete("/api/v1/media/videos/{id}", videoId);
   }
 
+  public static MockHttpServletRequestBuilder playbackRequest(String videoId) {
+    return get("/api/v1/media/videos/{id}/playback", videoId);
+  }
+
   public static MockHttpServletRequestBuilder completeRequest(String videoId) {
     return post("/api/v1/media/videos/{id}/complete", videoId);
   }
