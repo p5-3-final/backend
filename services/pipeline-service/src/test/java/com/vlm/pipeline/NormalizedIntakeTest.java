@@ -74,8 +74,7 @@ class NormalizedIntakeTest {
     assertThat(job.chunks()).hasSize(3);
     assertThat(jdbc.queryForObject("SELECT count(*) FROM normalized_receipts", Integer.class))
         .isEqualTo(1);
-    assertThat(jdbc.queryForObject("SELECT to_regclass('outbox_events')::text", String.class))
-        .isNull();
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events", Integer.class)).isZero();
   }
 
   @Test

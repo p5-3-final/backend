@@ -128,3 +128,30 @@ SPEC-007은 다른 작업의 영상 정규화 명세다. Pipeline 수신은 번�
 동기 처리·RECORD ack·auto commit=false로 DB 커밋 성공 뒤 offset을 처리한다. 파싱 오류·충돌·DB 오류는 설정된 backoff 이후 같은 입력을 다시 seek하고 자동 skip/성공 커밋하지 않는다. 설정 횟수 소진 후에도 recoverer가 실패를 유지하므로 잘못된 입력은 해당 파티션을 막는다. 원인 해소·명시적인 운영 재처리/DLQ 도구는 후속 범위다. 운영 설정 변경만으로 이미 처리된 eventId를 새 Job에 연결하지 않는다.
 
 검증: `env -u DEBUG ./gradlew :services:pipeline-service:build`. 실제 PostgreSQL·Kafka Testcontainers로 정상·중복·동시 수신·각 저장 단계 롤백·DB 커밋 후 ack 전 중단을 검증한다. 이벤트 스키마는 빌드 시 docs 계약 원본에서 JAR에 포함한다. CI는 CONTRACTS_DIR을 지정하고 계약이 없으면 빌드가 실패한다.
+
+## Pipeline 배정·슬롯·요청 발행 (SPEC-010)
+
+SPEC-008의 정규화 연결 Job에서 PENDING 청크를 선택한다. 사용자별(기본 2)·영상별(1)·전체(4) 상한과 사용자 한 청크 순환을 적용한다. 실행 시도·슬롯·DISPATCHED·chunk.requested Outbox를 한 DB 트랜잭션에 저장한다. 기존 common-messaging Publisher가 sourceId 키와 원 수신 traceparent로 Kafka에 발행한다. 요청 eventId/executionId/requestId는 재발행 때 바뀌지 않는다. 내부 PK는 보존하고 외부 chunkId UUID를 추가한다.
+
+자동 배정·발행은 `PIPELINE_DISPATCH_ENABLED=false`가 기본이다. `.env.example`의 상한·시작 기한·주기를 확인하고 모든 Pod에 동일 구성을 적용해야 한다. 슬롯이 남아 있을 때 구성 충돌은 배정을 거부한다. 상한 전환은 배정을 끄고 모든 슬롯을 확인·반환한 후 재시작한다. 배정 플래그는 정규화 intake 플래그와 별개다. 기존 Kafka offset을 바꾸지 않는다. `chunk.requested` 토픽과 worker 접근 권한은 별도 준비하며 이번에 운영 활성화하지 않았다.
+
+### 슬롯 만료와 종료 확인 복구
+
+`startBefore`(기본 배정 후 5분)는 신규 실행 시작 기한이다. AI 실행 종료 시간이 아니다. 만료는 RECOVERY_REQUIRED로 표시하고 슬롯을 유지한다. `pipeline.dispatch.recovery.required` gauge로 미확인 건수를 확인한다. 전송 후 DB 확인에 실패할 수 있으므로 Outbox의 `published_at IS NULL`도 미실행 증거로 쓰지 않는다.
+
+실행이 종료됐거나 시작하지 않았음을 **외부에서 확인한 뒤에만** 아래 일회성 명령을 실행한다. DB 접속용 `PIPELINE_DB_URL`, `PIPELINE_DB_USERNAME`, `PIPELINE_DB_PASSWORD`를 해당 환경에서 주입한다. 증거는 비밀값 없는 운영 기록 참조(1~500자, 한 줄)다. 명령 자체가 worker를 중단하거나 종료 사실을 검증하지는 않는다.
+
+```bash
+java -Dloader.main=com.vlm.pipeline.config.DispatchRecoveryCommand \
+  -cp services/pipeline-service/build/libs/pipeline-service.jar \
+  org.springframework.boot.loader.launch.PropertiesLauncher \
+  <executionId> <confirmationId> <evidence-reference>
+```
+
+명령은 웹·정규화 수신·배정·Outbox 주기를 강제로 끈 별도 프로세스로 실행하고 종료한다. 기한 전 반환은 거부한다. 같은 확인 ID와 같은 증거는 재시도해도 한 번만 반환하고, 다른 확인/증거나 확인 ID 재사용은 거부한다. 슬롯 반환·실행 STOPPED·청크 FAILED는 원자적이며 자동 재실행하지 않는다. 안전한 반환을 위해 worker가 startBefore 이후 요청을 새로 시작하지 않는 계약도 충족해야 한다. 검증용 소비자로만 이 동작을 확인했다.
+
+### 현재 연결과 제한
+
+정규화 producer는 ai 최신 main에 구현되지 않아 v2 실제 연결이 없다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
+
+실제 chunk-processor·영상 추출·AI·완료/실패 이벤트·정상 완료 자동 슬롯 반환·heartbeat/fencing·자동 재시도·Job 완료 판정은 후속이다. 현재는 배정→검증용 Kafka 소비까지 동작하며, 슬롯 자동 순환이 완성된 처리 파이프라인은 아니다. 기한 후 외부 종료 확인과 복구 명령으로 수동 반환할 수 있다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
