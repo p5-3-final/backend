@@ -45,3 +45,5 @@ updated: 2026-11-03
 - 전체 포맷·build 및 CI 결과는 최종 검증 후 갱신한다.
 
 - 최종 로컬 검증: `env -u DEBUG ./gradlew spotlessCheck build` 통과. 전체 backend 386개, 실패·skip 0. Pipeline 99개.
+
+- 구현 및 T002~T010의 코드·검증 기록: 8b9cdb6. 후속 문서 커밋은 결과 추적만 보완한다.
