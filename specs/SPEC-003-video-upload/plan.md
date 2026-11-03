@@ -113,7 +113,7 @@ SeaweedFS가 S3 API를 그대로 제공하므로 저장소별 구현이나 모�
   - 멀티파트면 `parts`로 `CompleteMultipartUpload`를 호출한다. 그 뒤(단일이면 바로) `HeadObject`로 크기를 확인해 다르거나 없으면 409 `MEDIA_UPLOAD_INCOMPLETE`(R-10).
   - 저장소 호출이 행 잠금 안에 들어간다. 잠금은 영상 하나에만 걸리고 같은 영상의 완료 요청끼리만 기다리므로 받아들인다. 운영 S3의 조각 합치기가 게이트웨이 응답 제한(10초)을 넘는지는 dev에서 확인한다(7절).
   - 성공하면 `UPLOADED`, `uploaded_at` 기록, `OutboxRecorder`로 `video.uploaded`를 같은 트랜잭션에 기록한다(R-9, R-21).
-- **목록·상세** (`GET …/videos`, `GET …/{videoId}`): `owner_id = X-User-Id`이고 `DELETED`가 아닌 행. 정렬은 `created_at DESC, id DESC` 고정이라 정렬 파라미터는 받지 않는다. `size`는 1~100.
+- **목록·상세** (`GET …/videos`, `GET …/{videoId}`): `owner_id = X-User-Id`이고 `DELETED`가 아닌 행. 정렬은 `created_at DESC, id DESC` 고정이라 정렬 파라미터는 받지 않는다. `size`는 1~100. 범위·형식이 틀린 `page`·`size`는 400 `MEDIA_INVALID_REQUEST`다. 이를 위해 `libs/common-web`이 쿼리 파라미터 검증 실패(`HandlerMethodValidationException`, `TypeMismatchException`)도 서비스 검증 오류 코드로 바꾼다.
 - **권한** (`domain/VideoAccess`): 소유자이거나 `X-User-Roles`에 `ADMIN`이 있으면 상세·삭제를 허용한다. 완료 요청은 소유자만. 거절은 모두 404 `MEDIA_VIDEO_NOT_FOUND`(R-16, R-17).
 - **삭제** (`DELETE …/{videoId}`): 행 잠금 → `DELETED`, `deleted_at` 기록, `video.deleted` Outbox 기록 → 204. 저장소 파일은 주기 작업이 지운다(R-20).
 - **주기 작업**

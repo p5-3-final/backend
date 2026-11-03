@@ -59,16 +59,16 @@ updated: 2026-11-03
 
 ## Phase 7: 마무리
 
-- [x] T025 media-service 응답과 `media-service.yaml` 스키마 일치 확인 — 테스트 `M/test/.../contract/MediaContractTest.java`
-- [x] T026 [P] [NFR-1] 영상 바이트를 받는 엔드포인트가 없음(multipart/form-data 거절) — 테스트 `M/test/.../api/NoUploadBytesTest.java`
-- [x] T027 [P] [NFR-4] 업로드 자리·완료·목록·상세 p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
-- [x] T028 [P] [NFR-5] 로그에 업로드 주소(서명)·파일 내용 없음 — 테스트 `M/test/.../SensitiveLogTest.java`
-- [ ] T029 환경변수 반영: 레포 `.env.example`, README 명령어·로컬 실행. 루트 `local/`(Kafka, SeaweedFS, media_db, media-service)은 docs 레포 PR로 추가하고 compose로 단일·멀티파트 업로드와 `video.uploaded` 수신 시연
+- [x] T025 media-service 응답과 `media-service.yaml` 스키마 일치 확인 — 테스트 `M/test/.../contract/MediaContractTest.java` (c6d99dc)
+- [x] T026 [P] [NFR-1] 영상 바이트를 받는 엔드포인트가 없음(multipart/form-data 거절) — 테스트 `M/test/.../api/NoUploadBytesTest.java` (c6d99dc)
+- [x] T027 [P] [NFR-4] 업로드 자리·완료·목록·상세 p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java` (c6d99dc)
+- [x] T028 [P] [NFR-5] 로그에 업로드 주소(서명)·파일 내용 없음 — 테스트 `M/test/.../SensitiveLogTest.java` (c6d99dc)
+- [x] T029 환경변수 반영: 레포 `.env.example`, README 명령어·로컬 실행. 루트 `local/`(Kafka, SeaweedFS, media_db, media-service)은 docs 레포 PR로 추가하고 compose로 단일·멀티파트 업로드와 `video.uploaded` 수신 시연
 - [ ] T030 (infra 준비 후 진행) 서비스 workflow `.github/workflows/media-service.yml` (이미지 빌드·ECR push·gitops 갱신)
 
 ## 완료 조건 (Definition of Done)
 
-- [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
-- [ ] lint, 타입 검사, 전체 테스트 통과
-- [ ] plan.md와 실제 구현이 일치함
+- [x] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
+- [x] lint, 타입 검사, 전체 테스트 통과
+- [x] plan.md와 실제 구현이 일치함
 - [ ] docs 레포 spec 상태 갱신 (`Implementing` / `Done`)
