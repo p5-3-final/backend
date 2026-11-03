@@ -6,6 +6,7 @@ import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,9 +19,12 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestClient;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -32,6 +36,7 @@ class VideoPlaybackApiTest {
 
   @Autowired MockMvc mvc;
   @Autowired S3Client s3;
+  @Autowired JdbcTemplate jdbc;
 
   private final UUID ownerId = UUID.randomUUID();
 
@@ -95,6 +100,41 @@ class VideoPlaybackApiTest {
     assertThat(
             read(playback.get("url").asText()).getHeaders().getContentDisposition().isAttachment())
         .isFalse();
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-4] 업로드 중인 영상이면 409 MEDIA_NOT_PLAYABLE을 반환한다")
+  void uploadingVideoIsNotPlayable() throws Exception {
+    String id = createVideo(mvc, ownerId, "a.mp4", 10, "video/mp4").at("/video/id").asText();
+
+    mvc.perform(asUser(playbackRequest(id), ownerId))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("MEDIA_NOT_PLAYABLE"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-4] 만료된 영상이면 409 MEDIA_NOT_PLAYABLE을 반환한다")
+  void expiredVideoIsNotPlayable() throws Exception {
+    String id = createVideo(mvc, ownerId, "a.mp4", 10, "video/mp4").at("/video/id").asText();
+    setStatus(id, "EXPIRED");
+
+    mvc.perform(asUser(playbackRequest(id), ownerId))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("MEDIA_NOT_PLAYABLE"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"NORMALIZING", "READY", "REJECTED"})
+  @DisplayName("[SPEC-006 R-1] 업로드 완료 이후 단계의 영상도 재생 주소를 발급한다")
+  void laterStagesArePlayable(String laterStatus) throws Exception {
+    String id = uploadedVideo("a.mp4", content(10), "video/mp4");
+    setStatus(id, laterStatus);
+
+    mvc.perform(asUser(playbackRequest(id), ownerId)).andExpect(status().isOk());
+  }
+
+  private void setStatus(String id, String newStatus) {
+    jdbc.update("UPDATE videos SET status = ? WHERE public_id = ?::uuid", newStatus, id);
   }
 
   private String uploadedVideo(String fileName, byte[] content, String contentType)
