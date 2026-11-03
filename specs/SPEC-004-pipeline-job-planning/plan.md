@@ -112,3 +112,7 @@ sequenceDiagram
 ## 8. 배포 고려사항
 
 PIPELINE_DB_URL/USERNAME/PASSWORD를 레포 .env.example에 추가한다. local compose·ECR·GitOps 등록 및 서비스 배포 workflow는 운영 인프라 준비 후 별도 작업이다. 현재는 Testcontainers와 단독 실행만 지원한다. Flyway가 시작 시 신규 테이블을 만든다. 배포 완료가 아니므로 spec을 Done으로 표시하지 않는다.
+
+## 후속 설계 경계 (2026-11-03)
+
+이 문서는 SPEC-004 구현 당시의 소수 초·planId 저장 설계를 기록한다. 정규화 수신의 목표 설계는 [SPEC-008 plan](../SPEC-008-normalized-intake/plan.md)으로 분리한다. 새 연동은 정수 밀리초이며 eventId를 planId로 사용하지 않는다. normalizationId와 불변 분석 설정에 의한 Job 재사용을 추가하되 기존 입력 비교·source 활성 제한은 유지한다. 계획 생성에 요청 Outbox를 붙이지 않고 배정 시 실행·슬롯·Outbox를 함께 저장한다. 이 후속 설계가 현재 코드·기존 NUMERIC 값의 단위를 이미 바꾼 것은 아니다.

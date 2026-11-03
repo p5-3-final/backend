@@ -17,6 +17,11 @@
 | `**/db/migration/**`, `**/infra/persistence/**`, `*Repository.java` | `.claude/rules/persistence.md` |
 | `.github/workflows/**` | `.claude/rules/ci.md` |
 
+## 영상 처리 설계 책임
+
+- normalize·chunk-processor를 포함한 영상 처리·Kafka·계획·배정은 backend 담당이다(루트 ADR-0009). AI팀은 모델 추론을 담당한다. Python 레포 경로와 담당을 혼동하지 않는다. 언어·레포 이동은 별도 구현 결정이며 이번 문서 변경으로 모듈을 추가하지 않는다.
+- 계획 생성 시 요청 Outbox를 만들지 않는다. 후속 배정기가 실행·슬롯·chunk.requested Outbox를 같은 트랜잭션으로 저장한다.
+
 ## 스택
 Java 21 · Spring Boot 3.5.x · Spring Cloud 2025.0.x · Gradle(Kotlin DSL, `gradle/libs.versions.toml`) · PostgreSQL · Flyway · JUnit 5 · AssertJ · Mockito · Testcontainers · ArchUnit
 

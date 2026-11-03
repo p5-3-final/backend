@@ -102,3 +102,21 @@ curl -s localhost:8082/api/v1/media/videos -H "X-User-Id: $(uuidgen)" -H 'X-User
 ### 로컬 테스트의 DEBUG 환경변수
 
 IDE가 `DEBUG=release`를 전달하면 Spring Boot의 debug 설정으로도 읽혀 프레임워크 DEBUG 로그가 활성화되고 SensitiveLogTest가 실패할 수 있다. 기준 main과 같은 CI 환경을 재현할 때는 `env -u DEBUG ./gradlew build`를 사용한다. 민감 로그 검증과 CI 검사 설정은 변경하지 않는다.
+
+## 정규화 v2 수신과 계획 저장 (SPEC-008)
+
+SPEC-007은 다른 작업의 영상 정규화 명세다. Pipeline 수신은 번호 충돌을 정리해 SPEC-008로 관리한다.
+
+`pipeline-service`는 `video.normalized`의 schemaVersion=2 계약을 검증하고 정규화 결과·수신 기록과 기존 Job·Chunk 계획을 단일 트랜잭션으로 저장한다. READY만 계획하며 REJECTED는 결과·수신 사실만 기록한다. v1 계약은 보존하지만 이 consumer는 v1에서 정규화 ID를 추정하지 않고 처리하지 않는다. producer의 v2 발행 전환은 별도 작업이다.
+
+- 같은 eventId·같은 payload는 최초 결과를 반환한다. JSON 키 순서·공백·동등한 숫자 표기는 JSONB로 비교한다.
+- 새 eventId라도 같은 normalizationId·분석 설정 버전이면 기존 Job을 재사용한다. 같은 결과/설정 ID의 입력 변경은 충돌이다.
+- 기존 활성 Job 제한과 SPEC-004 입력 비교는 유지한다. legacy Job에 normalizationId를 자동 백필하지 않는다.
+- durationMs와 durationSec는 정확히 일치해야 하며 기존 내부 초 단위를 일괄 변경하지 않는다.
+- 계획이 있으나 Outbox가 없는 상태는 정상이다. 요청 발행·슬롯·실행 시도·영상 처리·AI는 연결하지 않는다.
+
+단독 실행은 기존 PIPELINE_DB_*와 Kafka 주소를 설정하고, `PIPELINE_INTAKE_ENABLED=true`, 불변 `PIPELINE_INTAKE_PROFILE_VERSION`, `PIPELINE_INTAKE_INFERENCE_PROFILE_VERSION`을 지정한다. 이 버전 값은 실제 모델을 호출하거나 모델 존재를 검증한다는 뜻이 아니라 분석 설정의 식별이다. `KAFKA_BOOTSTRAP_SERVERS`의 `video.normalized` 토픽은 운영자가 미리 준비한다. 토픽 자동 생성은 하지 않는다. 기본 소비 그룹은 pipeline-normalized-intake-v2이며 기존 v1 그룹을 그대로 재사용하지 않는다. 새 그룹은 earliest에서 시작하므로 기존 토픽에 v1 이력이 있으면 운영자가 v2 전환 위치를 확인해 그룹 시작 offset을 준비해야 한다. v1을 자동으로 건너뛰거나 정규화 ID를 추정하지 않는다.
+
+동기 처리·RECORD ack·auto commit=false로 DB 커밋 성공 뒤 offset을 처리한다. 파싱 오류·충돌·DB 오류는 설정된 backoff 이후 같은 입력을 다시 seek하고 자동 skip/성공 커밋하지 않는다. 설정 횟수 소진 후에도 recoverer가 실패를 유지하므로 잘못된 입력은 해당 파티션을 막는다. 원인 해소·명시적인 운영 재처리/DLQ 도구는 후속 범위다. 운영 설정 변경만으로 이미 처리된 eventId를 새 Job에 연결하지 않는다.
+
+검증: `env -u DEBUG ./gradlew :services:pipeline-service:build`. 실제 PostgreSQL·Kafka Testcontainers로 정상·중복·동시 수신·각 저장 단계 롤백·DB 커밋 후 ack 전 중단을 검증한다. 이벤트 스키마는 빌드 시 docs 계약 원본에서 JAR에 포함한다. CI는 CONTRACTS_DIR을 지정하고 계약이 없으면 빌드가 실패한다.
