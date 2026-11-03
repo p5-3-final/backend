@@ -33,7 +33,7 @@ updated: 2026-11-03
 - [x] 담당 요구사항 테스트 통과
 - [x] 포맷·서비스 빌드 통과
 - [x] plan과 구현 일치
-- [ ] docs 상태 갱신 (배포 완료 전 Done 금지)
+- [x] docs 정책 PR에서 명세 확정 상태 Approved 정리 (배포 완료 전 Done 금지)
 
 ## 검증 기록
 
@@ -41,5 +41,12 @@ updated: 2026-11-03
 - Red: 저장 없는 서비스 골격에서 PostgreSQL 통합 17건 실패(재조회 없음·충돌 미거절·롤백 미실행). 저장·잠금 구현 후 통과.
 - Green: 계산 17건, PostgreSQL 통합 20건, ArchUnit 6건, 합계 43건 통과.
 - spotlessCheck와 pipeline-service:build 통과. 전체 backend 빌드는 auth-service·api-gateway·media-service SensitiveLogTest 각 1건 실패. 전체 309건 중 306건 통과, 3건 실패. 타 서비스 코드는 이번 변경 대상이 아니다.
-- docs 상태는 머지 당시 Review이며 사용자 명시적 진행 지시를 plan에 기록. 자동으로 승인 리뷰 이력을 만들지 않음.
+- ADR-0007에 따라 별도 팀원 Approve 대기는 제거하고 명세 확정 상태를 정리한다. 승인 리뷰 이력은 만들지 않는다.
 - 배포 workflow·local compose·infra·gitops는 범위 밖으로 보류.
+
+## 기준 main 비교와 재검증
+
+- 기준 main a61b449의 민감 로그 테스트도 IDE의 DEBUG=release를 상속하면 동일 3건 실패.
+- DEBUG만 제거한 main은 민감 로그 테스트 4건 모두 통과.
+- 같은 환경에서 PR head 전체 build --rerun-tasks는 309건 모두 통과, 실패·skip 0건.
+- Spring의 debug 속성으로 해석되는 IDE 환경변수로 프레임워크 DEBUG 로그가 켜져 발생한 차이다. 테스트·로깅 검증 기준을 완화하지 않았다.
