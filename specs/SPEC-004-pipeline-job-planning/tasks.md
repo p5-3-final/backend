@@ -8,25 +8,25 @@ updated: 2026-11-03
 
 ## Phase 1: 준비
 
-- [x] T001 모듈과 JDBC·Flyway 구성 — services/pipeline-service/build.gradle.kts
+- [x] T001 모듈과 JDBC·Flyway 구성 — services/pipeline-service/build.gradle.kts (4a3ef9f)
 
 ## Phase 2: US-1 구간 계산 (P1)
 
-- [x] T002 [R-1 R-2 R-6] 프로필 선택 — domain/PlanInput.java, ChunkPlannerTest
-- [x] T003 [R-3 R-4 R-5] 경계 구간 계산 — domain/ChunkPlanner.java, ChunkPlannerTest
-- [x] T004 [R-7] 입력 검증 — domain/PlanInput.java, ChunkPlannerTest
+- [x] T002 [R-1 R-2 R-6] 프로필 선택 — domain/PlanInput.java, ChunkPlannerTest (4a3ef9f)
+- [x] T003 [R-3 R-4 R-5] 경계 구간 계산 — domain/ChunkPlanner.java, ChunkPlannerTest (4a3ef9f)
+- [x] T004 [R-7] 입력 검증 — domain/PlanInput.java, ChunkPlannerTest (4a3ef9f)
 
 ## Phase 3: US-2/US-3 계획 저장 (P1)
 
-- [x] T005 [R-8 R-9 R-11] DB 보존·정렬 — application/PlanningService.java, infra/persistence/JdbcPlanRepository.java, PlanningServiceTest
-- [x] T006 [R-10] 부분 저장 실패 롤백 — PlanningServiceTest
-- [x] T007 [R-12 R-13] 동일 식별자 재시도·충돌 — PlanningServiceTest
-- [x] T008 [R-14 R-15] 활성 제한·종료 후 생성 — PlanningServiceTest
-- [x] T009 [R-16 R-17] 동시 요청 검증 — PlanningServiceTest
+- [x] T005 [R-8 R-9 R-11] DB 보존·정렬 — application/PlanningService.java, infra/persistence/JdbcPlanRepository.java, PlanningServiceTest (4a3ef9f)
+- [x] T006 [R-10] 부분 저장 실패 롤백 — PlanningServiceTest (4a3ef9f)
+- [x] T007 [R-12 R-13] 동일 식별자 재시도·충돌 — PlanningServiceTest (4a3ef9f)
+- [x] T008 [R-14 R-15] 활성 제한·종료 후 생성 — PlanningServiceTest (4a3ef9f)
+- [x] T009 [R-16 R-17] 동시 요청 검증 — PlanningServiceTest (4a3ef9f)
 
 ## Phase 4: 마무리
 
-- [x] T010 필수 검사·아키텍처·README·환경변수 반영
+- [x] T010 필수 검사·아키텍처·README·환경변수 반영 (4a3ef9f)
 
 ## 완료 조건 (Definition of Done)
 
