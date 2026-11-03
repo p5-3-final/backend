@@ -27,7 +27,7 @@ updated: 2026-11-03
 ## Phase 3: 수신
 
 - [x] T006 메시지 해석·계약 규칙 검증 — 테스트 `api/NormalizationEventParserTest`, 구현 `api/NormalizationEventParser`
-- [ ] T007 Kafka 리스너·컨테이너 설정, 잘못된 메시지 건너뜀 — 테스트 `event/NormalizationKafkaTest`, 구현 `api/NormalizationEventListener`, `config/NormalizationKafkaConfig`
+- [x] T007 Kafka 리스너·컨테이너 설정, 잘못된 메시지 건너뜀 — 테스트 `event/NormalizationKafkaTest`, 구현 `api/NormalizationEventListener`, `config/NormalizationKafkaConfig`
 
 ## Phase 4: US-1·US-2 조회 응답 (P1)
 
