@@ -35,6 +35,15 @@ public interface UploadStorage {
    */
   boolean deleteVideoFiles(String prefix, String storageKey, @Nullable String multipartUploadId);
 
+  /**
+   * 파일을 {@code ttl} 동안 읽을 수 있는 서명 GET 주소를 만든다(SPEC-006 R-1, R-2). 브라우저가 서비스를 거치지 않고 저장소에서 바로 읽는다.
+   *
+   * @param contentType 주소로 받는 응답의 형식
+   * @param downloadFileName 주면 이 이름으로 내려받게 한다. 없으면 브라우저가 바로 재생한다
+   */
+  String presignRead(
+      String storageKey, String contentType, @Nullable String downloadFileName, Duration ttl);
+
   /** 저장소에 있는 파일 크기. 파일이 없으면 비어 있다. */
   OptionalLong objectSize(String storageKey);
 

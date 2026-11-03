@@ -26,10 +26,10 @@ updated: 2026-11-03
 
 | 요구사항 | 담당 모듈 / 컴포넌트 | 검증 테스트 |
 | --- | --- | --- |
-| R-1 | `api/VideoController`, `application/PlaybackService`, `domain/Video#isPlayable`, `UploadStorage#presignRead` | `VideoPlaybackApiTest`(SeaweedFS에 올린 파일을 두 주소로 실제 GET해 같은 바이트 확인) |
+| R-1 | `api/VideoController`, `application/PlaybackService`, `domain/Video#isUploadCompleted`, `UploadStorage#presignRead` | `VideoPlaybackApiTest`(SeaweedFS에 올린 파일을 두 주소로 실제 GET해 같은 바이트 확인) |
 | R-2 | `PlaybackService`(유효 시간 1시간), `S3UploadStorage#presignRead` | `VideoPlaybackApiTest`(`expiresAt` = 발급 시각 + 1시간, 주소의 `X-Amz-Expires=3600`) |
 | R-3 | `S3UploadStorage#presignRead`(`response-content-type`) | `VideoPlaybackApiTest`(재생 주소 응답의 Content-Type이 신고한 형식) |
-| R-4 | `domain/Video#isPlayable`, `PlaybackService` | `VideoTest`, `VideoPlaybackApiTest`(UPLOADING·EXPIRED → 409 `MEDIA_NOT_PLAYABLE`) |
+| R-4 | `domain/Video#isUploadCompleted`, `PlaybackService` | `VideoPlaybackApiTest`(UPLOADING·EXPIRED → 409 `MEDIA_NOT_PLAYABLE`, NORMALIZING·READY·REJECTED → 200) |
 | R-5 | `domain/VideoAccess`(SPEC-003과 같음) | `VideoPlaybackApiTest`(없음·삭제·남의 영상 404, ADMIN 200) |
 | NFR-1 | 바이트를 내보내는 엔드포인트 없음 | `VideoPlaybackApiTest`(응답이 JSON이고 영상 바이트가 아님), `NoUploadBytesTest` 유지 |
 | NFR-2 | 전체 | `MediaLatencyTest`에 재생 주소 발급 추가 |
@@ -58,17 +58,16 @@ updated: 2026-11-03
 
 | 경로 | 변경 |
 | --- | --- |
-| `M/main/.../domain/Video.java` | `isPlayable()`: 업로드 완료 이후 상태(`UPLOADED`, `NORMALIZING`, `READY`, `REJECTED`)인지 |
 | `M/main/.../domain/MediaErrorCode.java` | `NOT_PLAYABLE(409, "MEDIA_NOT_PLAYABLE")` |
 | `M/main/.../domain/UploadStorage.java` | `String presignRead(String storageKey, String contentType, @Nullable String downloadFileName, Duration ttl)` |
-| `M/main/.../infra/storage/S3UploadStorage.java` | `S3Presigner#presignGetObject`로 구현 |
+| `M/main/.../infra/storage/S3UploadStorage.java`, `ContentDispositions.java` | `S3Presigner#presignGetObject`로 구현, 내려받기용 `Content-Disposition` 값 |
 | `M/main/.../application/PlaybackService.java` | 권한·상태 확인 후 두 주소와 만료 시각을 만든다 |
 | `M/main/.../api/VideoController.java`, `api/VideoPlaybackResponse.java` | 엔드포인트와 응답 record |
 
 ### 재생 주소 발급 흐름
 
 1. `findByPublicId` → `VideoAccess.canView`로 거르고, 볼 수 없으면 404 `MEDIA_VIDEO_NOT_FOUND`(R-5). 상세 조회와 같은 규칙이다.
-2. `isPlayable()`이 아니면 409 `MEDIA_NOT_PLAYABLE`(R-4). 볼 수 있는지를 먼저 확인해야 남의 영상 상태가 드러나지 않는다.
+2. 업로드 완료 이후 상태(`isUploadCompleted()`: `UPLOADED`, `NORMALIZING`, `READY`, `REJECTED`)가 아니면 409 `MEDIA_NOT_PLAYABLE`(R-4). 볼 수 있는지를 먼저 확인해야 남의 영상 상태가 드러나지 않는다.
 3. `now = clock.instant()`, `ttl = 1시간`(R-2). 두 주소를 같은 `ttl`로 서명하고 `expiresAt = now + ttl`을 돌려준다.
    - SPEC-003에서 겪은 것처럼 남은 시간을 다시 계산해 넘기면 3599초로 잘린다. `ttl`을 그대로 넘긴다.
 4. 트랜잭션은 `readOnly`다. 행을 바꾸지 않는다.
@@ -93,7 +92,7 @@ updated: 2026-11-03
 
 ## 6. 테스트 전략
 
-- **단위**: `Video#isPlayable`(상태별), `Content-Disposition` 값 만들기(한글·따옴표 파일 이름)
+- **단위**: `ContentDispositionsTest`(한글·따옴표 파일 이름). 재생 가능 상태는 SPEC-003의 `Video#isUploadCompleted`를 그대로 쓰고 통합 테스트로 상태별로 확인한다.
 - **통합**: `@IntegrationTest`(PostgreSQL·Kafka·SeaweedFS 컨테이너). 테스트가 업로드 자리를 받아 SeaweedFS에 실제로 올리고 완료한 뒤, 발급받은 두 주소로 GET해서 상태 코드, 바이트, `Content-Type`, `Content-Disposition`을 확인한다.
   - 상태를 바꿔야 하는 경우(EXPIRED, NORMALIZING 등)는 SPEC-003 테스트처럼 `JdbcTemplate`으로 행을 바꾼다.
 - **계약**: `MediaContractTest`에 `getVideoPlayback` 200·404·409 추가

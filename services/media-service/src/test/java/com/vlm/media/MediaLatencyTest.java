@@ -6,6 +6,7 @@ import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.listRequest;
+import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,6 +71,27 @@ class MediaLatencyTest {
     assertThat(p95(complete)).as("complete p95").isLessThanOrEqualTo(P95_LIMIT);
     assertThat(p95(list)).as("list p95").isLessThanOrEqualTo(P95_LIMIT);
     assertThat(p95(get)).as("get p95").isLessThanOrEqualTo(P95_LIMIT);
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 NFR-2] 재생 주소 발급 요청의 p95 응답 시간이 300ms 이하다")
+  void playbackP95IsWithinLimit() throws Exception {
+    JsonNode created =
+        json(
+            mvc.perform(asUser(createVideoRequest("a.mp4", 1000, "video/mp4"), ownerId))
+                .andExpect(status().isCreated()));
+    String videoId = created.at("/video/id").asText();
+    StorageUploads.postForm(created.get("upload"), new byte[1000]);
+    mvc.perform(asUser(completeRequest(videoId), ownerId)).andExpect(status().isOk());
+    List<Duration> playback = new ArrayList<>();
+
+    for (int i = 0; i < WARM_UP + SAMPLES; i++) {
+      long start = System.nanoTime();
+      mvc.perform(asUser(playbackRequest(videoId), ownerId)).andExpect(status().isOk());
+      record(playback, start, i >= WARM_UP);
+    }
+
+    assertThat(p95(playback)).as("playback p95").isLessThanOrEqualTo(P95_LIMIT);
   }
 
   private static void record(List<Duration> samples, long startNanos, boolean measured) {
