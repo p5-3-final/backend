@@ -6,12 +6,14 @@ Spring Boot 멀티모듈 MSA. 구조와 규칙은 [AGENTS.md](AGENTS.md)에 있�
 | --- | --- | --- |
 | `services/api-gateway` | 라우팅, 토큰 검증(JWKS), CORS, 알림 티켓 검증, 요청 수 제한 | 8080 |
 | `services/auth-service` | 가입, 로그인, 토큰 발급·재발급·폐기, 공개키 목록, 알림 티켓 | 8081 |
+| `services/media-service` | 영상 업로드 자리 발급(단일·멀티파트), 완료 확인, 목록·상세·삭제, 만료·저장소 정리 | 8082 |
 | `libs/common-core`, `libs/common-web` | 공통 오류 타입, ProblemDetail 핸들러 | — |
+| `libs/common-messaging` | Outbox 기록·발행(Kafka) | — |
 
 ## 준비물
 
 - JDK 21 (`brew install openjdk@21`). Gradle은 wrapper가 받는다.
-- Docker. 테스트가 Testcontainers로 PostgreSQL과 Redis를 띄운다.
+- Docker. 테스트가 Testcontainers로 PostgreSQL, Redis, Kafka, SeaweedFS(S3 대체)를 띄운다.
 - 계약 테스트는 docs 레포의 OpenAPI를 읽는다. 루트 구조(`project/repos/backend`)로 클론하면 따로 설정할 것이 없다. 다른 위치라면 `CONTRACTS_DIR`에 docs 레포의 `docs/contracts` 경로를 넣는다.
 
 ## 명령어
@@ -60,6 +62,24 @@ Spring Boot 멀티모듈 MSA. 구조와 규칙은 [AGENTS.md](AGENTS.md)에 있�
      -d '{"email":"user@example.com","password":"secret123"}' | jq -r .accessToken)
    curl -s localhost:8080/api/v1/auth/me -H "Authorization: Bearer $TOKEN"
    ```
+
+### media-service 단독 실행
+
+DB·Kafka·SeaweedFS는 docs 레포 local compose에서 필요한 것만 띄운다(루트 `project/`에서 실행). `local/.env`가 없으면 `cp local/.env.example local/.env`로 만든다.
+
+```bash
+docker compose -f local/docker-compose.yml up -d postgres kafka seaweedfs-init
+```
+
+backend 레포에서 환경변수를 올리고 띄운다. 게이트웨이(`MEDIA_SERVICE_URI`)를 거치거나 `X-User-Id`, `X-User-Roles` 헤더를 직접 붙여 8082로 부른다.
+
+```bash
+set -a; source .env; set +a
+./gradlew :services:media-service:bootRun --args='--spring.profiles.active=local'
+curl -s localhost:8082/api/v1/media/videos -H "X-User-Id: $(uuidgen)" -H 'X-User-Roles: USER'
+```
+
+업로드부터 이벤트 확인까지의 예시는 docs 레포 `local/README.md`의 "영상 업로드"에 있다.
 
 ## 문서
 
