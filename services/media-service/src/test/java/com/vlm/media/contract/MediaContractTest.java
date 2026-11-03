@@ -7,6 +7,7 @@ import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.listRequest;
+import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -185,6 +186,31 @@ class MediaContractTest {
   @DisplayName("[SPEC-003 R-16] 삭제할 영상 없음 응답이 계약과 일치한다")
   void deleteNotFound() throws Exception {
     perform(asUser(deleteRequest(UUID.randomUUID().toString()), ownerId))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-1] 재생 주소 응답이 계약과 일치한다")
+  void playback() throws Exception {
+    JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
+    StorageUploads.postForm(created.get("upload"), new byte[1000]);
+    mvc.perform(asUser(completeRequest(id(created)), ownerId)).andExpect(status().isOk());
+
+    perform(asUser(playbackRequest(id(created)), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-4] 재생할 수 없는 영상 응답이 계약과 일치한다")
+  void playbackNotPlayable() throws Exception {
+    JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
+
+    perform(asUser(playbackRequest(id(created)), ownerId)).andExpect(status().isConflict());
+  }
+
+  @Test
+  @DisplayName("[SPEC-006 R-5] 재생할 영상 없음 응답이 계약과 일치한다")
+  void playbackNotFound() throws Exception {
+    perform(asUser(playbackRequest(UUID.randomUUID().toString()), ownerId))
         .andExpect(status().isNotFound());
   }
 
