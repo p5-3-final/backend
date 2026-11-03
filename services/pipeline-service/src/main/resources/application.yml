@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: pipeline-service
+  datasource:
+    url: ${PIPELINE_DB_URL}
+    username: ${PIPELINE_DB_USERNAME}
+    password: ${PIPELINE_DB_PASSWORD}
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+logging:
+  structured:
+    format:
+      console: ecs

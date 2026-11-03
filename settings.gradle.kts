@@ -22,4 +22,5 @@ include(
     "services:api-gateway",
     "services:auth-service",
     "services:media-service",
+    "services:pipeline-service",
 )
