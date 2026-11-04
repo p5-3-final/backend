@@ -63,12 +63,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # 계약 테스트가 docs 레포의 OpenAPI 원본을 읽는다(public 레포라 토큰이 필요 없다).
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: p5-3-final/docs
-          path: docs-repo
-          persist-credentials: false
+      # 계약 테스트가 서비스 간 계약을 읽는다. docs main이 아니라 service-contracts.lock 버전을 받는다
+      # (docs ADR-0013, public 릴리스라 토큰이 필요 없다).
+      - name: service contracts
+        run: scripts/fetch-service-contracts.sh
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
@@ -79,4 +77,4 @@ jobs:
       - name: build
         run: ./gradlew build
         env:
-          CONTRACTS_DIR: ${{ github.workspace }}/docs-repo/docs/contracts
+          CONTRACTS_DIR: ${{ github.workspace }}/.service-contracts/service-contracts
