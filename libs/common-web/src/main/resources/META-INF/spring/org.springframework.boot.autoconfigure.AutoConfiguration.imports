@@ -1,1 +1,2 @@
 com.vlm.common.web.ProblemDetailAutoConfiguration
+com.vlm.common.web.ClockAutoConfiguration

@@ -1,8 +1,8 @@
 package com.vlm.auth.token.api;
 
-import com.vlm.auth.shared.api.UserIdHeader;
 import com.vlm.auth.token.application.SseTicketService;
 import com.vlm.auth.token.domain.SseTicketIssuer.IssuedSseTicket;
+import com.vlm.common.web.UserHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -20,8 +20,8 @@ class SseTicketController {
   @PostMapping("/api/v1/auth/sse-tickets")
   @ResponseStatus(HttpStatus.CREATED)
   SseTicketResponse issue(
-      @RequestHeader(value = UserIdHeader.NAME, required = false) @Nullable String userId) {
-    IssuedSseTicket ticket = sseTicketService.issue(UserIdHeader.parse(userId));
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId) {
+    IssuedSseTicket ticket = sseTicketService.issue(UserHeaders.userId(userId));
     return new SseTicketResponse(ticket.value(), ticket.expiresInSeconds());
   }
 }
