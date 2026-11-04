@@ -1,6 +1,6 @@
 package com.vlm.auth.domain;
 
-/** 접근 토큰 발급. 형식은 docs 레포 {@code docs/contracts/auth/access-token.md}. 구현은 infra 레이어에 있다. */
+/** 접근 토큰 발급. 형식은 docs 레포 {@code service-contracts/auth/access-token.md}. 구현은 infra 레이어에 있다. */
 public interface AccessTokenIssuer {
 
   IssuedAccessToken issue(User user);

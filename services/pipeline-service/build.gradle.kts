@@ -14,7 +14,7 @@ dependencies {
     testImplementation(libs.testcontainers.junit.jupiter)
 }
 
-val contractsDir = providers.environmentVariable("CONTRACTS_DIR").orElse(rootDir.resolve("../../docs/contracts").canonicalPath)
+val contractsDir = providers.environmentVariable("CONTRACTS_DIR").orElse(rootDir.resolve("../../service-contracts").canonicalPath)
 tasks.processResources {
     from(contractsDir.map { "$it/events" }) {
         include("_envelope.schema.json", "video.normalized.schema.json", "video.normalized.v2.schema.json")

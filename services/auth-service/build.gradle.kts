@@ -24,7 +24,7 @@ tasks.test {
     val contractsDir =
         providers
             .environmentVariable("CONTRACTS_DIR")
-            .orElse(rootDir.resolve("../../docs/contracts").canonicalPath)
+            .orElse(rootDir.resolve("../../service-contracts").canonicalPath)
     systemProperty("vlm.contracts.dir", contractsDir.get())
 }
 
