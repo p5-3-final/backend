@@ -51,16 +51,36 @@ backend/
 └── lefthook.yml                  # 커밋 전 검사
 ```
 
-서비스 내부 패키지는 `com.vlm.<service>`(예: `com.vlm.auth`, `com.vlm.gateway`) 아래에 다음과 같이 나눈다.
+### 패키지 구조
 
-| 패키지 | 내용 |
+서비스 내부 패키지는 `com.vlm.<service>`(예: `com.vlm.auth`, `com.vlm.media`) 아래를 **기능**으로 먼저 나누고, 기능 안을 레이어로 나눈다.
+
+```
+com.vlm.media/
+├── MediaServiceApplication
+├── video/                 # 기능: 업로드·완료·조회·삭제
+│   ├── api/  application/  domain/  infra/
+├── normalization/         # 기능: 정규화 이벤트 반영
+├── playback/              # 기능: 재생 주소 발급
+├── shared/                # 여러 기능이 함께 쓰는 집합(Video 엔티티·리포지토리·저장소 구현)
+└── config/                # 앱 전역 설정(기능 클래스를 쓰지 않는 것)
+```
+
+| 레이어 | 내용 |
 | --- | --- |
 | `api` | Controller, 요청/응답 DTO(record) |
 | `application` | 유스케이스 서비스. 트랜잭션 경계 |
 | `domain` | 엔티티, 값 객체, 도메인 서비스, 리포지토리 인터페이스 |
-| `infra` | JPA 구현, 외부 API 클라이언트, 메시징 |
+| `infra` | JPA 구현, 외부 API 클라이언트, 메시지 소비·발행, 스케줄러 |
 
-의존 방향은 `api → application → domain ← infra`다. `domain`은 `api`나 `infra`를 import하지 않는다. 이 규칙은 ArchUnit 테스트로 강제한다.
+- 레이어 의존 방향은 `api → application → domain ← infra`다. `domain`은 `api`나 `infra`를 import하지 않는다. Kafka 소비자와 스케줄러는 `infra`에 두고 `application`을 부른다(인바운드 어댑터).
+- 기능끼리는 상대 기능의 `application`만 부른다. 상대의 `api`·`domain`·`infra`는 쓰지 않는다. 기능 사이에 순환이 없어야 한다.
+- 둘 이상의 기능이 같은 엔티티를 다루면 그 엔티티와 관련 값 객체·리포지토리·저장소 구현을 `shared`로 옮긴다. `shared`는 기능 패키지를 쓰지 않는다.
+- 새 기능은 최상위 패키지를 하나 더 만든다. 최상위에는 기능, `shared`, `config`, 애플리케이션 클래스만 둔다.
+- 이 규칙은 서비스마다 `ArchitectureTest`(ArchUnit)로 강제한다.
+- 예외
+  - api-gateway는 파일이 적어 `config`·`error`·`filter` 구조를 유지하고 패키지 순환만 검사한다.
+  - pipeline-service는 기존 레이어 구조(`api`·`application`·`domain`·`infra`가 최상위)를 허용한다. 기능 구조로 옮길지는 담당자가 정한다.
 
 ## 명령어
 ```bash
