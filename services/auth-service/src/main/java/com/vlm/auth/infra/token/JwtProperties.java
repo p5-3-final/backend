@@ -4,7 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * 토큰 서명 설정. 형식은 docs 레포 {@code docs/contracts/auth/access-token.md}.
+ * 토큰 서명 설정. 형식은 docs 레포 {@code service-contracts/auth/access-token.md}.
  *
  * @param issuer 토큰 {@code iss}
  * @param audience 접근 토큰 {@code aud}

@@ -81,7 +81,7 @@ backend/
 
 ## 핵심 규칙
 - **서비스 간 경계**: `services/a`에서 `services/b`의 코드를 의존하거나 import하지 않는다. 공유가 필요하면 `libs/`(도메인 로직 없음)로 옮기거나 API·이벤트 계약으로 해결한다.
-- **API는 계약을 따른다**: `../../docs/contracts/openapi/<service>.yaml`과 경로, 필드, 상태 코드가 일치해야 한다. 계약에 없는 엔드포인트는 추가하지 않는다.
+- **API는 계약을 따른다**: `../../service-contracts/openapi/<service>.yaml`과 경로, 필드, 상태 코드가 일치해야 한다. 계약에 없는 엔드포인트는 추가하지 않는다.
 - **의존성 주입**: 생성자 주입만 쓴다(`private final` + `@RequiredArgsConstructor`). 필드 주입(`@Autowired` 필드)은 금지한다.
 - **DTO와 엔티티**: Entity를 API 응답으로 노출하지 않는다. 요청과 응답 DTO는 `record`로 만들고 Bean Validation(`@Valid`)으로 검증한다.
 - **Lombok**: `@Getter`, `@RequiredArgsConstructor`, `@Builder`만 허용한다. 엔티티에 `@Data`나 `@Setter`를 쓰지 않는다.
