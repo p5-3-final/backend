@@ -1,7 +1,7 @@
 package com.vlm.media.playback.api;
 
+import com.vlm.common.web.UserHeaders;
 import com.vlm.media.playback.application.PlaybackService;
-import com.vlm.media.shared.api.UserHeaders;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;

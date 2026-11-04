@@ -4,9 +4,6 @@ import com.vlm.common.error.ErrorCode;
 
 /** media-service 오류 코드. 계약 {@code media-service.yaml}의 code 값과 같다. */
 public enum MediaErrorCode implements ErrorCode {
-  // 게이트웨이를 거치지 않은 요청. 계약 _common.yaml Unauthenticated와 같은 코드를 쓴다.
-  TOKEN_MISSING(401, "AUTH_TOKEN_MISSING", "인증이 필요합니다."),
-  TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "인증 정보가 올바르지 않습니다."),
   FILE_SIZE_INVALID(400, "MEDIA_FILE_SIZE_INVALID", "파일 크기는 1바이트 이상 5GB 이하여야 합니다."),
   UNSUPPORTED_FORMAT(400, "MEDIA_UNSUPPORTED_FORMAT", "mp4, mov, mkv, avi 영상만 올릴 수 있습니다."),
   VIDEO_NOT_FOUND(404, "MEDIA_VIDEO_NOT_FOUND", "영상을 찾을 수 없습니다."),

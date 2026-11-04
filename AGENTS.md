@@ -32,7 +32,7 @@ backend/
 ├── gradle/libs.versions.toml     # 의존성 버전은 여기서만 관리
 ├── libs/
 │   ├── common-core/              # 공통 예외, 오류 코드, 유틸 (도메인 로직 금지, Spring 의존 최소화)
-│   ├── common-web/               # ProblemDetail 핸들러, 로깅·추적 필터, 공통 web 설정
+│   ├── common-web/               # ProblemDetail 핸들러, 사용자 헤더(UserHeaders), 마이크로초 Clock, 공통 web 설정 (서블릿 서비스용)
 │   └── common-messaging/         # 이벤트 envelope, Outbox, 멱등 소비(eventId), retry·DLQ 설정
 ├── services/
 │   ├── api-gateway/              # Spring Cloud Gateway (WebFlux): 라우팅, JWT 검증(JWKS), CORS
