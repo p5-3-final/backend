@@ -294,7 +294,10 @@ class DispatchKafkaTest {
     var node = mapper.readTree(record.value());
     assertThat(schema.validate(node)).isEmpty();
     assertThat(record.key()).isEqualTo(node.get("sourceId").asText());
-    if (!Instant.now().isBefore(Instant.parse(node.get("startBefore").asText()))) return "EXPIRED";
+    // Docker VM과 호스트 시계가 절전 복귀 후 다를 수 있어 검증 소비자의 시각도 실제 DB에서 읽는다.
+    // 기한 비교는 그대로 유지하며, 기한이 지난 요청은 아래 신규 점유를 하지 않는다.
+    if (!repository.now().isBefore(Instant.parse(node.get("startBefore").asText())))
+      return "EXPIRED";
     UUID execution = UUID.fromString(node.get("executionId").asText());
     return Objects.requireNonNull(
         tx.execute(

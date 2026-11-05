@@ -115,13 +115,13 @@ IDE가 `DEBUG=release`를 전달하면 Spring Boot의 debug 설정으로도 읽�
 
 SPEC-007은 다른 작업의 영상 정규화 명세다. Pipeline 수신은 번호 충돌을 정리해 SPEC-008로 관리한다.
 
-`pipeline-service`는 `video.normalized`의 schemaVersion=2 계약을 검증하고 정규화 결과·수신 기록과 기존 Job·Chunk 계획을 단일 트랜잭션으로 저장한다. READY만 계획하며 REJECTED는 결과·수신 사실만 기록한다. v1 계약은 보존하지만 이 consumer는 v1에서 정규화 ID를 추정하지 않고 처리하지 않는다. producer의 v2 발행 전환은 별도 작업이다.
+`pipeline-service`는 `video.normalized`의 schemaVersion=2 계약을 검증하고 정규화 결과·수신 기록과 기존 Job·Chunk 계획을 단일 트랜잭션으로 저장한다. READY만 계획하며 REJECTED는 결과·수신 사실만 기록한다. v1 계약은 보존하지만 이 consumer는 v1에서 정규화 ID를 추정하지 않고 처리하지 않는다. normalize producer의 v2 구현은 ai #12로 머지됐지만 이 consumer와의 실제 연결 검증은 별도다.
 
 - 같은 eventId·같은 payload는 최초 결과를 반환한다. JSON 키 순서·공백·동등한 숫자 표기는 JSONB로 비교한다.
 - 새 eventId라도 같은 normalizationId·분석 설정 버전이면 기존 Job을 재사용한다. 같은 결과/설정 ID의 입력 변경은 충돌이다.
 - 기존 활성 Job 제한과 SPEC-004 입력 비교는 유지한다. legacy Job에 normalizationId를 자동 백필하지 않는다.
 - durationMs와 durationSec는 정확히 일치해야 하며 기존 내부 초 단위를 일괄 변경하지 않는다.
-- 계획이 있으나 Outbox가 없는 상태는 정상이다. 요청 발행·슬롯·실행 시도·영상 처리·AI는 연결하지 않는다.
+- 계획이 있으나 Outbox가 없는 상태는 정상이다. SPEC-008 자체는 발행·슬롯·실행을 만들지 않으며、아래 SPEC-010 배정에서만 생성한다. 영상 처리·AI는 연결하지 않는다.
 
 단독 실행은 기존 PIPELINE_DB_*와 Kafka 주소를 설정하고, `PIPELINE_INTAKE_ENABLED=true`, 불변 `PIPELINE_INTAKE_PROFILE_VERSION`, `PIPELINE_INTAKE_INFERENCE_PROFILE_VERSION`을 지정한다. 이 버전 값은 실제 모델을 호출하거나 모델 존재를 검증한다는 뜻이 아니라 분석 설정의 식별이다. `KAFKA_BOOTSTRAP_SERVERS`의 `video.normalized` 토픽은 운영자가 미리 준비한다. 토픽 자동 생성은 하지 않는다. 기본 소비 그룹은 pipeline-normalized-intake-v2이며 기존 v1 그룹을 그대로 재사용하지 않는다. 새 그룹은 earliest에서 시작하므로 기존 토픽에 v1 이력이 있으면 운영자가 v2 전환 위치를 확인해 그룹 시작 offset을 준비해야 한다. v1을 자동으로 건너뛰거나 정규화 ID를 추정하지 않는다.
 
@@ -152,6 +152,6 @@ java -Dloader.main=com.vlm.pipeline.config.DispatchRecoveryCommand \
 
 ### 현재 연결과 제한
 
-정규화 producer는 ai 최신 main에 구현되지 않아 v2 실제 연결이 없다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
+작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `40356fe`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. 다만 재처리 때 같은 eventId의 occurredAt을 새 시각으로 만들므로 SPEC-008의 전체 payload 비교에서 EVENT_CONFLICT가 발생한다. 해당 경계는 자동화 테스트로 확인했으며 producer가 최초 결과 이벤트를 불변하게 재사용하도록 보완해야 한다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
 
 실제 chunk-processor·영상 추출·AI·완료/실패 이벤트·정상 완료 자동 슬롯 반환·heartbeat/fencing·자동 재시도·Job 완료 판정은 후속이다. 현재는 배정→검증용 Kafka 소비까지 동작하며, 슬롯 자동 순환이 완성된 처리 파이프라인은 아니다. 기한 후 외부 종료 확인과 복구 명령으로 수동 반환할 수 있다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.

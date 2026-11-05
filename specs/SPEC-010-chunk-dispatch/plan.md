@@ -4,7 +4,7 @@ repo: backend
 status: Approved
 owner: backend 담당자
 created: 2026-11-03
-updated: 2026-11-03
+updated: 2026-11-05
 ---
 
 # Plan: SPEC-010 공정 배정·슬롯·요청 Outbox — backend
@@ -127,10 +127,10 @@ sequenceDiagram
 
 PIPELINE_DISPATCH_ENABLED 기본 false, 사용자2/영상1/전체4, start-window-ms=300000, interval-ms=1000, batch-size=100. 잘못된 양수/상한 관계를 시작 시 거부. backend .env.example에 추가. local compose에 pipeline 자체가 없어 root local 예제에는 미연결임을 설명한다. gitops 배포는 변경하지 않음.
 
-ai origin/main에는 normalize 런타임이 없으며 SPEC-008 intake도 기본 disabled다. 테스트 입력은 producer 연결로 보고하지 않는다. 운영 플래그와 Kafka offset은 변경하지 않는다.
+착수 시 ai main은 normalize가 없었으나 작업 중 ai #12가 머지됐다. 최종 확인 `40356fe`에는 normalize v2가 있고 docs #57로 compose 생산자가 추가됐다. Pipeline은 compose에 없고 intake는 기본 disabled다. producer는 재처리시 같은 eventId에 occurredAt을 새로 생성하여 SPEC-008 EVENT_CONFLICT와 충돌한다(회귀 테스트 확인). 최초 결과 이벤트의 불변 재사용이 후속 연결의 선행 조건이다. 테스트 입력은 producer 연결로 보고하지 않는다. 운영 플래그와 Kafka offset은 변경하지 않는다.
 
 ### 구현 검증 결과
 
-Pipeline 132개, 전체 backend 466개 테스트가 통과했다(실패·skip 0). 기존 Outbox 코드는 수정하지 않고 실제 Kafka에서 재발행을 검증했다. 애플리케이션 JAR에 요청 스키마와 복구 명령이 포함된다. 패키징 CLI를 별도 PostgreSQL로 실행해 강제 비활성화·실제 슬롯 반환·충돌 거부를 확인했다. 운영 배포와 producer/worker 연결은 수행하지 않았다.
+Pipeline 134개, 전체 backend 468개 테스트가 통과했다(실패·skip 0). 기존 Outbox 코드는 수정하지 않고 실제 Kafka에서 재발행을 검증했다. 애플리케이션 JAR에 요청 스키마와 복구 명령이 포함된다. 패키징 CLI를 별도 PostgreSQL로 실행해 강제 비활성화·실제 슬롯 반환·충돌 거부를 확인했다. opt-in 자동 주기에서 수동 dispatch 호출 없이 발행·만료 표시·종료 확인 뒤 다음 청크 배정까지 실제 Kafka로 검증했다. 운영 배포와 producer/worker 연결은 수행하지 않았다.
 
 계획 대비 구체화: 복구 CLI는 별도 main entrypoint(`DispatchRecoveryCommand`)이며 실행 인자 3개만 받는다. 컨텍스트 시작 시 명령행 설정으로 intake/dispatch/outbox/web을 강제로 끈다. 별도 enabled 플래그나 HTTP 운영 API는 추가하지 않는다.
