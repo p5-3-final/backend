@@ -5,6 +5,9 @@ import com.vlm.common.error.ErrorCode;
 /** 특정 서비스에 속하지 않는 공통 오류 코드. */
 public enum CommonErrorCode implements ErrorCode {
   INVALID_REQUEST(400, "COMMON_INVALID_REQUEST", "요청 형식이 올바르지 않습니다."),
+  // 사용자 헤더(UserHeaders) 오류. 게이트웨이의 토큰 오류와 같은 코드를 써 클라이언트가 한 가지로 처리한다.
+  TOKEN_MISSING(401, "AUTH_TOKEN_MISSING", "인증이 필요합니다."),
+  TOKEN_INVALID(401, "AUTH_TOKEN_INVALID", "인증 정보가 올바르지 않습니다."),
   INTERNAL_ERROR(500, "COMMON_INTERNAL_ERROR", "요청을 처리하지 못했습니다.");
 
   private final int status;

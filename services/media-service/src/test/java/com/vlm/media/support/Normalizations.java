@@ -1,9 +1,9 @@
 package com.vlm.media.support;
 
-import com.vlm.media.application.NormalizationEventService;
-import com.vlm.media.application.NormalizationOutcome;
-import com.vlm.media.domain.NormalizationResult;
-import com.vlm.media.domain.RejectReason;
+import com.vlm.media.normalization.application.NormalizationEventService;
+import com.vlm.media.normalization.application.NormalizationOutcome;
+import com.vlm.media.shared.domain.NormalizationResult;
+import com.vlm.media.shared.domain.RejectReason;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 

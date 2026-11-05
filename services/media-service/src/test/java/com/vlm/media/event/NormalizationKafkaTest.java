@@ -5,8 +5,8 @@ import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.vlm.media.domain.Video;
-import com.vlm.media.domain.VideoRepository;
+import com.vlm.media.shared.domain.Video;
+import com.vlm.media.shared.domain.VideoRepository;
 import com.vlm.media.support.IntegrationTest;
 import java.io.IOException;
 import java.nio.file.Files;

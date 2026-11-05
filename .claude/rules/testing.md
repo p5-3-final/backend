@@ -10,7 +10,7 @@ paths:
 | 단위 | JUnit 5 + AssertJ + Mockito | domain, application |
 | 슬라이스 | `@WebMvcTest`, `@DataJpaTest` | Controller 검증·직렬화, 쿼리 |
 | 통합 | `@SpringBootTest` + Testcontainers(PostgreSQL) | 유스케이스 전체 흐름 |
-| 아키텍처 | ArchUnit | 패키지 의존 방향, 서비스 간 import 금지 |
+| 아키텍처 | ArchUnit | 레이어 의존 방향, 기능 경계(다른 기능은 application으로만)·순환 금지, 서비스 간 import 금지 |
 
 - DB 테스트는 H2를 쓰지 않고 Testcontainers PostgreSQL을 쓴다. 컨테이너는 `@ServiceConnection`으로 재사용한다.
 - 테스트 이름은 `@DisplayName("[SPEC-012 R-1] 중복 이메일이면 409를 반환한다")`처럼 요구사항 ID를 포함한 한국어 문장으로 쓴다.

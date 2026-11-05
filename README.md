@@ -14,7 +14,7 @@ Spring Boot 멀티모듈 MSA. 구조와 규칙은 [AGENTS.md](AGENTS.md)에 있�
 
 - JDK 21 (`brew install openjdk@21`). Gradle은 wrapper가 받는다.
 - Docker. 테스트가 Testcontainers로 PostgreSQL, Redis, Kafka, SeaweedFS(S3 대체)를 띄운다.
-- 계약 테스트는 docs 레포의 OpenAPI를 읽는다. 루트 구조(`project/repos/backend`)로 클론하면 따로 설정할 것이 없다. 다른 위치라면 `CONTRACTS_DIR`에 docs 레포의 `docs/contracts` 경로를 넣는다.
+- 계약 테스트는 docs 레포의 OpenAPI를 읽는다. 루트 구조(`project/repos/backend`)로 클론하면 따로 설정할 것이 없다. 다른 위치라면 `CONTRACTS_DIR`에 docs 레포의 `service-contracts` 경로를 넣는다.
 
 ## 명령어
 
@@ -91,7 +91,7 @@ media-service는 그룹 `media-service`로 `video.normalizing`(v1)과 `video.nor
 
 ## 문서
 
-- 기능 spec과 계약: docs 레포 `docs/specs/`, `docs/contracts/`
+- 기능 spec과 계약: docs 레포 `docs/specs/`, `service-contracts/`
 - 구현 계획: [specs/](specs/)
 
 ## Pipeline 계획 저장 (SPEC-004)

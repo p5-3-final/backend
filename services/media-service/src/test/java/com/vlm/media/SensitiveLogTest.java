@@ -9,9 +9,9 @@ import static com.vlm.media.support.MediaApi.playbackRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.vlm.media.application.StorageCleanupJob;
 import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.StorageUploads;
+import com.vlm.media.video.application.StorageCleanupJob;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;

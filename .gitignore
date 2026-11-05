@@ -20,3 +20,6 @@ build/
 out/
 *.class
 *.log
+
+# 서비스 간 계약 받기 캐시(scripts/fetch-service-contracts.sh)
+.service-contracts/
