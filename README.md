@@ -103,7 +103,7 @@ media-service는 그룹 `media-service`로 `video.normalizing`(v1)과 `video.nor
 - 다른 계획 UUID·같은 source의 활성 Job 존재: `PIPELINE_ACTIVE_JOB_EXISTS`
 - 활성 상태: PLANNED/RUNNING/ANALYZED. 종료·배정·완료 판정 기능은 이번 범위 밖이다.
 
-별도 PostgreSQL DB와 계정을 준비하고 `.env.example`의 `PIPELINE_DB_URL`, `PIPELINE_DB_USERNAME`, `PIPELINE_DB_PASSWORD`를 환경변수로 주입한다. `./gradlew :services:pipeline-service:bootRun --args=--server.port=8083`으로 실행한다. 업무 API는 없으며 Actuator health만 제공한다. 운영 배포·ECR·GitOps·local compose 등록은 후속 작업이다.
+별도 PostgreSQL DB와 계정을 준비하고 `.env.example`의 `PIPELINE_DB_URL`, `PIPELINE_DB_USERNAME`, `PIPELINE_DB_PASSWORD`를 환경변수로 주입한다. `./gradlew :services:pipeline-service:bootRun --args=--server.port=8083`으로 실행한다. 계획 생성용 외부 API는 없으며, SPEC-015의 소유자 실행 조회와 Actuator health를 제공한다. 운영 배포·ECR·GitOps·local compose 등록은 후속 작업이다.
 
 검증: `./gradlew :services:pipeline-service:build`. PostgreSQL은 Testcontainers로 생성하며 Docker가 필요하다.
 
@@ -154,7 +154,7 @@ java -Dloader.main=com.vlm.pipeline.config.DispatchRecoveryCommand \
 
 작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `4f97114`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. SPEC-014에서 최초 occurredAt·producedAt을 영속 보존하도록 보완하고 실제 producer 재전달까지 검증했다. 과거 원 payload가 없는 기록은 운영 확인이 필요하다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
 
-SPEC-010은 배정→검증용 Kafka 소비 범위였고, 실제 worker·추출·종료 이벤트·정상 슬롯 반환은 아래 SPEC-014에서 연결한다. 실제 AI adapter·heartbeat/fencing·자동 재시도·전체 Job 완료는 후속이다. 불명 실행은 기한만으로 반환하지 않고 외부 종료 확인과 복구 명령을 사용한다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
+SPEC-010은 배정→검증용 Kafka 소비 범위였고, 실제 worker·추출·종료 이벤트·정상 슬롯 반환은 아래 SPEC-014에서 연결한다. 실제 AI adapter·heartbeat/fencing·전체 분석 완료는 후속이다. 확정 실패의 제한된 재시도와 실행 집계는 SPEC-015에 설명한다. 불명 실행은 기한만으로 반환하지 않고 외부 종료 확인과 복구 명령을 사용한다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
 
 ## Pipeline 종료 결과와 슬롯 자동 반환 (SPEC-014)
 
@@ -164,6 +164,20 @@ SPEC-010은 배정→검증용 Kafka 소비 범위였고, 실제 worker·추출�
 
 normalize는 최초 occurredAt과 producedAt을 스냅샷에 함께 저장하고 공통 Publisher는 보존한다. 동일 eventId 입력 변경은 계속 충돌이다. 다른 eventId의 같은 정규화 결과는 producedAt 같은 전송 메타데이터를 결과 내용으로 취급하지 않아 기존 Job을 재사용한다. 과거 producedAt 없는 스냅샷의 최초 payload/운영 정합은 자동 추정하지 않는다.
 
-실제 연결 검증은 normalize 원본 업로드부터 worker의 실영상 추출·검증 추론 대역·종료 Kafka·Pipeline 반환·다음 청크 배정까지 수행한다. 성공/실패와 DB 실패/offset 유지·해소 후 재수신도 확인한다. 추론은 test 전용이며 실제 AI adapter/출력 스키마·불명 RUNNING의 자동 재실행·전체 Job 완료/배포는 후속이다. 운영 플래그와 기존 offset은 변경하지 않았다.
+실제 연결 검증은 normalize 원본 업로드부터 worker의 실영상 추출·검증 추론 대역·종료 Kafka·Pipeline 반환·다음 청크 배정까지 수행한다. 성공/실패와 DB 실패/offset 유지·해소 후 재수신도 확인한다. 추론은 test 전용이며 실제 AI adapter/출력 스키마·불명 RUNNING의 자동 재실행·분석 적재 완료/배포는 후속이다. 전체 Job 실행 집계는 아래 SPEC-015에서 연결한다. 운영 플래그와 기존 offset은 변경하지 않았다.
 
 통합 테스트는 ai 레포의 고정 worker 소스로 runtime 이미지를 빌드한다. 작업 공간에서는 `../ai`를 사용하고 독립 checkout에서는 `CHUNK_PROCESSOR_SOURCE_DIR`로 소스 위치를 지정한다. CI는 검증된 ai 커밋을 고정 checkout한다. 애플리케이션 코드는 다른 서비스의 코드나 DB에 의존하지 않는다.
+
+## Pipeline Job 실행 집계·조회 (SPEC-015)
+
+정규화 계획 연결·배정·실제 종료·수동 복구 시 원본 변경, 현재 실행 집계, Job별 단조 sequence, `job.status` Outbox를 같은 트랜잭션에 저장한다. 기존 Publisher를 그대로 쓴다. 운영자가 `job.status` 토픽과 권한을 준비해야 하며 이번에는 운영 활성화하지 않았다. 중복·이전 시도 결과와 변경 없는 점검은 순번을 증가시키지 않는다.
+
+`GET /api/v1/jobs/{jobId}/execution`은 gateway의 기존 `/jobs/**` 경로와 검증된 `X-User-Id`를 사용한다. jobId는 plan_id UUID다. 소유자만 조회 가능하며 타인·미존재·소유자 연결 없는 과거 계획은 동일한 404다. 누락/오래된 집계는 소유자 확인 후 같은 잠금·트랜잭션으로 보정한다. 응답에는 분석 `status`, 실행 `execution`, 현재 문제 청크 `issues`, 전체 실패 이력 `failures`, `sequence`가 있다. 복구 evidence와 원문 오류는 노출하지 않는다.
+
+실행은 PENDING/RUNNING/UNKNOWN/SUCCEEDED/PARTIAL_FAILED/FAILED로 구분한다. 청크는 미배정·재시도 대기·실행 중·종료 불명·성공·최종 실패로 한 번만 센다. 진행률은 확정 종료 청크/전체 계획 청크의 정수 백분율이며 실패도 종료로 센다. 성공률은 성공 청크/전체로 별도 표시한다. 재시도 대기·종료 불명은 진행률 분자에서 제외한다.
+
+기본 정책은 첫 실행 포함 maxAttempts=1, 허용 오류 없음이다. `PIPELINE_EXECUTION_MAX_ATTEMPTS`(1~10), `PIPELINE_EXECUTION_RETRYABLE_ERROR_CODES`(쉼표 구분), `PIPELINE_EXECUTION_RETRY_DELAY_MS`(0~86400000)를 명시하면 새 Job에 불변 저장한다. 이미 만든 Job에는 적용하지 않는다. 허용 코드의 확정 FAILED이고 예산이 남으면 RETRY_PENDING으로 두고, 기한 뒤 새 executionId/requestId/eventId로 기존 공정 배정을 거친다. STOPPED·종료 불명은 자동 재시도하지 않는다.
+
+누락 집계는 `JobExecutionService.reconcile(batchSize)`(1~1000) 또는 `PIPELINE_EXECUTION_RECONCILIATION_ENABLED=true` 주기 점검으로 복구한다. 기본은 false이며 주기/배치는 각각 `PIPELINE_EXECUTION_INTERVAL_MS`(기본 30000), `PIPELINE_EXECUTION_BATCH_SIZE`(100)다. checked_at이 오래된 순서로 순환한다. 순번은 Job 원장에도 저장하므로 집계 projection 누락 복구 뒤에도 되돌아가지 않는다. 복구 CLI는 점검 스케줄도 강제로 끈다.
+
+실행 종료는 분석 완료가 아니다. SUCCEEDED여도 기존 Job 분석 상태 RUNNING과 영상당 활성 Job 제한을 유지한다. `analysis.completed`, 버전 활성화, 검색 준비 완료는 발행/선언하지 않는다. 후속 Analysis/Search는 수락한 executionId·resultKey로 결과를 적재하고 적재 확인을 연결한 뒤 별도 분석 상태 전이를 구현해야 한다. 기존 offset·운영 설정은 바꾸지 않았다.

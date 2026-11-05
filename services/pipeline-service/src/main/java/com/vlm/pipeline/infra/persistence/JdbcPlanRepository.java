@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class JdbcPlanRepository implements PlanRepository {
   private final JdbcTemplate jdbc;
+  private final com.vlm.pipeline.config.JobExecutionProperties policy;
 
   @Override
   public void lockPlan(UUID id) {
@@ -81,6 +82,12 @@ public class JdbcPlanRepository implements PlanRepository {
                 i.chunkLength(),
                 i.overlap(),
                 plan.status()));
+    jdbc.update(
+        "UPDATE jobs SET max_attempts=?,retryable_error_codes=string_to_array(?,','),retry_delay_ms=? WHERE id=?",
+        policy.maxAttempts(),
+        String.join(",", policy.retryableErrorCodes()),
+        policy.retryDelayMs(),
+        jobId);
     jdbc.batchUpdate(
         "INSERT INTO chunks(job_id,ordinal,owned_start,owned_end,expanded_start,expanded_end) VALUES (?,?,?,?,?,?)",
         plan.chunks().stream()

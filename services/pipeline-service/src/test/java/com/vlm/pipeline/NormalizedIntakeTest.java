@@ -74,7 +74,11 @@ class NormalizedIntakeTest {
     assertThat(job.chunks()).hasSize(3);
     assertThat(jdbc.queryForObject("SELECT count(*) FROM normalized_receipts", Integer.class))
         .isEqualTo(1);
-    assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events", Integer.class)).isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested'",
+                Integer.class))
+        .isZero();
   }
 
   @Test

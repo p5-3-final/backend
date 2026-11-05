@@ -80,7 +80,7 @@ public class JdbcDispatchRepository implements DispatchRepository {
         JOIN normalization_results n ON n.normalization_id=p.normalization_id AND n.result='READY'
         JOIN analysis_settings a ON a.version=p.settings_version
         LEFT JOIN dispatch_users u ON u.owner_id=n.owner_id
-        WHERE c.status='PENDING' AND j.status IN ('PLANNED','RUNNING')
+        WHERE (c.status='PENDING' OR (c.status='RETRY_PENDING' AND c.retry_at<=clock_timestamp())) AND j.status IN ('PLANNED','RUNNING')
           AND (SELECT count(*) FROM execution_slots s WHERE s.owner_id=n.owner_id AND s.released_at IS NULL) < ?
           AND (SELECT count(*) FROM execution_slots s WHERE s.source_id=j.source_id AND s.released_at IS NULL) < ?
         ORDER BY COALESCE(u.last_sequence,0), n.owner_id, j.created_at, j.id, c.ordinal
@@ -137,7 +137,7 @@ public class JdbcDispatchRepository implements DispatchRepository {
   @Override
   public void markDispatched(DispatchCandidate c) {
     if (jdbc.update(
-            "UPDATE chunks SET status='DISPATCHED',updated_at=now() WHERE id=? AND status='PENDING'",
+            "UPDATE chunks SET status='DISPATCHED',retry_at=NULL,updated_at=now() WHERE id=? AND status IN ('PENDING','RETRY_PENDING')",
             c.id())
         != 1) throw new IllegalStateException("Chunk is no longer pending");
     jdbc.update(

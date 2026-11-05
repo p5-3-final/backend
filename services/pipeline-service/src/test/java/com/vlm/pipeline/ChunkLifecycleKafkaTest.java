@@ -105,6 +105,7 @@ class ChunkLifecycleKafkaTest {
                   "chunk.requested.chunk-processor-v1.retry",
                   "chunk-processor-v1.dlq",
                   "chunk.execution.finished",
+                  "job.status",
                   "stage.timing")
               .map(n -> new NewTopic(n, 1, (short) 1))
               .toArray(NewTopic[]::new));
@@ -258,6 +259,10 @@ class ChunkLifecycleKafkaTest {
   }
 
   List<String> normalizedPayloads(int expected) {
+    return payloads("video.normalized", expected);
+  }
+
+  List<String> payloads(String topic, int expected) {
     var values = new ArrayList<String>();
     try (var consumer =
         new KafkaConsumer<String, String>(
@@ -272,7 +277,7 @@ class ChunkLifecycleKafkaTest {
                 StringDeserializer.class,
                 "enable.auto.commit",
                 false))) {
-      var tp = new TopicPartition("video.normalized", 0);
+      var tp = new TopicPartition(topic, 0);
       consumer.assign(List.of(tp));
       consumer.seekToBeginning(List.of(tp));
       long deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
@@ -280,6 +285,42 @@ class ChunkLifecycleKafkaTest {
         for (var r : consumer.poll(Duration.ofMillis(100))) values.add(r.value());
     }
     return values;
+  }
+
+  JsonNode publishedStatus(String status) throws Exception {
+    String eventId =
+        jdbc.queryForObject(
+            "SELECT event_id::text FROM outbox_events WHERE event_type='job.status' AND payload->'execution'->>'status'=? ORDER BY id DESC LIMIT 1",
+            String.class,
+            status);
+    try (var consumer =
+        new KafkaConsumer<String, String>(
+            Map.of(
+                "bootstrap.servers",
+                kafka.getBootstrapServers(),
+                "group.id",
+                "verify-status-" + UUID.randomUUID(),
+                "key.deserializer",
+                StringDeserializer.class,
+                "value.deserializer",
+                StringDeserializer.class,
+                "enable.auto.commit",
+                false))) {
+      var tp = new TopicPartition("job.status", 0);
+      consumer.assign(List.of(tp));
+      consumer.seekToBeginning(List.of(tp));
+      long deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos();
+      while (System.nanoTime() < deadline)
+        for (var r : consumer.poll(Duration.ofMillis(100))) {
+          var event = mapper.readTree(r.value());
+          if (event.path("eventId").asText().equals(eventId)) {
+            assertThat(r.key()).isEqualTo(event.path("sourceId").asText());
+            assertThat(event.path("sequence").asLong()).isPositive();
+            return event;
+          }
+        }
+    }
+    throw new AssertionError("Committed terminal job.status event did not reach Kafka: " + eventId);
   }
 
   @Test
@@ -363,6 +404,11 @@ class ChunkLifecycleKafkaTest {
           assertThat(artifact.get("verification").asBoolean()).isTrue();
           assertThat(artifact.get("actual_start_seconds").asText()).isNotBlank();
         }
+        // 상태 이벤트는 중간 불명 상태와 중복 전달이 추가될 수 있다. 커밋한 종료 eventId의 실제 도착을 검증한다.
+        var finished = publishedStatus("SUCCEEDED");
+        assertThat(finished.path("execution").path("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(finished.path("execution").path("progressPercent").asInt()).isEqualTo(100);
+        assertThat(finished.path("status").asText()).isEqualTo("RUNNING");
         send(upload);
         var replay = normalizedPayloads(2);
         assertThat(replay).hasSize(2);
@@ -400,6 +446,12 @@ class ChunkLifecycleKafkaTest {
                 });
         assertThat(count("SELECT count(*) FROM chunk_executions WHERE status='FAILED'"))
             .isEqualTo(2);
+        var failed = publishedStatus("FAILED");
+        assertThat(failed.path("execution").path("status").asText()).isEqualTo("FAILED");
+        assertThat(failed.path("failures")).hasSize(2);
+        assertThat(
+                count("SELECT count(*) FROM outbox_events WHERE event_type='analysis.completed'"))
+            .isZero();
       }
     } finally {
       Files.deleteIfExists(video);

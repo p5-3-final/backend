@@ -10,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecutionResultService {
   private final DispatchRepository dispatch;
   private final ResultRepository results;
+  private final JobExecutionService executions;
 
   @Transactional
   public String receive(ExecutionFinished event) {
     dispatch.lock();
-    return results.apply(event);
+    String decision = results.apply(event);
+    executions.refresh(event.jobId());
+    return decision;
   }
 }

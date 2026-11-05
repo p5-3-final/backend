@@ -11,9 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class NormalizedIntakeService {
   private final NormalizedReceiptRepository receipts;
   private final PlanningService planning;
+  private final JobExecutionService executions;
   private final com.vlm.pipeline.config.NormalizedIntakeProperties properties;
 
-  /** 수신 완료 표시와 계획은 같은 트랜잭션이다. 배정·Outbox는 생성하지 않는다. */
+  /** 수신 완료 표시와 계획은 같은 트랜잭션이다. 배정·요청 Outbox는 생성하지 않는다. */
   @Transactional
   public IntakeResult receive(
       NormalizedVideo event, AnalysisSettings settings, @Nullable String traceparent) {
@@ -36,6 +37,7 @@ public class NormalizedIntakeService {
       }
     }
     receipts.saveReceipt(event, jobId, traceparent);
+    if (jobId != null) executions.refresh(jobId);
     return new IntakeResult(event.eventId(), jobId, event.ready() ? "READY" : "REJECTED");
   }
 }
