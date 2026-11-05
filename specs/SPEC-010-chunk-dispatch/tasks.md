@@ -44,13 +44,17 @@ updated: 2026-11-05
 - 배정 8개 저장 경계(실행·슬롯·청크·Job·구성 순서·사용자 순서·Outbox·trace), 반환 3개 저장 경계의 전체 롤백을 검증했다.
 - 기존 데이터 대상 expand migration 및 마지막 125001ms 경계·비정수 ms 거부를 검증했다.
 - Kafka 전송 실패/전송 후 DB 확인 실패/새 Publisher 재발행, 검증 소비자 내구 원장의 같은 실행 중복/다른 입력 충돌·기한 후 신규 시작 거부를 검증했다.
-- `env -u DEBUG ./gradlew spotlessApply spotlessCheck build`: 전체 backend 468개 / Pipeline 134개 통과, 실패·skip 0. 기존 IDE DEBUG 환경변수만 제거했으며 검사 기준 변경 없음.
+- `env -u DEBUG ./gradlew spotlessApply spotlessCheck build`: 전체 backend 482개 / Pipeline 134개 통과, 실패·skip 0. 기존 IDE DEBUG 환경변수만 제거했으며 검사 기준 변경 없음.
 - 패키징 JAR 복구 CLI smoke: 실제 임시 PostgreSQL에서 알려지지 않은 실행 거부, STOPPED/FAILED/슬롯 반환, 재시도 멱등, 충돌 거부를 확인했다. 환경변수 enabled=true에서도 메시지 수신·배정·발행·웹을 강제로 끄는 것을 확인했다.
 - CI·Draft 해제·머지의 최종 상태는 구현 PR에서 확인한다. 결과가 나오기 전에 완료했다고 기록하지 않는다.
 
 - opt-in 주기 통합 검증을 추가했다. 수동 배정 호출 없이 실제 Kafka 발행·만료 대기·종료 확인·다음 청크 배정까지 확인했다(`DispatchScheduleTest`).
-- 최종 ai main `40356fe`의 새 normalize v2를 읽고 occurredAt 재생성 충돌을 확인했다. 기존 eventConflict 테스트에 해당 경우를 추가했으며 비교 정책·생산자 코드는 변경하지 않았다.
+- 최종 ai main `4f97114`의 새 normalize v2를 읽고 occurredAt 재생성 충돌을 확인했다. 기존 eventConflict 테스트에 해당 경우를 추가했으며 비교 정책·생산자 코드는 변경하지 않았다.
 
 - 추가 검증 중 호스트 JVM/컨테이너 DB의 서로 다른 wall clock으로 검증 소비자가 유효 요청을 만료로 보는 실패를 확인했다. 검증 소비자의 수신 시각을 생성자와 동일한 실제 DB clock_timestamp에서 읽도록 정렬했다. 기한 연장이나 만료 비교 완화 없이 기한 후 신규 점유 거부도 그대로 검증한다.
 
 구현 커밋: `1788c88`. 이후 자동 주기·producer 재처리 충돌 경계 테스트와 연결 상태 문서를 보완했다.
+
+- 최신 main의 ADR-0013 계약 경로·고정 CI 및 공통 구성 변경을 병합했다. 구현과 무관한 서비스 코드는 재작성하지 않고 원래 main 변경을 유지했다.
+
+최신 main 통합 후 고정 계약 2.0.1(체크섬 검증) 기준 `spotlessCheck build` 통과: 전체 482개 / Pipeline 134개, 실패·skip 0. 이전 468개 결과는 main 통합 전 기록이며 새 공통/다른 서비스 테스트를 포함한 최종 수치는 482개다.

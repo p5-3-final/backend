@@ -152,6 +152,6 @@ java -Dloader.main=com.vlm.pipeline.config.DispatchRecoveryCommand \
 
 ### 현재 연결과 제한
 
-작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `40356fe`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. 다만 재처리 때 같은 eventId의 occurredAt을 새 시각으로 만들므로 SPEC-008의 전체 payload 비교에서 EVENT_CONFLICT가 발생한다. 해당 경계는 자동화 테스트로 확인했으며 producer가 최초 결과 이벤트를 불변하게 재사용하도록 보완해야 한다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
+작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `4f97114`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. 다만 재처리 때 같은 eventId의 occurredAt을 새 시각으로 만들므로 SPEC-008의 전체 payload 비교에서 EVENT_CONFLICT가 발생한다. 해당 경계는 자동화 테스트로 확인했으며 producer가 최초 결과 이벤트를 불변하게 재사용하도록 보완해야 한다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
 
 실제 chunk-processor·영상 추출·AI·완료/실패 이벤트·정상 완료 자동 슬롯 반환·heartbeat/fencing·자동 재시도·Job 완료 판정은 후속이다. 현재는 배정→검증용 Kafka 소비까지 동작하며, 슬롯 자동 순환이 완성된 처리 파이프라인은 아니다. 기한 후 외부 종료 확인과 복구 명령으로 수동 반환할 수 있다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
