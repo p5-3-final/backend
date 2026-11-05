@@ -74,8 +74,7 @@ class NormalizedIntakeTest {
     assertThat(job.chunks()).hasSize(3);
     assertThat(jdbc.queryForObject("SELECT count(*) FROM normalized_receipts", Integer.class))
         .isEqualTo(1);
-    assertThat(jdbc.queryForObject("SELECT to_regclass('outbox_events')::text", String.class))
-        .isNull();
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events", Integer.class)).isZero();
   }
 
   @Test
@@ -96,12 +95,15 @@ class NormalizedIntakeTest {
     assertThat(count("normalized_receipts")).isEqualTo(2);
   }
 
-  @Test
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"height", "occurredAt"})
   @DisplayName("[SPEC-008 R-6] 같은 eventId의 변경 입력은 덮어쓰지 않고 충돌한다")
-  void eventConflict() throws Exception {
+  void eventConflict(String field) throws Exception {
     var json = ready();
     intake.receive(parse(json), settings, null);
-    json.put("height", 720);
+    if (field.equals("height")) json.put(field, 720);
+    else
+      json.put(field, java.time.Instant.parse(json.get(field).asText()).plusSeconds(1).toString());
     assertThatThrownBy(() -> intake.receive(parse(json), settings, null))
         .isInstanceOfSatisfying(
             com.vlm.common.error.BusinessException.class,
