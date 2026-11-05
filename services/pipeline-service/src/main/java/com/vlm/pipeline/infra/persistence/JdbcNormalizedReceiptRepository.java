@@ -50,7 +50,7 @@ public class JdbcNormalizedReceiptRepository implements NormalizedReceiptReposit
   public void ensureNormalization(NormalizedVideo event) {
     var existing =
         jdbc.queryForList(
-            "SELECT metadata=CAST(? AS jsonb) FROM normalization_results WHERE normalization_id=?",
+            "SELECT (metadata - 'producedAt')=CAST(? AS jsonb) FROM normalization_results WHERE normalization_id=?",
             Boolean.class,
             event.metadata(),
             event.normalizationId());

@@ -96,12 +96,13 @@ class NormalizedIntakeTest {
   }
 
   @org.junit.jupiter.params.ParameterizedTest
-  @org.junit.jupiter.params.provider.ValueSource(strings = {"height", "occurredAt"})
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"height", "occurredAt", "producedAt"})
   @DisplayName("[SPEC-008 R-6] 같은 eventId의 변경 입력은 덮어쓰지 않고 충돌한다")
   void eventConflict(String field) throws Exception {
     var json = ready();
     intake.receive(parse(json), settings, null);
     if (field.equals("height")) json.put(field, 720);
+    else if (field.equals("producedAt")) json.put(field, "2026-11-05T01:00:00Z");
     else
       json.put(field, java.time.Instant.parse(json.get(field).asText()).plusSeconds(1).toString());
     assertThatThrownBy(() -> intake.receive(parse(json), settings, null))
@@ -304,5 +305,18 @@ class NormalizedIntakeTest {
   int count(String table) {
     return Objects.requireNonNull(
         jdbc.queryForObject("SELECT count(*) FROM " + table, Integer.class));
+  }
+
+  @Test
+  @DisplayName("[SPEC-008 R-5] 새 이벤트의 발행 시각은 불변 정규화 메타데이터 비교에서 제외한다")
+  void envelopePublicationDoesNotChangeNormalization() throws Exception {
+    var json = ready();
+    json.put("producedAt", "2026-11-05T01:00:00Z");
+    var first = intake.receive(parse(json), settings, null);
+    json.put("eventId", UUID.randomUUID().toString());
+    json.put("producedAt", "2026-11-05T02:00:00Z");
+    assertThat(intake.receive(parse(json), settings, null).jobId()).isEqualTo(first.jobId());
+    assertThat(count("jobs")).isEqualTo(1);
+    assertThat(count("normalized_receipts")).isEqualTo(2);
   }
 }

@@ -176,6 +176,8 @@ public class JdbcDispatchRepository implements DispatchRepository {
             "SELECT * FROM chunk_executions WHERE execution_id=? FOR UPDATE", executionId);
     if (rows.isEmpty()) throw new IllegalArgumentException("Unknown execution");
     var r = rows.getFirst();
+    if (Objects.equals(r.get("status"), "SUCCEEDED") || Objects.equals(r.get("status"), "FAILED"))
+      return;
     if (Objects.equals(r.get("status"), "STOPPED")) {
       if (!Objects.equals(r.get("confirmation_id"), confirmationId)
           || !Objects.equals(r.get("evidence"), evidence))

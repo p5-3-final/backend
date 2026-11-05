@@ -8,3 +8,5 @@
 .env
 .env.*
 .service-contracts
+
+.worker-source
