@@ -152,6 +152,18 @@ java -Dloader.main=com.vlm.pipeline.config.DispatchRecoveryCommand \
 
 ### 현재 연결과 제한
 
-작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `4f97114`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. 다만 재처리 때 같은 eventId의 occurredAt을 새 시각으로 만들므로 SPEC-008의 전체 payload 비교에서 EVENT_CONFLICT가 발생한다. 해당 경계는 자동화 테스트로 확인했으며 producer가 최초 결과 이벤트를 불변하게 재사용하도록 보완해야 한다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
+작업 중 ai #12로 normalize v2 구현이 머지됐고 docs #57로 로컬 compose에 추가됐다. 최종 확인한 ai main `4f97114`는 v2 식별자·정수 ms·불변 key 형식으로 발행한다. SPEC-014에서 최초 occurredAt·producedAt을 영속 보존하도록 보완하고 실제 producer 재전달까지 검증했다. 과거 원 payload가 없는 기록은 운영 확인이 필요하다. SPEC-008 수신과 이번 배정은 기본 비활성이고 root local compose에도 pipeline 실행이 없다. 테스트 v2 입력을 실제 정규화 연결로 취급하지 않는다.
 
-실제 chunk-processor·영상 추출·AI·완료/실패 이벤트·정상 완료 자동 슬롯 반환·heartbeat/fencing·자동 재시도·Job 완료 판정은 후속이다. 현재는 배정→검증용 Kafka 소비까지 동작하며, 슬롯 자동 순환이 완성된 처리 파이프라인은 아니다. 기한 후 외부 종료 확인과 복구 명령으로 수동 반환할 수 있다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
+SPEC-010은 배정→검증용 Kafka 소비 범위였고, 실제 worker·추출·종료 이벤트·정상 슬롯 반환은 아래 SPEC-014에서 연결한다. 실제 AI adapter·heartbeat/fencing·자동 재시도·전체 Job 완료는 후속이다. 불명 실행은 기한만으로 반환하지 않고 외부 종료 확인과 복구 명령을 사용한다. 명세·계약은 docs SPEC-010/ADR-0009, 계획·tasks는 `specs/SPEC-010-chunk-dispatch/`를 참고한다.
+
+## Pipeline 종료 결과와 슬롯 자동 반환 (SPEC-014)
+
+`PIPELINE_RESULTS_ENABLED=false`가 기본이다. 별도 결과 그룹으로 chunk.execution.finished를 받아 원 요청의 실행·청크·Job·정규화·source·owner 식별을 검증한다. 수신 기록·실행 SUCCEEDED/FAILED·청크 PROCESSED/FAILED·슬롯 반환은 같은 DB 트랜잭션이다. DB 커밋 성공 후 offset을 처리한다. PROCESSED는 worker 결과 준비를 뜻하며 downstream 적재/전체 Job 완료는 아니다.
+
+동일 eventId는 전체 payload를 비교한다. 새 이벤트의 같은 현재 실행 결과는 의미가 같을 때만 중복으로 기록하고, 다른 결과는 충돌이다. 더 새 시도가 있거나 이미 STOPPED인 실행은 IGNORED로 기록해 새 실행/슬롯을 바꾸지 않는다. 자동 결과와 복구 CLI는 같은 DB 잠금을 공유한다. 결과가 먼저 종료하면 CLI는 no-op, CLI가 먼저면 늦은 결과는 무시한다. 만료만으로 종료하지 않으며 실제 결과가 도착하지 않은 RECOVERY_REQUIRED는 슬롯을 유지한다.
+
+normalize는 최초 occurredAt과 producedAt을 스냅샷에 함께 저장하고 공통 Publisher는 보존한다. 동일 eventId 입력 변경은 계속 충돌이다. 다른 eventId의 같은 정규화 결과는 producedAt 같은 전송 메타데이터를 결과 내용으로 취급하지 않아 기존 Job을 재사용한다. 과거 producedAt 없는 스냅샷의 최초 payload/운영 정합은 자동 추정하지 않는다.
+
+실제 연결 검증은 normalize 원본 업로드부터 worker의 실영상 추출·검증 추론 대역·종료 Kafka·Pipeline 반환·다음 청크 배정까지 수행한다. 성공/실패와 DB 실패/offset 유지·해소 후 재수신도 확인한다. 추론은 test 전용이며 실제 AI adapter/출력 스키마·불명 RUNNING의 자동 재실행·전체 Job 완료/배포는 후속이다. 운영 플래그와 기존 offset은 변경하지 않았다.
+
+통합 테스트는 ai 레포의 고정 worker 소스로 runtime 이미지를 빌드한다. 작업 공간에서는 `../ai`를 사용하고 독립 checkout에서는 `CHUNK_PROCESSOR_SOURCE_DIR`로 소스 위치를 지정한다. CI는 검증된 ai 커밋을 고정 checkout한다. 애플리케이션 코드는 다른 서비스의 코드나 DB에 의존하지 않는다.

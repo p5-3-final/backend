@@ -63,6 +63,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # 실제 Kafka 연결 테스트는 검증·머지된 worker 소스를 고정해 이미지를 빌드한다(ai #34).
+      - name: chunk processor integration source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: p5-3-final/ai
+          ref: 5408a90b67f15d3af187d9083709c2c6820db141
+          path: .worker-source
+          persist-credentials: false
       # 계약 테스트가 서비스 간 계약을 읽는다. docs main이 아니라 service-contracts.lock 버전을 받는다
       # (docs ADR-0013, public 릴리스라 토큰이 필요 없다).
       - name: service contracts
@@ -78,3 +86,4 @@ jobs:
         run: ./gradlew build
         env:
           CONTRACTS_DIR: ${{ github.workspace }}/.service-contracts/service-contracts
+          CHUNK_PROCESSOR_SOURCE_DIR: ${{ github.workspace }}/.worker-source

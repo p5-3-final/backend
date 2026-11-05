@@ -36,6 +36,10 @@ pipeline:
     retry-interval-ms: ${PIPELINE_INTAKE_RETRY_INTERVAL_MS:1000}
     retry-attempts: ${PIPELINE_INTAKE_RETRY_ATTEMPTS:2}
 
+  results:
+    enabled: ${PIPELINE_RESULTS_ENABLED:false}
+    group-id: ${PIPELINE_RESULTS_GROUP_ID:pipeline-execution-results-v1}
+
   dispatch:
     enabled: ${PIPELINE_DISPATCH_ENABLED:false}
     user-limit: ${PIPELINE_DISPATCH_USER_LIMIT:2}

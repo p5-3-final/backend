@@ -66,7 +66,8 @@ public class NormalizedEventParser {
         validateKey(text(node, "hlsPlaylistKey"), prefix, ".m3u8");
       }
       ObjectNode metadata = ((ObjectNode) node).deepCopy();
-      metadata.remove(java.util.List.of("eventId", "occurredAt", "eventType", "schemaVersion"));
+      metadata.remove(
+          java.util.List.of("eventId", "occurredAt", "eventType", "schemaVersion", "producedAt"));
       return new NormalizedVideo(
           eventId,
           normalizationId,

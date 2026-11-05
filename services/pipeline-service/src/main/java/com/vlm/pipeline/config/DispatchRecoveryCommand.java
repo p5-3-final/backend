@@ -19,6 +19,7 @@ public final class DispatchRecoveryCommand {
             .run(
                 "--spring.main.web-application-type=none",
                 "--pipeline.intake.enabled=false",
+                "--pipeline.results.enabled=false",
                 "--pipeline.dispatch.enabled=false",
                 "--vlm.outbox.scheduling-enabled=false")) {
       context

@@ -23,3 +23,6 @@ out/
 
 # 서비스 간 계약 받기 캐시(scripts/fetch-service-contracts.sh)
 .service-contracts/
+
+# 실제 worker 통합 테스트의 CI 고정 source checkout
+.worker-source/
