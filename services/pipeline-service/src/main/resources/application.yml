@@ -40,6 +40,14 @@ pipeline:
     enabled: ${PIPELINE_RESULTS_ENABLED:false}
     group-id: ${PIPELINE_RESULTS_GROUP_ID:pipeline-execution-results-v1}
 
+  execution:
+    reconciliation-enabled: ${PIPELINE_EXECUTION_RECONCILIATION_ENABLED:false}
+    interval-ms: ${PIPELINE_EXECUTION_INTERVAL_MS:30000}
+    batch-size: ${PIPELINE_EXECUTION_BATCH_SIZE:100}
+    max-attempts: ${PIPELINE_EXECUTION_MAX_ATTEMPTS:1}
+    retryable-error-codes: ${PIPELINE_EXECUTION_RETRYABLE_ERROR_CODES:}
+    retry-delay-ms: ${PIPELINE_EXECUTION_RETRY_DELAY_MS:1000}
+
   dispatch:
     enabled: ${PIPELINE_DISPATCH_ENABLED:false}
     user-limit: ${PIPELINE_DISPATCH_USER_LIMIT:2}

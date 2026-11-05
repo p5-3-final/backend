@@ -1,6 +1,7 @@
 plugins { id("vlm.spring-boot-service") }
 dependencies {
     implementation(project(":libs:common-core"))
+    implementation(project(":libs:common-web"))
     implementation(project(":libs:common-messaging"))
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -26,6 +27,7 @@ tasks.processResources {
             "video.normalized.v2.schema.json",
             "chunk.requested.schema.json",
             "chunk.execution.finished.schema.json",
+            "job.status.schema.json",
         )
         into("contracts/events")
     }

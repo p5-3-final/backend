@@ -47,6 +47,11 @@ class DispatchKafkaTest {
   @TestConfiguration(proxyBeanMethods = false)
   static class Topics {
     @Bean
+    org.apache.kafka.clients.admin.NewTopic jobStatusTopic() {
+      return new org.apache.kafka.clients.admin.NewTopic("job.status", 1, (short) 1);
+    }
+
+    @Bean
     org.apache.kafka.clients.admin.NewTopic requestTopic() {
       return new org.apache.kafka.clients.admin.NewTopic("chunk.requested", 1, (short) 1);
     }
@@ -55,6 +60,7 @@ class DispatchKafkaTest {
   @Autowired DispatchService dispatch;
   @Autowired DispatchRepository repository;
   @Autowired OutboxRecorder outbox;
+  @Autowired com.vlm.pipeline.application.JobExecutionService executions;
   @Autowired NormalizedIntakeService intake;
   @Autowired NormalizedEventParser parser;
   @Autowired DispatchRecoveryService recovery;
@@ -108,16 +114,21 @@ class DispatchKafkaTest {
         parser.parse(e.get("sourceId").asText(), e.toString()),
         new AnalysisSettings("dispatch-v1", "local", "infer-v1"),
         "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
-    return Objects.requireNonNull(
-            tx.execute(
-                t ->
-                    new DispatchService(
-                            repository,
-                            outbox,
-                            new com.vlm.pipeline.config.DispatchProperties(
-                                false, 2, 1, 4, window, 1000, 100))
-                        .dispatchOne()))
-        .orElseThrow();
+    UUID assigned =
+        Objects.requireNonNull(
+                tx.execute(
+                    t ->
+                        new DispatchService(
+                                repository,
+                                outbox,
+                                new com.vlm.pipeline.config.DispatchProperties(
+                                    false, 2, 1, 4, window, 1000, 100),
+                                executions)
+                            .dispatchOne()))
+            .orElseThrow();
+    // 이 테스트는 요청 Publisher의 재전달을 검증한다. 집계 발행은 실제 워커 통합 테스트가 검증한다.
+    jdbc.update("UPDATE outbox_events SET published_at=now() WHERE event_type='job.status'");
+    return assigned;
   }
 
   List<ConsumerRecord<String, String>> read(UUID execution, int expected) throws Exception {
@@ -167,7 +178,8 @@ class DispatchKafkaTest {
         .isEqualTo("infer-v1");
     assertThat(
             jdbc.queryForObject(
-                "SELECT count(*) FROM outbox_events WHERE published_at IS NOT NULL", Integer.class))
+                "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND published_at IS NOT NULL",
+                Integer.class))
         .isEqualTo(1);
     assertThat(
             jdbc.queryForObject(
@@ -191,16 +203,23 @@ class DispatchKafkaTest {
     var failed = new OutboxPublisher(jdbc, tx, operations, properties);
     try {
       failed.publishPending();
-      assertThat(jdbc.queryForObject("SELECT attempts FROM outbox_events", Integer.class))
+      assertThat(
+              jdbc.queryForObject(
+                  "SELECT attempts FROM outbox_events WHERE event_type='chunk.requested'",
+                  Integer.class))
           .isEqualTo(1);
       assertThat(
               jdbc.queryForObject(
-                  "SELECT count(*) FROM outbox_events WHERE published_at IS NULL", Integer.class))
+                  "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND published_at IS NULL",
+                  Integer.class))
           .isEqualTo(1);
       var restarted = new OutboxPublisher(jdbc, tx, new KafkaTemplate<>(producer), properties);
       restarted.publishPending();
       assertThat(read(execution, 1)).hasSize(1);
-      assertThat(jdbc.queryForObject("SELECT attempts FROM outbox_events", Integer.class))
+      assertThat(
+              jdbc.queryForObject(
+                  "SELECT attempts FROM outbox_events WHERE event_type='chunk.requested'",
+                  Integer.class))
           .isEqualTo(2);
       assertThat(jdbc.queryForObject("SELECT count(*) FROM chunk_executions", Integer.class))
           .isEqualTo(1);
@@ -220,7 +239,8 @@ class DispatchKafkaTest {
           .isInstanceOf(org.springframework.dao.DataAccessException.class);
       assertThat(
               jdbc.queryForObject(
-                  "SELECT count(*) FROM outbox_events WHERE published_at IS NULL", Integer.class))
+                  "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND published_at IS NULL",
+                  Integer.class))
           .isEqualTo(1);
     } finally {
       jdbc.execute("ALTER TABLE outbox_events DROP CONSTRAINT publish_failure");

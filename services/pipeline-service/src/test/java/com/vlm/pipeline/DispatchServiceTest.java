@@ -66,7 +66,11 @@ class DispatchServiceTest {
 
   int count(String table) {
     return Objects.requireNonNull(
-        jdbc.queryForObject("SELECT count(*) FROM " + table, Integer.class));
+        jdbc.queryForObject(
+            "SELECT count(*) FROM "
+                + table
+                + (table.equals("outbox_events") ? " WHERE event_type='chunk.requested'" : ""),
+            Integer.class));
   }
 
   @Test
@@ -86,7 +90,10 @@ class DispatchServiceTest {
     assertThat(row.get("plan_id")).isEqualTo(job);
     var payload =
         new ObjectMapper()
-            .readTree(jdbc.queryForObject("SELECT payload::text FROM outbox_events", String.class));
+            .readTree(
+                jdbc.queryForObject(
+                    "SELECT payload::text FROM outbox_events WHERE event_type='chunk.requested'",
+                    String.class));
     assertThat(payload.get("executionId").asText()).isEqualTo(execution.toString());
     assertThat(payload.get("requestId")).isEqualTo(payload.get("executionId"));
     assertThat(payload.get("eventId")).isNotEqualTo(payload.get("executionId"));
@@ -99,6 +106,7 @@ class DispatchServiceTest {
 
   @Autowired com.vlm.pipeline.domain.DispatchRepository repository;
   @Autowired com.vlm.common.messaging.OutboxRecorder outbox;
+  @Autowired com.vlm.pipeline.application.JobExecutionService executions;
   @Autowired org.springframework.transaction.support.TransactionTemplate tx;
   @Autowired org.springframework.context.ApplicationContext context;
 
@@ -107,7 +115,8 @@ class DispatchServiceTest {
         new com.vlm.pipeline.config.DispatchProperties(
             false, user, source, global, 300000, 1000, 100);
     return Objects.requireNonNull(
-        tx.execute(t -> new DispatchService(repository, outbox, properties).dispatchOne()));
+        tx.execute(
+            t -> new DispatchService(repository, outbox, properties, executions).dispatchOne()));
   }
 
   @Test
@@ -148,7 +157,7 @@ class DispatchServiceTest {
     assertThat(dispatch.dispatchOne()).isEmpty();
     assertThat(
             jdbc.queryForObject(
-                "SELECT count(*) FROM outbox_events WHERE (payload->>'jobId')::uuid=?",
+                "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND (payload->>'jobId')::uuid=?",
                 Integer.class,
                 job))
         .isEqualTo(1);
@@ -408,7 +417,7 @@ class DispatchServiceTest {
         new ObjectMapper()
             .readTree(
                 jdbc.queryForObject(
-                    "SELECT payload::text FROM outbox_events ORDER BY id DESC LIMIT 1",
+                    "SELECT payload::text FROM outbox_events WHERE event_type='chunk.requested' ORDER BY id DESC LIMIT 1",
                     String.class));
     assertThat(payload.at("/ownedRange/startMs").asLong()).isEqualTo(120000);
     assertThat(payload.at("/ownedRange/endMs").asLong()).isEqualTo(125001);
@@ -416,7 +425,8 @@ class DispatchServiceTest {
     assertThat(payload.at("/processingRange/endMs").asLong()).isEqualTo(125001);
     assertThat(
             jdbc.queryForObject(
-                "SELECT count(DISTINCT payload->>'chunkId') FROM outbox_events", Integer.class))
+                "SELECT count(DISTINCT payload->>'chunkId') FROM outbox_events WHERE event_type='chunk.requested'",
+                Integer.class))
         .isEqualTo(3);
   }
 

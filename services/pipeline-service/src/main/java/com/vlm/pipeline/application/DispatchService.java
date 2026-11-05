@@ -15,6 +15,7 @@ public class DispatchService {
   private final DispatchRepository repository;
   private final OutboxRecorder outbox;
   private final DispatchProperties properties;
+  private final JobExecutionService executions;
 
   /** 한 건 배정만 잠근다. Kafka I/O는 기존 Publisher의 별도 트랜잭션이다. */
   @Transactional
@@ -26,6 +27,7 @@ public class DispatchService {
         properties.globalLimit(),
         properties.startWindowMs());
     repository.expire();
+    executions.refreshLive();
     var selected =
         repository.next(properties.userLimit(), properties.sourceLimit(), properties.globalLimit());
     if (selected.isEmpty()) return Optional.empty();
@@ -58,6 +60,7 @@ public class DispatchService {
     repository.advanceFairness(c.ownerId());
     outbox.record(eventId, "chunk.requested", c.sourceId(), request);
     repository.preserveTrace(eventId, c.traceparent());
+    executions.refresh(c.jobId());
     return Optional.of(executionId);
   }
 }

@@ -42,6 +42,11 @@ class DispatchScheduleTest {
   @TestConfiguration(proxyBeanMethods = false)
   static class Topics {
     @Bean
+    org.apache.kafka.clients.admin.NewTopic jobStatusTopic() {
+      return new org.apache.kafka.clients.admin.NewTopic("job.status", 1, (short) 1);
+    }
+
+    @Bean
     org.apache.kafka.clients.admin.NewTopic requestTopic() {
       return new org.apache.kafka.clients.admin.NewTopic("chunk.requested", 1, (short) 1);
     }
@@ -78,7 +83,9 @@ class DispatchScheduleTest {
         .atMost(Duration.ofSeconds(30))
         .untilAsserted(
             () -> {
-              assertThat(count("SELECT count(*) FROM outbox_events WHERE published_at IS NOT NULL"))
+              assertThat(
+                      count(
+                          "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND published_at IS NOT NULL"))
                   .isEqualTo(1);
               assertThat(count("SELECT count(*) FROM execution_slots WHERE released_at IS NULL"))
                   .isEqualTo(1);
@@ -96,13 +103,16 @@ class DispatchScheduleTest {
                     .isEqualTo(1));
     assertThat(count("SELECT count(*) FROM execution_slots WHERE released_at IS NULL"))
         .isEqualTo(1);
-    assertThat(count("SELECT count(*) FROM outbox_events")).isEqualTo(1);
+    assertThat(count("SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested'"))
+        .isEqualTo(1);
     recovery.confirmStopped(first, UUID.randomUUID(), "verification:worker-never-started");
     await()
         .atMost(Duration.ofSeconds(30))
         .untilAsserted(
             () -> {
-              assertThat(count("SELECT count(*) FROM outbox_events WHERE published_at IS NOT NULL"))
+              assertThat(
+                      count(
+                          "SELECT count(*) FROM outbox_events WHERE event_type='chunk.requested' AND published_at IS NOT NULL"))
                   .isEqualTo(2);
               assertThat(count("SELECT count(*) FROM execution_slots WHERE released_at IS NULL"))
                   .isEqualTo(1);
