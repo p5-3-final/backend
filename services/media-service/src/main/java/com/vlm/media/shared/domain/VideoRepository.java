@@ -14,6 +14,9 @@ public interface VideoRepository {
   /** 소유자의 삭제되지 않은 영상을 만든 시각 최신순으로 조회한다. */
   VideoPage findVisibleByOwner(UUID ownerId, int page, int size);
 
+  /** 세션에 속한 "삭제"가 아닌 영상 수. */
+  long countVisibleInSession(UUID sessionId);
+
   /** 행을 잠그고 조회한다. 같은 영상의 상태 전이를 한 요청씩 처리하려고 쓴다(SPEC-003 NFR-2). */
   Optional<Video> findByPublicIdForUpdate(UUID publicId);
 

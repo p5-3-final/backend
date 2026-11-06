@@ -26,7 +26,7 @@ updated: 2026-11-06
 - [x] T004 [R-2] 이름 없음·101자, 현장 101자면 400 `MEDIA_INVALID_REQUEST` — 테스트 `WorkSessionApiTest`, 구현 `CreateWorkSessionRequest` (T003에서 요청 DTO 검증을 함께 넣어 Red 없이 통과)
 - [x] T005 [R-6] [R-13] 세션·역할로 업로드 자리 발급하면 영상이 세션에 들어가고 응답 `session`에 담김 — 테스트 `M/test/.../video/api/CreateVideoSessionApiTest.java`, 구현 `shared/domain/{Video,SessionRole}`, `video/api/{CreateVideoRequest,VideoResponse,VideoController}`, `video/application/CreateVideoService`
 - [x] T006 [R-11] [R-12] `video.uploaded`에 세션이 있으면 `sessionId`·`role`, 없으면 두 필드 없음(계약 스키마 통과) — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `video/application/event/VideoUploaded` (R-12는 세션 필드가 없던 때부터 통과)
-- [ ] T007 [R-10] 영상 100개인 세션이면 409 `MEDIA_SESSION_FULL`, 삭제한 영상은 세지 않음 — 테스트 `CreateVideoSessionApiTest`, 구현 `CreateVideoService`, `shared/domain/{MediaErrorCode,VideoRepository}`
+- [x] T007 [R-10] 영상 100개인 세션이면 409 `MEDIA_SESSION_FULL`, 삭제한 영상은 세지 않음 — 테스트 `CreateVideoSessionApiTest`, 구현 `CreateVideoService`, `shared/domain/{MediaErrorCode,VideoRepository}`
 
 ## Phase 2: US-2 세션 확인 (P1)
 

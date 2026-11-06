@@ -43,6 +43,11 @@ class VideoRepositoryAdapter implements VideoRepository {
   }
 
   @Override
+  public long countVisibleInSession(UUID sessionId) {
+    return jpaRepository.countBySessionIdAndStatusNot(sessionId, VideoStatus.DELETED);
+  }
+
+  @Override
   public Optional<Video> findByPublicIdForUpdate(UUID publicId) {
     return jpaRepository.findWithLockByPublicId(publicId);
   }
