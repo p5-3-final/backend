@@ -34,19 +34,4 @@ public class RetentionSetting {
   @UpdateTimestamp private Instant updatedAt;
 
   protected RetentionSetting() {}
-
-  private RetentionSetting(UUID ownerId, boolean defaultConsent, Instant now) {
-    this.ownerId = ownerId;
-    this.defaultConsent = defaultConsent;
-    this.createdAt = now;
-    this.updatedAt = now;
-  }
-
-  public static RetentionSetting create(UUID ownerId, boolean defaultConsent, Instant now) {
-    return new RetentionSetting(ownerId, defaultConsent, now);
-  }
-
-  public void changeDefaultConsent(boolean defaultConsent) {
-    this.defaultConsent = defaultConsent;
-  }
 }

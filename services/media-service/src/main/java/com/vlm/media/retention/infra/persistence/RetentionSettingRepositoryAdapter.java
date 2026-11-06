@@ -14,8 +14,8 @@ class RetentionSettingRepositoryAdapter implements RetentionSettingRepository {
   private final RetentionSettingJpaRepository jpaRepository;
 
   @Override
-  public RetentionSetting save(RetentionSetting setting) {
-    return jpaRepository.save(setting);
+  public void upsert(UUID ownerId, boolean defaultConsent) {
+    jpaRepository.upsert(ownerId, defaultConsent);
   }
 
   @Override
