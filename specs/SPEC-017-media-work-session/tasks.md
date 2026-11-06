@@ -43,7 +43,7 @@ updated: 2026-11-06
 ## Phase 4: 마무리
 
 - [x] T014 [P] [NFR-2] 영상 99개인 세션에 동시 10건이면 1건만 성공 — 테스트 `M/test/.../video/application/ConcurrentSessionVideoTest.java`, 구현 `CreateVideoService`(세션 행 잠금) (T007에서 행 잠금을 넣어 통과. 잠금을 뺀 조회로 바꾸면 실패하는 것을 확인)
-- [ ] T015 [P] 세션 API 3개와 세션 지정 업로드 자리 발급·404·409 응답이 계약 1.3.0과 일치 — 테스트 `MediaContractTest`
+- [x] T015 [P] 세션 API 3개와 세션 지정 업로드 자리 발급·404·409 응답이 계약 1.3.1과 일치 — 테스트 `MediaContractTest`
 - [ ] T016 [P] [NFR-1] 세션 만들기·목록·상세(영상 100개) p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
 - [ ] T017 README API 목록에 세션 API 추가
 
