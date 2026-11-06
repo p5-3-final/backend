@@ -94,6 +94,19 @@ class VideoDeletedEventTest {
     assertThat(((Timestamp) record.get("retain_until")).toInstant()).isEqualTo(retainUntil);
   }
 
+  @Test
+  @DisplayName("[SPEC-018 R-10] 동의하지 않은 영상을 지우면 video.deleted에 보존 정보가 없고 최소 기록도 없다")
+  void unconsentedVideoIsNotRetained() throws Exception {
+    String videoId = newVideo();
+
+    mvc.perform(asUser(deleteRequest(videoId), ownerId));
+
+    JsonNode payload =
+        json.readTree(jdbc.queryForObject("SELECT payload::text FROM outbox_events", String.class));
+    assertThat(payload.has("retention")).isFalse();
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM retained_videos", Integer.class)).isZero();
+  }
+
   private String consentedVideo() throws Exception {
     return MediaApi.json(
             mvc.perform(

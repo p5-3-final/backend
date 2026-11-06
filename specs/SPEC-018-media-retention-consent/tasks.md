@@ -32,7 +32,7 @@ updated: 2026-11-06
 
 ## Phase 2: US-2 동의하지 않은 영상 삭제 (P1)
 
-- [ ] T010 [R-10] 미동의 영상 삭제 시 `retention` 없음, 최소 기록 없음 — 테스트 `VideoDeletedEventTest`, 구현 `DeleteVideoService`
+- [x] T010 [R-10] 미동의 영상 삭제 시 `retention` 없음, 최소 기록 없음 — 테스트 `VideoDeletedEventTest`, 구현 `DeleteVideoService`
 
 ## Phase 3: US-3 동의 철회 (P1)
 
