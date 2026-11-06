@@ -15,26 +15,43 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.LogLevel;
+import org.springframework.boot.logging.LoggingSystem;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpMethod;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 @IntegrationTest
 @ExtendWith(OutputCaptureExtension.class)
-@TestPropertySource(properties = "logging.level.com.vlm=DEBUG")
 class SensitiveLogTest {
 
   private static final Pattern SIGNATURE = Pattern.compile("X-Amz-Signature=([^&]+)");
 
+  private static final String LOGGER = "com.vlm";
+
+  // 속성으로 로그 수준을 바꾸면 Spring 컨텍스트와 저장소 컨테이너가 하나 더 뜨고, 테스트 보조 클라이언트
+  // (TestcontainersConfiguration.s3())가 새 컨테이너를 가리켜 다른 테스트가 어긋난다. 같은 컨텍스트에서 수준만 바꾼다.
+  @Autowired LoggingSystem logging;
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
   @Autowired ReviewFixtures reviews;
+
+  @BeforeEach
+  void enableDebug() {
+    logging.setLogLevel(LOGGER, LogLevel.DEBUG);
+  }
+
+  @AfterEach
+  void restoreLevel() {
+    logging.setLogLevel(LOGGER, null);
+  }
 
   @Test
   @DisplayName("[SPEC-029 R-5] 근거 프레임 서명 주소의 서명을 로그에 남기지 않는다")

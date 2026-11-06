@@ -84,6 +84,6 @@ updated: 2026-11-07
 ## 완료 조건 (Definition of Done)
 
 - [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과(T025는 계약 수정 뒤)
-- [ ] lint, 타입 검사, 전체 테스트 통과(`./gradlew spotlessCheck build`)
-- [ ] plan.md와 실제 구현이 일치함
+- [x] lint, 타입 검사, 전체 테스트 통과(`./gradlew spotlessCheck build`)
+- [x] plan.md와 실제 구현이 일치함
 - [ ] docs 레포 spec 상태 갱신 (`Implementing` / `Done`)
