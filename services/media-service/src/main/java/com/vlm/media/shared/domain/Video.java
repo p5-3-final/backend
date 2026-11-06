@@ -70,6 +70,12 @@ public class Video {
 
   private @Nullable Instant normalizedAt;
 
+  // 세션의 공개 ID. 세션과 역할은 업로드 자리를 발급할 때만 정하고 바꾸지 않는다(SPEC-017).
+  private @Nullable UUID sessionId;
+
+  @Enumerated(EnumType.STRING)
+  private @Nullable SessionRole sessionRole;
+
   @CreationTimestamp
   @Column(updatable = false)
   private Instant createdAt;
@@ -113,6 +119,12 @@ public class Video {
     VideoFilePolicy.check(fileName, sizeBytes, contentType);
     return new Video(
         UUID.randomUUID(), ownerId, fileName, sizeBytes, contentType, now, uploadExpiry);
+  }
+
+  /** 작업 세션에 넣는다(SPEC-017 R-6). 업로드 자리를 발급할 때만 부른다. */
+  public void joinSession(UUID sessionId, SessionRole role) {
+    this.sessionId = sessionId;
+    this.sessionRole = role;
   }
 
   /** 멀티파트 업로드로 올린다는 것을 기록한다. */

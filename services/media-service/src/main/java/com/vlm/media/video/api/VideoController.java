@@ -45,7 +45,9 @@ class VideoController {
             UserHeaders.userId(userId),
             request.fileName(),
             request.sizeBytes(),
-            request.contentType());
+            request.contentType(),
+            request.sessionId(),
+            request.role());
     VideoResponse video = VideoResponse.from(created.video());
     return ResponseEntity.created(URI.create(VIDEOS + "/" + video.id()))
         .body(new CreateVideoResponse(video, UploadInstruction.from(created.upload())));
