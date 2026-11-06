@@ -1,10 +1,13 @@
 package com.vlm.media.retention.application;
 
+import com.vlm.common.error.BusinessException;
 import com.vlm.media.retention.domain.RetainedVideo;
 import com.vlm.media.retention.domain.RetainedVideoRepository;
 import com.vlm.media.retention.domain.RetentionSetting;
 import com.vlm.media.retention.domain.RetentionSettingRepository;
+import com.vlm.media.shared.domain.MediaErrorCode;
 import com.vlm.media.shared.domain.Video;
+import com.vlm.media.shared.domain.VideoRepository;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,22 @@ public class RetentionService {
   private final RetentionSettingRepository settingRepository;
   private final RetainedVideoRepository retainedVideoRepository;
   private final RetentionKeys retentionKeys;
+  private final VideoRepository videoRepository;
+
+  /**
+   * 영상의 학습용 보존 동의를 바꾼다(SPEC-018 R-6). 영상을 지울 때의 값이 적용되므로 이벤트는 내지 않는다.
+   *
+   * @throws BusinessException 영상이 없으면 {@link MediaErrorCode#VIDEO_NOT_FOUND}
+   */
+  @Transactional
+  public Video changeConsent(UUID videoId, UUID userId, boolean consent) {
+    Video video =
+        videoRepository
+            .findByPublicIdForUpdate(videoId)
+            .orElseThrow(() -> new BusinessException(MediaErrorCode.VIDEO_NOT_FOUND));
+    video.changeRetentionConsent(consent);
+    return video;
+  }
 
   /**
    * 동의한 채 지운 영상의 최소 기록을 남기고 보존 정보를 돌려준다(SPEC-018 R-8, R-9). 영상 삭제와 같은 트랜잭션에서 불러야 기록과 이벤트가 함께 남는다.
