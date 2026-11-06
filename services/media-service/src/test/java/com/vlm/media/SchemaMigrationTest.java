@@ -64,4 +64,22 @@ class SchemaMigrationTest {
                     """))
         .isInstanceOf(DataIntegrityViolationException.class);
   }
+
+  @Test
+  @DisplayName("[SPEC-018] 보존 설정·최소 기록 테이블과 영상 동의 컬럼(기본 false)을 만든다")
+  void createsRetentionTables() {
+    assertThat(
+            jdbcTemplate.queryForList(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+                String.class))
+        .contains("retention_settings", "retained_videos");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                SELECT column_default FROM information_schema.columns
+                WHERE table_name = 'videos' AND column_name = 'retention_consent'
+                """,
+                String.class))
+        .isEqualTo("false");
+  }
 }

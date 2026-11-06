@@ -28,6 +28,7 @@ import org.springframework.test.context.jdbc.Sql;
 @AutoConfigureObservability(metrics = false)
 @Import(TestcontainersConfiguration.class)
 @Sql(
-    statements = "TRUNCATE outbox_events, videos, work_sessions RESTART IDENTITY",
+    statements =
+        "TRUNCATE outbox_events, videos, work_sessions, retention_settings, retained_videos RESTART IDENTITY",
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public @interface IntegrationTest {}
