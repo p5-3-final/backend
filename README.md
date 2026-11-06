@@ -89,6 +89,22 @@ media-service는 그룹 `media-service`로 `video.normalizing`(v1)과 `video.nor
 - 계약을 어긴 메시지(키와 sourceId 불일치, v1 결과, 다른 영상 폴더의 경로 등)는 경고 로그를 남기고 건너뛴다. DB 장애 같은 일시 오류는 offset을 멈춘 채 1초부터 최대 30초 간격으로 계속 다시 시도한다.
 - 설정: `vlm.media.normalization.estimate-factor`(예상 처리 시간 계수, 기본 1.0), `vlm.media.normalization.consumer-enabled`(기본 true)
 
+### 작업 세션 (SPEC-017)
+
+영상 여러 개를 작업 하나(작업 전·중·후)로 묶는다. 계약은 docs 레포 `service-contracts/openapi/media-service.yaml`이다.
+
+- `POST /api/v1/media/sessions`(이름, 현장·구역 선택), `GET /api/v1/media/sessions`(내 세션 최신순), `GET /api/v1/media/sessions/{id}`(속한 영상을 역할 → 업로드 완료 순으로)
+- 업로드 자리 발급(`POST /api/v1/media/videos`)에 `sessionId`·`role`(`BEFORE`·`DURING`·`AFTER`)을 함께 보내면 세션에 넣는다. 나중에는 바꾸지 않는다. 세션당 "삭제"가 아닌 영상은 100개까지다.
+- 세션에 속한 영상의 `video.uploaded`에는 `sessionId`·`role`이 실린다.
+
+```bash
+SESSION=$(curl -s -X POST localhost:8082/api/v1/media/sessions -H 'Content-Type: application/json' \
+  -H "X-User-Id: $USER_ID" -H 'X-User-Roles: USER' -d '{"name":"방호벽 교체"}' | jq -r .id)
+curl -s -X POST localhost:8082/api/v1/media/videos -H 'Content-Type: application/json' \
+  -H "X-User-Id: $USER_ID" -H 'X-User-Roles: USER' \
+  -d "{\"fileName\":\"before.mp4\",\"sizeBytes\":1000,\"contentType\":\"video/mp4\",\"sessionId\":\"$SESSION\",\"role\":\"BEFORE\"}"
+```
+
 ## 문서
 
 - 기능 spec과 계약: docs 레포 `docs/specs/`, `service-contracts/`
