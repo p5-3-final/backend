@@ -19,7 +19,9 @@ record VideoResponse(
     @Nullable Instant uploadedAt,
     @Nullable Double durationSec,
     @Nullable Integer estimatedProcessingSec,
-    @Nullable RejectReason rejectReason) {
+    @Nullable RejectReason rejectReason,
+    @Nullable VideoSessionResponse session,
+    boolean retentionConsent) {
 
   static VideoResponse from(Video video) {
     // SPEC-007 R-21: 길이·예상 시간은 READY, 거절 사유는 REJECTED일 때만 보인다.
@@ -36,6 +38,9 @@ record VideoResponse(
         video.getUploadedAt(),
         durationMs == null ? null : durationMs / 1000.0,
         ready ? video.getEstimatedProcessingSec() : null,
-        video.getStatus() == VideoStatus.REJECTED ? video.getRejectReason() : null);
+        video.getStatus() == VideoStatus.REJECTED ? video.getRejectReason() : null,
+        null,
+        // SPEC-018 구현 전에는 동의 수단이 없어 모든 영상이 미동의(기본값)다.
+        false);
   }
 }
