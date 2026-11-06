@@ -28,7 +28,7 @@ updated: 2026-11-06
 - [x] T006 [R-3] [R-5] 동의 값 없이 업로드 자리를 받으면 계정 기본값, 응답에 담김 — 테스트 `M/test/.../video/api/CreateVideoConsentApiTest.java`, 구현 `Video`, `CreateVideoService`, `VideoResponse`
 - [x] T007 [R-4] 요청의 동의 값이 기본값보다 우선 — 테스트 `CreateVideoConsentApiTest`, 구현 `CreateVideoRequest`, `CreateVideoService`
 - [x] T008 [R-8] [R-9] 동의한 영상 삭제 시 `video.deleted.retention`(키·1년 뒤)과 최소 기록 — 테스트 `M/test/.../event/VideoDeletedEventTest.java`, 구현 `RetentionService#retain`, `DeleteVideoService`, `VideoDeleted`
-- [ ] T009 [R-17] 보존 만료 시각이 지난 최소 기록을 지움, 이벤트 없음 — 테스트 `M/test/.../retention/application/RetentionExpiryTest.java`, 구현 `RetentionExpiryJob`, `retention/infra/scheduling`
+- [x] T009 [R-17] 보존 만료 시각이 지난 최소 기록을 지움, 이벤트 없음 — 테스트 `M/test/.../retention/application/RetentionExpiryTest.java`, 구현 `RetentionExpiryJob`, `retention/infra/scheduling`
 
 ## Phase 2: US-2 동의하지 않은 영상 삭제 (P1)
 
