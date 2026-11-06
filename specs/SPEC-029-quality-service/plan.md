@@ -4,7 +4,7 @@ repo: backend
 status: Approved
 owner: <이름>
 created: 2026-11-06
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Plan: SPEC-029 quality-service 검토 큐·Golden Set·평가 실행·처리 단계 리포트 — backend
@@ -13,19 +13,21 @@ updated: 2026-11-06
 - 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 1.2.0, `quality/v1/golden-manifest.schema.json`, `events/{event.analyzed,stage.timing,video.deleted,_vlm-analysis,_envelope}.schema.json`, `stages/v1/{stage-timing,stages}.schema.json`, `taxonomy/v2/taxonomy.schema.json` (계약 묶음 3.14.0)
 - ADR: ADR-0007, ADR-0008(배포 단위 quality-service), ADR-0010 ⑨·⑩, ADR-0011(Golden Set 확정 버전 보존)
 
+- v5.1(계약 묶음 4.0.0, 2026-11-07, ADR-0016): `openapi/quality-service.yaml` 2.0.0은 검토 항목 `reason`을 `x-extensible-enum`으로 바꾸고 `budget_exceeded`·`call_cap_reached`·`model_unavailable`·`alert_dismissed`를 더했으며, 목록 필터 `reason`과 알림 지표 리포트 `GET /api/v1/quality/alert-reports`를 더했다. 소비 토픽에 `alert.raised`(`events/alert.raised.schema.json`)가 더해지고 `event.analyzed`에 `unverifiedReason`이 생겼다. R-27(사유별 재판정 큐)·R-28(긴급 알림 기록·지표)을 아래 설계 절대로 더한다. 잠금은 T001에서 4.0.0으로 올린다.
+
 ## 1. 요약
 
 - `services/quality-service` 모듈을 새로 만든다. catalog와 ADR-0008에 이미 있는 배포 단위라 새 서비스 결정은 아니다. 뼈대는 media-service와 같다(Spring Boot servlet, JPA + Flyway `quality_db`, `libs/common-web`·`common-core`, Testcontainers PostgreSQL·Kafka·SeaweedFS, ArchUnit 기능 구조).
 - 기능 패키지는 `review`(검토 큐), `golden`(Golden Set), `evaluation`(평가 실행·CI Gate), `stage`(처리 단계 측정·리포트), `deletion`(삭제 전파)이다. Kafka 소비는 `event.analyzed`·`stage.timing`·`video.deleted` 3종이고 발행은 없다.
 - 서버 API 인터페이스와 요청·응답 모델은 `openapi/quality-service.yaml`에서 openapi-generator Gradle 플러그인으로 빌드 때 생성한다(handoff 3절 "내부 호출 클라이언트는 생성", 이번 작업 지시). 컨트롤러는 생성된 인터페이스를 구현한다.
-- 계약 잠금을 2.9.1에서 3.14.0으로 올리는 것이 구현 첫 태스크다. 3.14.0의 `quality-service.yaml`은 1.2.0이라 SPEC-035가 더한 `ReviewItem.evidenceFrameUrls`(근거 프레임 서명 주소)가 필수다. 이 서명 주소는 이 plan의 R-5 응답에서 함께 만든다.
+- 계약 잠금을 2.9.1에서 4.0.0으로 올리는 것이 구현 첫 태스크다. 4.0.0의 `quality-service.yaml`은 2.0.0이라 SPEC-035가 더한 `ReviewItem.evidenceFrameUrls`(근거 프레임 서명 주소)가 필수다. 이 서명 주소는 이 plan의 R-5 응답에서 함께 만든다.
 - api-gateway에 `/api/v1/quality/**` 라우트 하나를 더한다.
 - 새 외부 의존성: openapi-generator Gradle 플러그인(합의함, handoff 3절). 그 밖의 새 라이브러리는 없다. 백분위·집계는 PostgreSQL `percentile_cont`로 하고, 한 Pod만 도는 주기 작업은 PostgreSQL advisory lock으로 한다(ShedLock 같은 새 라이브러리를 들이지 않는다).
 - DB 스키마: 새 서비스의 `quality_db` 테이블 8개(아래 "데이터 모델"). 새 서비스의 스키마라 기존 합의 범위다.
 
 ## 2. 담당 요구사항
 
-경로 약어: `Q` = `services/quality-service/src`, `G` = `services/api-gateway/src`, `C` = `libs/common-core/src`
+경로 약어: `Q` = `services/quality-service/src`, `G` = `services/api-gateway/src`, `C` = `libs/common-core/src`, `A` = `Q/main/java/com/vlm/quality/alert`
 
 | 요구사항 | 담당 모듈 / 컴포넌트 | 검증 테스트 |
 | --- | --- | --- |
@@ -55,6 +57,8 @@ updated: 2026-11-06
 | R-24 | `stage/application/StageReportService#trend`, `stage/domain/TrendQuery` | `StageTrendApiTest` |
 | R-25 | `stage/application/StageTimingPartitionJob` | `StageTimingPartitionTest` |
 | R-26 | `G/main/resources/application.yml` 라우트 `quality-service` | `G/test/.../RoutingTest`, `QualityRoutingTest` |
+| R-27 | `review/application/ReviewIntakeService`(`unverified` → 사유 `unverifiedReason`), `review/domain/ReviewReason`(계약 `x-extensible-enum` 목록), `ReviewQueryService#list`(`reason` 필터) | `EventAnalyzedIntakeTest`(사유 3종), `ReviewQueueApiTest`(필터), `QualityContractTest`(사유 목록 = 계약) |
+| R-28 | `A/infra/messaging/AlertRaisedListener`, `A/application/AlertIntakeService`, `A/application/AlertReportService`, `A/api/AlertReportController`, 마이그레이션 `V202611071200__create_alert_events.sql` | `AlertRaisedIntakeTest`(순서 역전 포함), `AlertReportApiTest`(p50·p95·dismissed 비율) |
 | NFR-1 | `ReviewAssignmentService#assign` | `ConcurrentAssignTest` |
 | NFR-2 | `ReviewQueryService#list`, 인덱스 `idx_review_items_queue` | `QualityLatencyTest` |
 | NFR-3 | `JdbcStageTimingRepository`(배치 삽입) | `StageTimingThroughputTest` |
@@ -80,7 +84,7 @@ updated: 2026-11-06
 
 | 경로 | 변경 |
 | --- | --- |
-| `service-contracts.lock` | 3.14.0 |
+| `service-contracts.lock` | 4.0.0 |
 | `settings.gradle.kts` | `services:quality-service` 추가 |
 | `gradle/libs.versions.toml` | `[versions] openapi-generator`, `[plugins] openapi-generator`(7.x 최신 안정판을 구현 때 고정) |
 | `services/quality-service/build.gradle.kts` | `vlm.spring-boot-service`, web·validation·data-jpa·flyway·kafka, AWS SDK S3, json-schema-validator, openapi-generator 설정, 계약 JSON Schema를 리소스로 복사(pipeline-service의 `processResources` 방식) |
@@ -453,7 +457,7 @@ sequenceDiagram
 
 - 리스크: openapi-generator가 OpenAPI 3.1의 `type: [string, 'null']`·`anyOf: [$ref, null]`을 잘못 생성할 수 있다. 첫 설정 태스크에서 생성 결과를 확인하고, 계약을 우회하는 손 작성 모델로 몰래 바꾸지 않는다. 막히면 보고한다.
 - 리스크: Docker 이미지 빌드(루트 `Dockerfile`은 `COPY . .`)에는 작업 공간의 `../../service-contracts`가 없다. 생성 태스크가 계약을 읽으므로 이미지 빌드 전에 `scripts/fetch-service-contracts.sh`로 받은 `.service-contracts/`를 `CONTRACTS_DIR`로 넘겨야 한다. Dockerfile에 `CONTRACTS_DIR` 빌드 인자를 더한다(ci-common.md 규칙 확인).
-- 리스크: 계약 잠금 3.14.0은 2.9.1 뒤 다른 서비스 계약도 바꿨다. 로컬은 이미 작업 공간 계약으로 테스트가 돌지만, CI에서 pipeline-service(다른 담당자) 테스트가 깨지면 그 코드를 고치지 않고 멈춰 보고한다.
+- 리스크: 계약 잠금 4.0.0은 2.9.1 뒤 다른 서비스 계약도 바꿨다. 로컬은 이미 작업 공간 계약으로 테스트가 돌지만, CI에서 pipeline-service(다른 담당자) 테스트가 깨지면 그 코드를 고치지 않고 멈춰 보고한다.
 - 리스크: 확정할 항목이 많으면 프레임 복사가 길어져 gateway 응답 제한(10s)을 넘을 수 있다. 동시 복사 8개로 줄이고, 넘으면 측정값과 함께 보고한다.
 - 롤백: 새 서비스라 배포를 내리면 된다. 마이그레이션은 새 테이블뿐이다. api-gateway 라우트는 한 블록이라 되돌리기 쉽다.
 
@@ -476,3 +480,20 @@ sequenceDiagram
 4. **(spec 모호, plan에서 정함) 검토 항목의 "유형"**: R-2 표본 비율, R-5 유형 필터, 응답 `ReviewItem.eventType`의 "유형"을 `candidateEventType`으로 정했다. 후보 유형은 항상 있고 Golden Set 매니페스트도 `candidateEventType`을 쓴다. 판정 결과 유형은 `analysis.eventType`으로 따로 보인다.
 5. **(spec 공백, plan에서 정함) 삭제 흔적**: 계약 `video.deleted` 설명은 소비자가 삭제 흔적을 남기라고 하지만 R-16에는 없다. `deleted_sources`를 두어 삭제 뒤에 온 `event.analyzed`로 항목을 다시 만들지 않는다.
 6. **(spec 모호, plan에서 정함) 확정 뒤 초안**: 초안을 비우지 않고 유지하는 모델로 정했다(5절).
+
+## 11. v5.1 추가 설계(계약 묶음 4.0.0, 2026-11-07)
+
+### 생성 코드와 사유 목록(R-27)
+
+- `quality-service.yaml` 2.0.0에서 다시 생성한다. `reason`이 `x-extensible-enum`이라 생성기는 `String`으로 만든다. 서버는 `ReviewReason`(값 목록 = 계약 `x-extensible-enum`)으로 검증하고, 계약 테스트가 목록을 대조한다. 모르는 값은 400 `QUALITY_VALIDATION`이다.
+- `event.analyzed`가 `verificationStatus: unverified`이면 표본 규칙(R-2)과 무관하게 큐에 넣고 사유는 `unverifiedReason` 값이다. 사유가 없으면 기존 `reviewRequired` 규칙을 따른다. 검토 항목 ID는 R-1과 같이 eventId 기반이라 재수신에 멱등이다.
+- 목록 조회 `GET /api/v1/quality/review-items?reason=`은 기존 인덱스 `idx_review_items_queue`에 `reason`을 더한 인덱스로 받는다.
+
+### 긴급 알림 기록과 리포트(R-28)
+
+- 소비 토픽 `alert.raised`(소비 그룹 quality-service)를 더한다. 발행은 없다.
+- 테이블 `alert_events`: `candidate_id uuid PK`, `source_id`, `owner_id`, `camera_id`, `event_type`, `severity`, `pending_at timestamptz`, `resolved_at timestamptz null`, `status`(`pending`·`confirmed`·`dismissed`), `dismiss_reason text null`, `evidence_frame_keys jsonb`, 인덱스 `(pending_at)`, `(camera_id, pending_at)`.
+- intake는 candidateId로 upsert한다. `pending`은 `pending_at`만 채우고, `confirmed`·`dismissed`는 `resolved_at`·`status`를 채운다. 순서가 뒤집혀 `confirmed`가 먼저 오면 행을 만들고 `pending_at`은 나중에 채운다. 같은 상태의 재수신은 무시한다.
+- `dismissed`는 검토 항목(사유 `alert_dismissed`, 근거 프레임 = `evidenceFrameKeys`, `analysis` null)을 R-3 규칙으로 넣는다.
+- 리포트 `GET /api/v1/quality/alert-reports`(계약 파라미터 `from`·`to`·`cameraId`): `resolved_at − pending_at`의 p50·p95(`percentile_cont`), 건수, `dismissed` 비율. 둘 다 채워진 행만 지연에 넣고 미해결 건수는 따로 낸다. OPERATOR 전용(R-4).
+- 삭제 전파(R-16)에 `alert_events`의 `source_id` 행 삭제를 더한다.
