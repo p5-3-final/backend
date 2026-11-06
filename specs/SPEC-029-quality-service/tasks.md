@@ -35,7 +35,7 @@ updated: 2026-11-07
 - [x] T013 [R-8] 라벨 저장: 맡은 사람이면 200·`LABELED`·라벨·저장 시각, 같은 사람이 다시 저장하면 덮어씀, 다른 사람 403, `UNASSIGNED`면 409 `QUALITY_REVIEW_NOT_ASSIGNED` — 테스트 `Q/test/.../review/api/ReviewLabelApiTest.java`, 구현 `review/application/ReviewLabelService`, `review/domain/ReviewLabel`
 - [x] T014 [R-9] `eventPresent=true`인데 유형·시작·끝 중 하나 없음, `endMs <= startMs`, `eventPresent=false`인데 유형 있음이면 400 `QUALITY_INVALID_REQUEST`, 항목 그대로 — 테스트 `Q/test/.../review/domain/ReviewLabelRulesTest.java`, `ReviewLabelApiTest`, 구현 `review/domain/ReviewLabelRules`, `ReviewLabelService`
 - [x] T015 [R-10] 24시간 넘게 라벨 없이 `ASSIGNED`인 항목을 `UNASSIGNED`로, 다른 Pod가 잠금을 잡고 있으면 아무것도 안 함 — 테스트 `Q/test/.../review/application/StaleAssignmentJobTest.java`(시계 고정, 다른 연결로 advisory lock을 잡은 채 실행), 구현 `review/application/StaleAssignmentJob`, `shared/infra/persistence/SingleRunLock`, `config/QualityJobScheduling`
-- [x] T016 [P] [NFR-1] 같은 항목에 맡기 10건 동시 → 200 1건, 409 9건 — 테스트 `Q/test/.../review/application/ConcurrentAssignTest.java`, 구현 `ReviewAssignmentService#assign`(T011의 조건부 UPDATE로 통과. 읽고 쓰는 방식으로 바꾸면 실패하는 것을 확인)
+- [x] T016 [P] [NFR-1] 같은 항목에 맡기 10건 동시 → 200 1건, 409 9건 — 테스트 `Q/test/.../review/application/ConcurrentAssignTest.java`, 구현 `ReviewAssignmentService#assign`(T011의 조건부 UPDATE로 통과. 읽고 쓰는 방식으로 바꿔 실패하는지는 확인하지 않았다)
 
 ## Phase 2: US-2 Golden Set 버전으로 평가 고정 (P1)
 
