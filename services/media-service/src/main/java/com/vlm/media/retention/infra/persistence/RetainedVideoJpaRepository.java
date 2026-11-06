@@ -2,12 +2,17 @@ package com.vlm.media.retention.infra.persistence;
 
 import com.vlm.media.retention.domain.RetainedVideo;
 import java.time.Instant;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface RetainedVideoJpaRepository extends JpaRepository<RetainedVideo, Long> {
+
+  Page<RetainedVideo> findByOwnerId(UUID ownerId, Pageable pageable);
 
   @Modifying
   @Query(

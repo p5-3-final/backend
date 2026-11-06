@@ -2,6 +2,7 @@ package com.vlm.media.retention.application;
 
 import com.vlm.common.error.BusinessException;
 import com.vlm.media.retention.domain.RetainedVideo;
+import com.vlm.media.retention.domain.RetainedVideoPage;
 import com.vlm.media.retention.domain.RetainedVideoRepository;
 import com.vlm.media.retention.domain.RetentionSetting;
 import com.vlm.media.retention.domain.RetentionSettingRepository;
@@ -50,6 +51,12 @@ public class RetentionService {
         retainedVideoRepository.save(
             RetainedVideo.of(video.getPublicId(), video.getOwnerId(), deletedAt));
     return new Retention(retentionKeys.keyOf(record.getSourceId()), record.getRetainUntil());
+  }
+
+  /** 요청자의 보존 중인 삭제 영상을 삭제 최신순으로 한 페이지 돌려준다(SPEC-018 R-13). */
+  @Transactional(readOnly = true)
+  public RetainedVideoPage listRetained(UUID ownerId, int page, int size) {
+    return retainedVideoRepository.findByOwner(ownerId, page, size);
   }
 
   /** 이후에 만드는 영상의 기본 동의 값을 바꾼다. 이미 있는 영상의 동의는 그대로다(SPEC-018 R-2). */

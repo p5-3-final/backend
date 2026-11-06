@@ -4,6 +4,8 @@ import com.vlm.common.web.UserHeaders;
 import com.vlm.media.retention.application.RetentionService;
 import com.vlm.media.shared.api.VideoResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 class RetentionController {
 
   private static final String SETTINGS = "/api/v1/media/retention-settings";
+  private static final String RETAINED = "/api/v1/media/retained-videos";
 
   private final RetentionService retentionService;
 
@@ -36,6 +40,15 @@ class RetentionController {
       @Valid @RequestBody RetentionConsentRequest request) {
     return VideoResponse.from(
         retentionService.changeConsent(videoId, UserHeaders.userId(userId), request.consent()));
+  }
+
+  @GetMapping(RETAINED)
+  RetainedVideoPageResponse listRetained(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+    return RetainedVideoPageResponse.from(
+        retentionService.listRetained(UserHeaders.userId(userId), page, size));
   }
 
   @PutMapping(SETTINGS)

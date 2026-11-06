@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.MediaType;
@@ -155,6 +157,13 @@ public final class MediaApi {
     return completeRequest(videoId)
         .contentType(MediaType.APPLICATION_JSON)
         .content(JSON.writeValueAsString(Map.of("parts", parts)));
+  }
+
+  /** 객체 노드의 필드 이름. */
+  public static List<String> fieldNames(JsonNode node) {
+    List<String> names = new ArrayList<>();
+    node.fieldNames().forEachRemaining(names::add);
+    return names;
   }
 
   public static JsonNode json(ResultActions result) throws Exception {
