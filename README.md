@@ -89,6 +89,16 @@ media-service는 그룹 `media-service`로 `video.normalizing`(v1)과 `video.nor
 - 계약을 어긴 메시지(키와 sourceId 불일치, v1 결과, 다른 영상 폴더의 경로 등)는 경고 로그를 남기고 건너뛴다. DB 장애 같은 일시 오류는 offset을 멈춘 채 1초부터 최대 30초 간격으로 계속 다시 시도한다.
 - 설정: `vlm.media.normalization.estimate-factor`(예상 처리 시간 계수, 기본 1.0), `vlm.media.normalization.consumer-enabled`(기본 true)
 
+### 학습용 보존 동의 (SPEC-018)
+
+영상을 지울 때 사용자가 동의한 영상만 비식별 파생 데이터를 1년 동안 남기도록 보존 키를 발급한다(docs ADR-0011).
+
+- `GET · PUT /api/v1/media/retention-settings`(계정 기본값, 처음엔 false), `PUT /api/v1/media/videos/{id}/retention-consent`(소유자만)
+- 업로드 자리 발급의 `retentionConsent`가 없으면 그때의 계정 기본값을 쓴다.
+- 동의한 영상을 지우면 `video.deleted`에 `retention`(보존 키, 1년 뒤 만료 시각)이 실리고 최소 기록(영상 ID·소유자·시각)이 남는다.
+- `GET · DELETE /api/v1/media/retained-videos`, `DELETE …/{id}`: 보존 중인 삭제 영상 목록과 철회. 철회하면 `video.retention.revoked`를 발행한다. 만료된 기록은 1시간마다 지운다.
+- 환경변수 `MEDIA_RETENTION_HMAC_KEY`(Base64, 32바이트 이상)가 없거나 짧으면 기동하지 않는다. 키를 잃으면 철회 때 보존 키를 다시 계산할 수 없다.
+
 ### 작업 세션 (SPEC-017)
 
 영상 여러 개를 작업 하나(작업 전·중·후)로 묶는다. 계약은 docs 레포 `service-contracts/openapi/media-service.yaml`이다.

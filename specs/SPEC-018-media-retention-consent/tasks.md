@@ -49,9 +49,9 @@ updated: 2026-11-06
 - [x] T018 [P] 보존 API 6개와 `retentionConsent` 요청이 계약 1.3.1과 일치 — 테스트 `MediaContractTest`
 - [x] T019 [P] [NFR-1] 비밀 키가 로그에 없음 — 테스트 `M/test/.../SensitiveLogTest.java` (T002에서 설정 출력 가리기를 넣어 통과. 가리기를 빼면 실패하는 것을 확인)
 - [x] T020 [P] [NFR-2] 보존 API p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
-- [ ] T021 설정·예시: `application.yml`, `.env.example`, README
+- [x] T021 설정·예시: `application.yml`, `.env.example`, README
 
 ## 완료 조건 (Definition of Done)
 
-- [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
-- [ ] lint, 타입 검사, 전체 테스트 통과
+- [x] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
+- [x] lint, 타입 검사, 전체 테스트 통과
