@@ -12,8 +12,11 @@ import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.MediaApi;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -49,5 +52,25 @@ class WorkSessionApiTest {
                 .string("Location", org.hamcrest.Matchers.startsWith("/api/v1/media/sessions/")))
         .andExpect(jsonPath("$.site").isEmpty())
         .andExpect(jsonPath("$.area").isEmpty());
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidSessions")
+  @DisplayName("[SPEC-017 R-2] 이름이 없거나 범위를 벗어나거나 현장·구역이 100자를 넘으면 400을 반환한다")
+  void rejectsInvalidSession(Map<String, String> body) throws Exception {
+    mvc.perform(asUser(createSessionRequest(body), ownerId))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("MEDIA_INVALID_REQUEST"));
+  }
+
+  static Stream<Map<String, String>> invalidSessions() {
+    String long101 = "가".repeat(101);
+    return Stream.of(
+        Map.of("site", "평택"),
+        Map.of("name", ""),
+        Map.of("name", " "),
+        Map.of("name", long101),
+        Map.of("name", "a", "site", long101),
+        Map.of("name", "a", "area", long101));
   }
 }
