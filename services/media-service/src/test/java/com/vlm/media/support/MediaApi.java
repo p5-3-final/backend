@@ -3,6 +3,7 @@ package com.vlm.media.support;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,6 +98,36 @@ public final class MediaApi {
 
   public static MockHttpServletRequestBuilder sessionsRequest() {
     return get("/api/v1/media/sessions");
+  }
+
+  public static MockHttpServletRequestBuilder retentionSettingsRequest() {
+    return get("/api/v1/media/retention-settings");
+  }
+
+  public static MockHttpServletRequestBuilder updateRetentionSettingsRequest(boolean defaultConsent)
+      throws Exception {
+    return put("/api/v1/media/retention-settings")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(Map.of("defaultConsent", defaultConsent)));
+  }
+
+  public static MockHttpServletRequestBuilder consentRequest(String videoId, boolean consent)
+      throws Exception {
+    return put("/api/v1/media/videos/{id}/retention-consent", videoId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(Map.of("consent", consent)));
+  }
+
+  public static MockHttpServletRequestBuilder retainedVideosRequest() {
+    return get("/api/v1/media/retained-videos");
+  }
+
+  public static MockHttpServletRequestBuilder revokeRequest(String videoId) {
+    return delete("/api/v1/media/retained-videos/{id}", videoId);
+  }
+
+  public static MockHttpServletRequestBuilder revokeAllRequest() {
+    return delete("/api/v1/media/retained-videos");
   }
 
   public static MockHttpServletRequestBuilder listRequest() {

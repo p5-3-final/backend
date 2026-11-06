@@ -23,7 +23,7 @@ updated: 2026-11-06
 
 ## Phase 1: US-1 학습용 보존에 동의 (P1)
 
-- [ ] T004 [R-1] 보존 설정 조회, 바꾼 적 없으면 false — 테스트 `M/test/.../retention/api/RetentionSettingsApiTest.java`, 구현 `retention/{api,application,domain,infra}`
+- [x] T004 [R-1] 보존 설정 조회, 바꾼 적 없으면 false — 테스트 `M/test/.../retention/api/RetentionSettingsApiTest.java`, 구현 `retention/{api,application,domain,infra}`
 - [ ] T005 [R-2] 기본값 변경 저장, 기존 영상 동의는 그대로 — 테스트 `RetentionSettingsApiTest`, 구현 `RetentionService#updateSettings`
 - [ ] T006 [R-3] [R-5] 동의 값 없이 업로드 자리를 받으면 계정 기본값, 응답에 담김 — 테스트 `M/test/.../video/api/CreateVideoConsentApiTest.java`, 구현 `Video`, `CreateVideoService`, `VideoResponse`
 - [ ] T007 [R-4] 요청의 동의 값이 기본값보다 우선 — 테스트 `CreateVideoConsentApiTest`, 구현 `CreateVideoRequest`, `CreateVideoService`
