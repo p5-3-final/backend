@@ -1,6 +1,7 @@
 package com.vlm.media.video.api;
 
 import com.vlm.common.web.UserHeaders;
+import com.vlm.media.shared.api.VideoResponse;
 import com.vlm.media.shared.domain.UploadStorage.UploadedPart;
 import com.vlm.media.video.application.CompleteUploadService;
 import com.vlm.media.video.application.CreateVideoService;

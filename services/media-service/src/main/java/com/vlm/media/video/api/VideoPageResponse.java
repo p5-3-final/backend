@@ -1,5 +1,6 @@
 package com.vlm.media.video.api;
 
+import com.vlm.media.shared.api.VideoResponse;
 import com.vlm.media.shared.domain.VideoPage;
 import java.util.List;
 

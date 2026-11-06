@@ -1,8 +1,14 @@
 package com.vlm.media.session.api;
 
+import static com.vlm.media.support.MediaApi.asAdmin;
 import static com.vlm.media.support.MediaApi.asUser;
+import static com.vlm.media.support.MediaApi.createSession;
 import static com.vlm.media.support.MediaApi.createSessionRequest;
+import static com.vlm.media.support.MediaApi.createSessionVideo;
+import static com.vlm.media.support.MediaApi.deleteRequest;
+import static com.vlm.media.support.MediaApi.sessionRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -72,5 +78,25 @@ class WorkSessionApiTest {
         Map.of("name", long101),
         Map.of("name", "a", "site", long101),
         Map.of("name", "a", "area", long101));
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-4] 세션 상세는 삭제가 아닌 영상을 역할 순서로 반환하고 ADMIN도 볼 수 있다")
+  void detailListsVideosInOrder() throws Exception {
+    String sessionId = createSession(mvc, ownerId, "방호벽 교체");
+    String after = createSessionVideo(mvc, ownerId, sessionId, "AFTER");
+    String before = createSessionVideo(mvc, ownerId, sessionId, "BEFORE");
+    String deleted = createSessionVideo(mvc, ownerId, sessionId, "DURING");
+    mvc.perform(asUser(deleteRequest(deleted), ownerId)).andExpect(status().isNoContent());
+
+    mvc.perform(asUser(sessionRequest(sessionId), ownerId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(sessionId))
+        .andExpect(jsonPath("$.name").value("방호벽 교체"))
+        .andExpect(jsonPath("$.videos[*].id").value(contains(before, after)))
+        .andExpect(jsonPath("$.videos[0].session.role").value("BEFORE"));
+    mvc.perform(asAdmin(sessionRequest(sessionId), UUID.randomUUID()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.videos.length()").value(2));
   }
 }
