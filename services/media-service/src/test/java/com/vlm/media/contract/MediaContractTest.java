@@ -2,12 +2,16 @@ package com.vlm.media.contract;
 
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
+import static com.vlm.media.support.MediaApi.createSessionRequest;
+import static com.vlm.media.support.MediaApi.createSessionVideo;
 import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.listRequest;
 import static com.vlm.media.support.MediaApi.playbackRequest;
+import static com.vlm.media.support.MediaApi.sessionRequest;
+import static com.vlm.media.support.MediaApi.sessionsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vlm.media.normalization.application.NormalizationEventService;
 import com.vlm.media.shared.domain.RejectReason;
 import com.vlm.media.support.IntegrationTest;
+import com.vlm.media.support.MediaApi;
 import com.vlm.media.support.Normalizations;
 import com.vlm.media.support.StorageUploads;
 import java.nio.file.Files;
@@ -234,6 +239,94 @@ class MediaContractTest {
   void playbackNotFound() throws Exception {
     perform(asUser(playbackRequest(UUID.randomUUID().toString()), ownerId))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-1] 세션 만들기 응답이 계약과 일치한다")
+  void createSession() throws Exception {
+    perform(asUser(createSessionRequest(Map.of("name", "세션", "site", "공장")), ownerId))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-2] 세션 만들기 입력 오류 응답이 계약과 일치한다")
+  void createSessionBadRequest() throws Exception {
+    performInvalidRequest(asUser(createSessionRequest(Map.of("name", "")), ownerId))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-3] 세션 목록 응답이 계약과 일치한다")
+  void listSessions() throws Exception {
+    MediaApi.createSession(mvc, ownerId, "세션");
+
+    perform(asUser(sessionsRequest(), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-4] 세션 상세 응답이 계약과 일치한다")
+  void getSession() throws Exception {
+    String sessionId = MediaApi.createSession(mvc, ownerId, "세션");
+    createSessionVideo(mvc, ownerId, sessionId, "BEFORE");
+    createSessionVideo(mvc, ownerId, sessionId, "AFTER");
+
+    perform(asUser(sessionRequest(sessionId), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-5] 세션 없음 응답이 계약과 일치한다")
+  void getSessionNotFound() throws Exception {
+    perform(asUser(sessionRequest(UUID.randomUUID().toString()), ownerId))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-6] 세션에 넣은 업로드 자리 응답이 계약과 일치한다")
+  void createSessionVideoMatches() throws Exception {
+    String sessionId = MediaApi.createSession(mvc, ownerId, "세션");
+
+    perform(
+            asUser(
+                createVideoRequest(
+                    "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "DURING")),
+                ownerId))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-9] 업로드 자리 발급의 세션 없음 응답이 계약과 일치한다")
+  void createVideoSessionNotFound() throws Exception {
+    perform(
+            asUser(
+                createVideoRequest(
+                    "a.mp4",
+                    1000,
+                    "video/mp4",
+                    Map.of("sessionId", UUID.randomUUID().toString(), "role", "DURING")),
+                ownerId))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-10] 업로드 자리 발급의 세션 가득 참 응답이 계약과 일치한다")
+  void createVideoSessionFull() throws Exception {
+    String sessionId = MediaApi.createSession(mvc, ownerId, "세션");
+    jdbc.update(
+        """
+        INSERT INTO videos (public_id, owner_id, file_name, size_bytes, content_type, status,
+            storage_key, expires_at, session_id, session_role)
+        SELECT gen_random_uuid(), ?, 'v.mp4', 1, 'video/mp4', 'UPLOADED', 'k', now(), ?, 'DURING'
+        FROM generate_series(1, 100)
+        """,
+        ownerId,
+        UUID.fromString(sessionId));
+
+    perform(
+            asUser(
+                createVideoRequest(
+                    "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "DURING")),
+                ownerId))
+        .andExpect(status().isConflict());
   }
 
   private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {

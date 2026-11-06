@@ -2,11 +2,15 @@ package com.vlm.media;
 
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
+import static com.vlm.media.support.MediaApi.createSession;
+import static com.vlm.media.support.MediaApi.createSessionRequest;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.listRequest;
 import static com.vlm.media.support.MediaApi.playbackRequest;
+import static com.vlm.media.support.MediaApi.sessionRequest;
+import static com.vlm.media.support.MediaApi.sessionsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,10 +21,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 @IntegrationTest
@@ -32,6 +38,7 @@ class MediaLatencyTest {
   private static final Duration P95_LIMIT = Duration.ofMillis(300);
 
   @Autowired MockMvc mvc;
+  @Autowired JdbcTemplate jdbc;
 
   private final UUID ownerId = UUID.randomUUID();
 
@@ -92,6 +99,45 @@ class MediaLatencyTest {
     }
 
     assertThat(p95(playback)).as("playback p95").isLessThanOrEqualTo(P95_LIMIT);
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 NFR-1] 세션 만들기·목록·상세(영상 100개) 요청의 p95 응답 시간이 300ms 이하다")
+  void sessionP95IsWithinLimit() throws Exception {
+    String sessionId = createSession(mvc, ownerId, "세션");
+    jdbc.update(
+        """
+        INSERT INTO videos (public_id, owner_id, file_name, size_bytes, content_type, status,
+            storage_key, expires_at, uploaded_at, session_id, session_role)
+        SELECT gen_random_uuid(), ?, 'v.mp4', 1, 'video/mp4', 'UPLOADED', 'k', now(), now(), ?,
+            'DURING'
+        FROM generate_series(1, 100)
+        """,
+        ownerId,
+        UUID.fromString(sessionId));
+    List<Duration> create = new ArrayList<>();
+    List<Duration> list = new ArrayList<>();
+    List<Duration> detail = new ArrayList<>();
+
+    for (int i = 0; i < WARM_UP + SAMPLES; i++) {
+      boolean measured = i >= WARM_UP;
+      long start = System.nanoTime();
+      mvc.perform(asUser(createSessionRequest(Map.of("name", "세션 " + i)), ownerId))
+          .andExpect(status().isCreated());
+      record(create, start, measured);
+
+      start = System.nanoTime();
+      mvc.perform(asUser(sessionsRequest(), ownerId)).andExpect(status().isOk());
+      record(list, start, measured);
+
+      start = System.nanoTime();
+      mvc.perform(asUser(sessionRequest(sessionId), ownerId)).andExpect(status().isOk());
+      record(detail, start, measured);
+    }
+
+    assertThat(p95(create)).as("session create p95").isLessThanOrEqualTo(P95_LIMIT);
+    assertThat(p95(list)).as("session list p95").isLessThanOrEqualTo(P95_LIMIT);
+    assertThat(p95(detail)).as("session detail p95").isLessThanOrEqualTo(P95_LIMIT);
   }
 
   private static void record(List<Duration> samples, long startNanos, boolean measured) {

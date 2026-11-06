@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.MediaType;
@@ -41,6 +42,32 @@ public final class MediaApi {
                 Map.of("fileName", fileName, "sizeBytes", sizeBytes, "contentType", contentType)));
   }
 
+  /** 세션·역할 같은 추가 항목을 넣은 업로드 자리 요청. */
+  public static MockHttpServletRequestBuilder createVideoRequest(
+      String fileName, long sizeBytes, String contentType, Map<String, ?> extra) throws Exception {
+    Map<String, Object> body = new HashMap<>(extra);
+    body.put("fileName", fileName);
+    body.put("sizeBytes", sizeBytes);
+    body.put("contentType", contentType);
+    return post("/api/v1/media/videos")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(body));
+  }
+
+  /** 세션에 넣은 영상의 업로드 자리를 받고 영상 ID를 돌려준다. */
+  public static String createSessionVideo(MockMvc mvc, UUID ownerId, String sessionId, String role)
+      throws Exception {
+    ResultActions result =
+        mvc.perform(
+            asUser(
+                createVideoRequest(
+                    role + ".mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", role)),
+                ownerId));
+    return JSON.readTree(result.andReturn().getResponse().getContentAsString())
+        .at("/video/id")
+        .asText();
+  }
+
   /** 업로드 자리를 받고 응답 본문을 돌려준다. */
   public static JsonNode createVideo(
       MockMvc mvc, UUID ownerId, String fileName, long sizeBytes, String contentType)
@@ -48,6 +75,28 @@ public final class MediaApi {
     ResultActions result =
         mvc.perform(asUser(createVideoRequest(fileName, sizeBytes, contentType), ownerId));
     return JSON.readTree(result.andReturn().getResponse().getContentAsString());
+  }
+
+  /** 세션 만들기 요청. 값이 null인 항목은 본문에서 뺀다. */
+  public static MockHttpServletRequestBuilder createSessionRequest(Map<String, ?> body)
+      throws Exception {
+    return post("/api/v1/media/sessions")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(body));
+  }
+
+  /** 세션을 만들고 세션 ID를 돌려준다. */
+  public static String createSession(MockMvc mvc, UUID ownerId, String name) throws Exception {
+    ResultActions result = mvc.perform(asUser(createSessionRequest(Map.of("name", name)), ownerId));
+    return JSON.readTree(result.andReturn().getResponse().getContentAsString()).get("id").asText();
+  }
+
+  public static MockHttpServletRequestBuilder sessionRequest(String sessionId) {
+    return get("/api/v1/media/sessions/{id}", sessionId);
+  }
+
+  public static MockHttpServletRequestBuilder sessionsRequest() {
+    return get("/api/v1/media/sessions");
   }
 
   public static MockHttpServletRequestBuilder listRequest() {

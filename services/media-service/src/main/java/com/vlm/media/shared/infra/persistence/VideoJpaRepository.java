@@ -20,6 +20,10 @@ interface VideoJpaRepository extends JpaRepository<Video, Long> {
 
   Page<Video> findByOwnerIdAndStatusNot(UUID ownerId, VideoStatus status, Pageable pageable);
 
+  List<Video> findBySessionIdAndStatusNot(UUID sessionId, VideoStatus status);
+
+  long countBySessionIdAndStatusNot(UUID sessionId, VideoStatus status);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   Optional<Video> findWithLockByPublicId(UUID publicId);
 

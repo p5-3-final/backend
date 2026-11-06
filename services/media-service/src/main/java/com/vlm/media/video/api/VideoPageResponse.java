@@ -1,5 +1,7 @@
 package com.vlm.media.video.api;
 
+import com.vlm.common.web.PageMeta;
+import com.vlm.media.shared.api.VideoResponse;
 import com.vlm.media.shared.domain.VideoPage;
 import java.util.List;
 
@@ -9,9 +11,6 @@ record VideoPageResponse(List<VideoResponse> items, PageMeta page) {
   static VideoPageResponse from(VideoPage page) {
     return new VideoPageResponse(
         page.items().stream().map(VideoResponse::from).toList(),
-        new PageMeta(page.page(), page.size(), page.totalElements(), page.totalPages()));
+        PageMeta.of(page.page(), page.size(), page.totalElements()));
   }
-
-  /** 계약 _common.yaml {@code PageMeta}. */
-  record PageMeta(int page, int size, long totalElements, int totalPages) {}
 }

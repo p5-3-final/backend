@@ -1,12 +1,14 @@
 package com.vlm.media;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.vlm.media.support.IntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import software.amazon.awssdk.services.s3.S3Client;
 
@@ -30,5 +32,36 @@ class SchemaMigrationTest {
                 .sdkHttpResponse()
                 .isSuccessful())
         .isTrue();
+  }
+
+  @Test
+  @DisplayName("[SPEC-017] 작업 세션 테이블과 영상의 세션·역할 컬럼을 만든다")
+  void createsWorkSessionColumns() {
+    List<String> columns =
+        jdbcTemplate.queryForList(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = 'videos'",
+            String.class);
+
+    assertThat(
+            jdbcTemplate.queryForList(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+                String.class))
+        .contains("work_sessions");
+    assertThat(columns).contains("session_id", "session_role");
+  }
+
+  @Test
+  @DisplayName("[SPEC-017] 영상의 세션과 역할은 함께 있거나 함께 없어야 한다")
+  void sessionAndRoleGoTogether() {
+    assertThatThrownBy(
+            () ->
+                jdbcTemplate.update(
+                    """
+                    INSERT INTO videos (public_id, owner_id, file_name, size_bytes, content_type,
+                        status, storage_key, expires_at, session_role)
+                    VALUES (gen_random_uuid(), gen_random_uuid(), 'a.mp4', 1, 'video/mp4',
+                        'UPLOADING', 'k', now(), 'BEFORE')
+                    """))
+        .isInstanceOf(DataIntegrityViolationException.class);
   }
 }
