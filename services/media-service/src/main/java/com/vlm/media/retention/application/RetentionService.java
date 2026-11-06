@@ -1,6 +1,8 @@
 package com.vlm.media.retention.application;
 
 import com.vlm.common.error.BusinessException;
+import com.vlm.common.messaging.OutboxRecorder;
+import com.vlm.media.retention.application.event.VideoRetentionRevoked;
 import com.vlm.media.retention.domain.RetainedVideo;
 import com.vlm.media.retention.domain.RetainedVideoPage;
 import com.vlm.media.retention.domain.RetainedVideoRepository;
@@ -10,6 +12,7 @@ import com.vlm.media.shared.domain.MediaErrorCode;
 import com.vlm.media.shared.domain.Video;
 import com.vlm.media.shared.domain.VideoRepository;
 import com.vlm.media.shared.domain.VideoStatus;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,8 @@ public class RetentionService {
   private final RetainedVideoRepository retainedVideoRepository;
   private final RetentionKeys retentionKeys;
   private final VideoRepository videoRepository;
+  private final OutboxRecorder outbox;
+  private final Clock clock;
 
   /**
    * 영상의 학습용 보존 동의를 바꾼다(SPEC-018 R-6). 영상을 지울 때의 값이 적용되므로 이벤트는 내지 않는다.
@@ -51,6 +56,32 @@ public class RetentionService {
         retainedVideoRepository.save(
             RetainedVideo.of(video.getPublicId(), video.getOwnerId(), deletedAt));
     return new Retention(retentionKeys.keyOf(record.getSourceId()), record.getRetainUntil());
+  }
+
+  /**
+   * 지운 영상의 보존 동의를 철회한다(SPEC-018 R-14). 보존 키를 다시 계산해 철회 이벤트를 기록하고 최소 기록을 지운다. 기록을 잠근 채 처리하므로 동시에 와도
+   * 이벤트는 한 번이다(NFR-3).
+   *
+   * @throws BusinessException 보존 중인 기록이 없으면 {@link MediaErrorCode#RETAINED_VIDEO_NOT_FOUND}
+   */
+  @Transactional
+  public void revoke(UUID videoId, UUID userId) {
+    RetainedVideo record =
+        retainedVideoRepository
+            .findBySourceIdForUpdate(videoId)
+            .orElseThrow(() -> new BusinessException(MediaErrorCode.RETAINED_VIDEO_NOT_FOUND));
+    recordRevoked(record);
+  }
+
+  private void recordRevoked(RetainedVideo record) {
+    VideoRetentionRevoked event =
+        VideoRetentionRevoked.of(
+            record.getSourceId(),
+            record.getOwnerId(),
+            retentionKeys.keyOf(record.getSourceId()),
+            clock.instant());
+    outbox.record(event.eventId(), VideoRetentionRevoked.TYPE, record.getSourceId(), event);
+    retainedVideoRepository.delete(record);
   }
 
   /** 요청자의 보존 중인 삭제 영상을 삭제 최신순으로 한 페이지 돌려준다(SPEC-018 R-13). */

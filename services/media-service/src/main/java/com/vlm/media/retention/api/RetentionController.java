@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -49,6 +51,14 @@ class RetentionController {
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
     return RetainedVideoPageResponse.from(
         retentionService.listRetained(UserHeaders.userId(userId), page, size));
+  }
+
+  @DeleteMapping(RETAINED + "/{videoId}")
+  ResponseEntity<Void> revoke(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
+      @PathVariable UUID videoId) {
+    retentionService.revoke(videoId, UserHeaders.userId(userId));
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping(SETTINGS)

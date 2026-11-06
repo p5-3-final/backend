@@ -4,6 +4,7 @@ import com.vlm.media.retention.domain.RetainedVideo;
 import com.vlm.media.retention.domain.RetainedVideoPage;
 import com.vlm.media.retention.domain.RetainedVideoRepository;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,16 @@ class RetainedVideoRepositoryAdapter implements RetainedVideoRepository {
   @Override
   public RetainedVideo save(RetainedVideo retainedVideo) {
     return jpaRepository.save(retainedVideo);
+  }
+
+  @Override
+  public Optional<RetainedVideo> findBySourceIdForUpdate(UUID sourceId) {
+    return jpaRepository.findWithLockBySourceId(sourceId);
+  }
+
+  @Override
+  public void delete(RetainedVideo retainedVideo) {
+    jpaRepository.delete(retainedVideo);
   }
 
   @Override
