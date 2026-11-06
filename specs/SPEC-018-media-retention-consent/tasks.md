@@ -37,7 +37,7 @@ updated: 2026-11-06
 ## Phase 3: US-3 동의 철회 (P1)
 
 - [x] T011 [R-6] 소유자가 영상 동의를 바꾸면 200과 영상, 이벤트 없음 — 테스트 `M/test/.../retention/api/VideoConsentApiTest.java`, 구현 `RetentionService#changeConsent`, `Video#changeRetentionConsent`
-- [ ] T012 [R-7] 없음·삭제·남의 영상(ADMIN 포함)이면 404 — 테스트 `VideoConsentApiTest`, 구현 `RetentionService#changeConsent`
+- [x] T012 [R-7] 없음·삭제·남의 영상(ADMIN 포함)이면 404 — 테스트 `VideoConsentApiTest`, 구현 `RetentionService#changeConsent`
 - [ ] T013 [R-13] 보존 중인 삭제 영상 목록(내 것만, 삭제 최신순, ID·시각만) — 테스트 `M/test/.../retention/api/RetainedVideosApiTest.java`, 구현 `RetentionService#listRetained`
 - [ ] T014 [R-14] [R-18] 영상별 철회: `video.retention.revoked`(같은 키, 계약 스키마) 1건, 기록 삭제, 204 — 테스트 `RetainedVideosApiTest`, 구현 `RetentionService#revoke`, `event/VideoRetentionRevoked`
 - [ ] T015 [R-15] 없음·이미 철회·남의 기록이면 404 `MEDIA_RETAINED_VIDEO_NOT_FOUND` — 테스트 `RetainedVideosApiTest`, 구현 `RetentionService#revoke`, `MediaErrorCode`

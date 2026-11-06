@@ -1,8 +1,10 @@
 package com.vlm.media.retention.api;
 
+import static com.vlm.media.support.MediaApi.asAdmin;
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.consentRequest;
 import static com.vlm.media.support.MediaApi.createVideo;
+import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +41,25 @@ class VideoConsentApiTest {
         .andExpect(jsonPath("$.retentionConsent").value(false));
 
     assertThat(jdbc.queryForObject("SELECT count(*) FROM outbox_events", Integer.class)).isZero();
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-7] 없는 영상, 삭제된 영상, 남의 영상(ADMIN 포함)이면 404를 반환한다")
+  void hidesOthersAndDeletedVideos() throws Exception {
+    String videoId = newVideo();
+    String deleted = newVideo();
+    mvc.perform(asUser(deleteRequest(deleted), ownerId)).andExpect(status().isNoContent());
+
+    mvc.perform(asUser(consentRequest(videoId, true), UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_VIDEO_NOT_FOUND"));
+    mvc.perform(asAdmin(consentRequest(videoId, true), UUID.randomUUID()))
+        .andExpect(status().isNotFound());
+    mvc.perform(asUser(consentRequest(deleted, true), ownerId)).andExpect(status().isNotFound());
+    mvc.perform(asUser(consentRequest(UUID.randomUUID().toString(), true), ownerId))
+        .andExpect(status().isNotFound());
+    mvc.perform(asUser(getRequest(videoId), ownerId))
+        .andExpect(jsonPath("$.retentionConsent").value(false));
   }
 
   private String newVideo() throws Exception {

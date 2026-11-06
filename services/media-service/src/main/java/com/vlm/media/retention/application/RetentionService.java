@@ -8,6 +8,7 @@ import com.vlm.media.retention.domain.RetentionSettingRepository;
 import com.vlm.media.shared.domain.MediaErrorCode;
 import com.vlm.media.shared.domain.Video;
 import com.vlm.media.shared.domain.VideoRepository;
+import com.vlm.media.shared.domain.VideoStatus;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +27,15 @@ public class RetentionService {
   /**
    * 영상의 학습용 보존 동의를 바꾼다(SPEC-018 R-6). 영상을 지울 때의 값이 적용되므로 이벤트는 내지 않는다.
    *
-   * @throws BusinessException 영상이 없으면 {@link MediaErrorCode#VIDEO_NOT_FOUND}
+   * @throws BusinessException 영상이 없거나 삭제됐거나 요청자 소유가 아니면 {@link MediaErrorCode#VIDEO_NOT_FOUND}
    */
   @Transactional
   public Video changeConsent(UUID videoId, UUID userId, boolean consent) {
     Video video =
         videoRepository
             .findByPublicIdForUpdate(videoId)
+            // 동의는 소유자의 결정이라 ADMIN도 바꿀 수 없다(SPEC-018 R-7). 볼 수 없는 이유는 구분하지 않는다.
+            .filter(v -> v.getStatus() != VideoStatus.DELETED && v.isOwnedBy(userId))
             .orElseThrow(() -> new BusinessException(MediaErrorCode.VIDEO_NOT_FOUND));
     video.changeRetentionConsent(consent);
     return video;
