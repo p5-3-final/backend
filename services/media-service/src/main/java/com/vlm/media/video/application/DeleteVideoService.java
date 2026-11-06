@@ -2,6 +2,7 @@ package com.vlm.media.video.application;
 
 import com.vlm.common.error.BusinessException;
 import com.vlm.common.messaging.OutboxRecorder;
+import com.vlm.media.retention.application.RetentionService;
 import com.vlm.media.shared.domain.MediaErrorCode;
 import com.vlm.media.shared.domain.Video;
 import com.vlm.media.shared.domain.VideoAccess;
@@ -20,6 +21,7 @@ public class DeleteVideoService {
 
   private final VideoRepository videoRepository;
   private final OutboxRecorder outbox;
+  private final RetentionService retentionService;
   private final Clock clock;
 
   /**
@@ -38,7 +40,8 @@ public class DeleteVideoService {
             .orElseThrow(() -> new BusinessException(MediaErrorCode.VIDEO_NOT_FOUND));
     Instant now = clock.instant();
     video.delete(now);
-    VideoDeleted event = VideoDeleted.of(video, now);
+    // SPEC-018 R-8: 보존 기록과 이벤트를 상태 변경과 같은 트랜잭션에 넣어, 하나만 남는 일이 없게 한다.
+    VideoDeleted event = VideoDeleted.of(video, now, retentionService.retain(video, now));
     outbox.record(event.eventId(), VideoDeleted.TYPE, video.getPublicId(), event);
   }
 }
