@@ -99,4 +99,17 @@ class WorkSessionApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.videos.length()").value(2));
   }
+
+  @Test
+  @DisplayName("[SPEC-017 R-5] 없는 세션과 남의 세션은 구분하지 않고 404를 반환한다")
+  void hidesMissingAndOthersSessions() throws Exception {
+    String sessionId = createSession(mvc, ownerId, "내 세션");
+
+    mvc.perform(asUser(sessionRequest(sessionId), UUID.randomUUID()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_SESSION_NOT_FOUND"));
+    mvc.perform(asUser(sessionRequest(UUID.randomUUID().toString()), ownerId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MEDIA_SESSION_NOT_FOUND"));
+  }
 }

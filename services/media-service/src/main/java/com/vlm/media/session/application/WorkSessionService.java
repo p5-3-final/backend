@@ -33,13 +33,15 @@ public class WorkSessionService {
   /**
    * 세션과 속한 "삭제"가 아닌 영상을 세션 안 순서로 돌려준다(SPEC-017 R-4, R-7).
    *
-   * @throws BusinessException 세션이 없으면 {@link MediaErrorCode#SESSION_NOT_FOUND}
+   * @throws BusinessException 세션이 없거나 소유자도 ADMIN도 아니면 {@link MediaErrorCode#SESSION_NOT_FOUND}
    */
   @Transactional(readOnly = true)
   public SessionDetail get(UUID sessionId, UUID userId, boolean admin) {
     WorkSession session =
         sessionRepository
             .findByPublicId(sessionId)
+            // 없는 세션과 볼 권한이 없는 세션을 구분하지 않는다(SPEC-017 R-5).
+            .filter(found -> admin || found.isOwnedBy(userId))
             .orElseThrow(() -> new BusinessException(MediaErrorCode.SESSION_NOT_FOUND));
     List<Video> videos =
         videoRepository.findVisibleInSession(sessionId).stream()
