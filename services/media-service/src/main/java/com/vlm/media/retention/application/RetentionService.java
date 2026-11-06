@@ -62,13 +62,16 @@ public class RetentionService {
    * 지운 영상의 보존 동의를 철회한다(SPEC-018 R-14). 보존 키를 다시 계산해 철회 이벤트를 기록하고 최소 기록을 지운다. 기록을 잠근 채 처리하므로 동시에 와도
    * 이벤트는 한 번이다(NFR-3).
    *
-   * @throws BusinessException 보존 중인 기록이 없으면 {@link MediaErrorCode#RETAINED_VIDEO_NOT_FOUND}
+   * @throws BusinessException 보존 중인 기록이 없거나 요청자 소유가 아니면 {@link
+   *     MediaErrorCode#RETAINED_VIDEO_NOT_FOUND}
    */
   @Transactional
   public void revoke(UUID videoId, UUID userId) {
     RetainedVideo record =
         retainedVideoRepository
             .findBySourceIdForUpdate(videoId)
+            // 소유자만 철회한다. 남의 기록과 없는 기록을 구분하지 않는다(SPEC-018 R-15).
+            .filter(found -> found.getOwnerId().equals(userId))
             .orElseThrow(() -> new BusinessException(MediaErrorCode.RETAINED_VIDEO_NOT_FOUND));
     recordRevoked(record);
   }

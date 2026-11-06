@@ -1,6 +1,7 @@
 package com.vlm.media.retention.api;
 
 import static com.vlm.media.support.MediaApi.asUser;
+import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.retainedVideosRequest;
@@ -70,6 +71,26 @@ class RetainedVideosApiTest {
     assertThat(eventCount("video.retention.revoked")).isEqualTo(1);
     mvc.perform(asUser(retainedVideosRequest(), ownerId))
         .andExpect(jsonPath("$.items[*].videoId").value(contains(keepId)));
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-15] 없음·이미 철회·동의하지 않은 영상·남의 기록이면 404를 반환한다")
+  void rejectsMissingRecords() throws Exception {
+    String retained = retainedVideo(ownerId);
+    String revoked = retainedVideo(ownerId);
+    mvc.perform(asUser(revokeRequest(revoked), ownerId)).andExpect(status().isNoContent());
+    String unconsented =
+        createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4").at("/video/id").asText();
+    mvc.perform(asUser(deleteRequest(unconsented), ownerId));
+
+    for (String videoId : List.of(revoked, unconsented, UUID.randomUUID().toString())) {
+      mvc.perform(asUser(revokeRequest(videoId), ownerId))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.code").value("MEDIA_RETAINED_VIDEO_NOT_FOUND"));
+    }
+    mvc.perform(asUser(revokeRequest(retained), UUID.randomUUID()))
+        .andExpect(status().isNotFound());
+    assertThat(eventCount("video.retention.revoked")).isEqualTo(1);
   }
 
   private JsonNode payload(String eventType, String videoId) throws Exception {
