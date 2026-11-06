@@ -28,7 +28,8 @@ public final class DownstreamServices {
           "PIPELINE_SERVICE_URI",
           "ANALYSIS_SERVICE_URI",
           "SEARCH_SERVICE_URI",
-          "NOTIFICATION_SERVICE_URI"
+          "NOTIFICATION_SERVICE_URI",
+          "QUALITY_SERVICE_URI"
         }) {
       registry.add(name, () -> baseUrl);
     }

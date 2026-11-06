@@ -21,7 +21,8 @@ class RoutingTest extends GatewayIntegrationTest {
         "/api/v1/jobs/ping",
         "/api/v1/analysis/ping",
         "/api/v1/search/ping",
-        "/api/v1/notify/ping"
+        "/api/v1/notify/ping",
+        "/api/v1/quality/ping"
       })
   @DisplayName("서비스 경로로 들어온 요청을 경로를 유지한 채 해당 서비스로 전달한다")
   void forwardsToService(String path) {
