@@ -76,6 +76,12 @@ public class RetentionService {
     recordRevoked(record);
   }
 
+  /** 요청자의 보존 중인 삭제 영상을 모두 철회한다. 기록마다 철회 이벤트를 하나씩 남긴다(SPEC-018 R-16). */
+  @Transactional
+  public void revokeAll(UUID userId) {
+    retainedVideoRepository.findAllByOwnerForUpdate(userId).forEach(this::recordRevoked);
+  }
+
   private void recordRevoked(RetainedVideo record) {
     VideoRetentionRevoked event =
         VideoRetentionRevoked.of(

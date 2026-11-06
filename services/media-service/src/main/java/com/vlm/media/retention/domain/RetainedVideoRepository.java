@@ -1,6 +1,7 @@
 package com.vlm.media.retention.domain;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +11,9 @@ public interface RetainedVideoRepository {
 
   /** 행을 잠그고 조회한다. 같은 기록의 철회를 한 번에 하나씩 처리하려고 쓴다(SPEC-018 NFR-3). */
   Optional<RetainedVideo> findBySourceIdForUpdate(UUID sourceId);
+
+  /** 소유자의 기록을 모두 잠그고 조회한다(SPEC-018 R-16). */
+  List<RetainedVideo> findAllByOwnerForUpdate(UUID ownerId);
 
   void delete(RetainedVideo retainedVideo);
 

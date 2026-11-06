@@ -53,6 +53,13 @@ class RetentionController {
         retentionService.listRetained(UserHeaders.userId(userId), page, size));
   }
 
+  @DeleteMapping(RETAINED)
+  ResponseEntity<Void> revokeAll(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId) {
+    retentionService.revokeAll(UserHeaders.userId(userId));
+    return ResponseEntity.noContent().build();
+  }
+
   @DeleteMapping(RETAINED + "/{videoId}")
   ResponseEntity<Void> revoke(
       @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,

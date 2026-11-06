@@ -5,6 +5,7 @@ import static com.vlm.media.support.MediaApi.createVideo;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.retainedVideosRequest;
+import static com.vlm.media.support.MediaApi.revokeAllRequest;
 import static com.vlm.media.support.MediaApi.revokeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -91,6 +92,25 @@ class RetainedVideosApiTest {
     mvc.perform(asUser(revokeRequest(retained), UUID.randomUUID()))
         .andExpect(status().isNotFound());
     assertThat(eventCount("video.retention.revoked")).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-16] 전체 철회는 내 기록마다 철회 이벤트를 하나씩 기록하고 모두 지우며 기록이 없어도 204다")
+  void revokesAll() throws Exception {
+    retainedVideo(ownerId);
+    retainedVideo(ownerId);
+    retainedVideo(ownerId);
+    UUID other = UUID.randomUUID();
+    retainedVideo(other);
+
+    mvc.perform(asUser(revokeAllRequest(), ownerId)).andExpect(status().isNoContent());
+
+    assertThat(eventCount("video.retention.revoked")).isEqualTo(3);
+    mvc.perform(asUser(retainedVideosRequest(), ownerId)).andExpect(jsonPath("$.items").isEmpty());
+    mvc.perform(asUser(retainedVideosRequest(), other))
+        .andExpect(jsonPath("$.page.totalElements").value(1));
+    mvc.perform(asUser(revokeAllRequest(), ownerId)).andExpect(status().isNoContent());
+    assertThat(eventCount("video.retention.revoked")).isEqualTo(3);
   }
 
   private JsonNode payload(String eventType, String videoId) throws Exception {

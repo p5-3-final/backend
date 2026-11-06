@@ -3,6 +3,7 @@ package com.vlm.media.retention.infra.persistence;
 import com.vlm.media.retention.domain.RetainedVideo;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,9 @@ interface RetainedVideoJpaRepository extends JpaRepository<RetainedVideo, Long> 
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   Optional<RetainedVideo> findWithLockBySourceId(UUID sourceId);
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  List<RetainedVideo> findWithLockByOwnerId(UUID ownerId);
 
   @Modifying
   @Query(
