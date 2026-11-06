@@ -69,6 +69,8 @@ updated: 2026-11-06
 | `M/main/.../shared/domain/{Video,VideoRepository,MediaErrorCode}.java` | 세션 필드, 세션 안 영상 조회, 오류 코드 2개 |
 | `M/main/.../session/{api,application}/` | 세션 API |
 | `M/main/.../video/api/{CreateVideoRequest,VideoResponse,VideoController}.java`, `video/application/CreateVideoService.java`, `video/application/event/VideoUploaded.java` | 세션 지정, 응답·이벤트 필드 |
+| `M/main/.../shared/api/VideoResponse.java` | 영상 API와 세션 상세가 같은 영상 응답을 쓰므로 `video/api`에서 옮긴다 |
+| `libs/common-web/.../PageMeta.java` | 계약 `_common.yaml`의 공통 페이지 정보. 목록 API를 두는 서비스가 함께 쓰도록 media 안에서 옮긴다 |
 | `service-contracts.lock` | 2.9.0 |
 
 ### 스키마
