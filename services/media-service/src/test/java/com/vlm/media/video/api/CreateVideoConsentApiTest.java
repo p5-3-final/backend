@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.MediaApi;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,5 +39,22 @@ class CreateVideoConsentApiTest {
     mvc.perform(asUser(updateRetentionSettingsRequest(false), ownerId));
     mvc.perform(asUser(getRequest(videoId), ownerId))
         .andExpect(jsonPath("$.retentionConsent").value(true));
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-4] 업로드 자리 요청에 동의 값이 있으면 계정 기본값보다 그 값을 저장한다")
+  void requestValueWins() throws Exception {
+    mvc.perform(
+            asUser(
+                createVideoRequest("a.mp4", 1000, "video/mp4", Map.of("retentionConsent", true)),
+                ownerId))
+        .andExpect(jsonPath("$.video.retentionConsent").value(true));
+
+    mvc.perform(asUser(updateRetentionSettingsRequest(true), ownerId));
+    mvc.perform(
+            asUser(
+                createVideoRequest("b.mp4", 1000, "video/mp4", Map.of("retentionConsent", false)),
+                ownerId))
+        .andExpect(jsonPath("$.video.retentionConsent").value(false));
   }
 }
