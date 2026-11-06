@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vlm.quality.review.application.ReviewItemView;
 import com.vlm.quality.review.domain.ReviewItem;
-import com.vlm.quality.review.domain.ReviewLabel;
+import com.vlm.quality.shared.domain.ReviewLabel;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

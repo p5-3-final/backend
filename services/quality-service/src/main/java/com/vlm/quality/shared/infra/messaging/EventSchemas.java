@@ -13,6 +13,7 @@ import com.networknt.schema.SchemaLocation;
 import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import com.vlm.quality.shared.domain.ContractDocuments;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +25,7 @@ import org.springframework.stereotype.Component;
  * <p>원격 스키마를 조회하지 않는다. 계약 {@code $id}를 클래스패스 {@code contracts/}에 연결해 상대 {@code $ref}도 JAR 안에서 찾는다.
  */
 @Component
-public class EventSchemas {
+public class EventSchemas implements ContractDocuments {
 
   private static final String ID_PREFIX = "https://vlm.example/contracts/";
 
@@ -61,6 +62,15 @@ public class EventSchemas {
     if (!errors.isEmpty()) {
       throw new InvalidEventException(
           "does not match " + schemaPath + ": " + errors.iterator().next().getMessage());
+    }
+  }
+
+  @Override
+  public void requireValid(String schemaPath, String json) {
+    try {
+      validate(schemaPath, read(json));
+    } catch (InvalidEventException e) {
+      throw new IllegalStateException("generated document violates the contract", e);
     }
   }
 

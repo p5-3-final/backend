@@ -2,6 +2,7 @@ package com.vlm.quality.review.domain;
 
 import com.vlm.common.error.BusinessException;
 import com.vlm.quality.shared.domain.QualityErrorCode;
+import com.vlm.quality.shared.domain.ReviewLabel;
 
 /** 라벨 형식 규칙(SPEC-029 R-9). 저장 전에 검사해, 어기면 항목을 바꾸지 않는다. */
 public final class ReviewLabelRules {

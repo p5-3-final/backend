@@ -1,5 +1,6 @@
 package com.vlm.quality.review.domain;
 
+import com.vlm.quality.shared.domain.ReviewLabel;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

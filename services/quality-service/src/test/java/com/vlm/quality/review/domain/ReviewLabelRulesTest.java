@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.vlm.common.error.BusinessException;
 import com.vlm.quality.shared.domain.QualityErrorCode;
+import com.vlm.quality.shared.domain.ReviewLabel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

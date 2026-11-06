@@ -1,4 +1,4 @@
-package com.vlm.quality.review.domain;
+package com.vlm.quality.shared.domain;
 
 import org.jspecify.annotations.Nullable;
 
@@ -25,7 +25,7 @@ public record ReviewLabel(
   public static final String UNCERTAIN = "uncertain";
 
   /** Golden Set에 넣을 수 있는 확정 라벨인지(R-12). */
-  public boolean isDecided() {
+  public boolean hasDecidedVerdict() {
     return !UNCERTAIN.equals(verdict);
   }
 }

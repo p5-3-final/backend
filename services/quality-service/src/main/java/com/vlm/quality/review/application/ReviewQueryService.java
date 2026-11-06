@@ -5,8 +5,11 @@ import com.vlm.quality.review.domain.ReviewFilter;
 import com.vlm.quality.review.domain.ReviewItem;
 import com.vlm.quality.review.domain.ReviewItemPage;
 import com.vlm.quality.review.domain.ReviewItemRepository;
+import com.vlm.quality.review.domain.ReviewReason;
+import com.vlm.quality.review.domain.ReviewStatus;
 import com.vlm.quality.shared.domain.EvidenceUrls;
 import com.vlm.quality.shared.domain.QualityErrorCode;
+import com.vlm.quality.shared.domain.ReviewLabel;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,6 +45,26 @@ public class ReviewQueryService {
     return items
         .findByItemId(itemId)
         .orElseThrow(() -> new BusinessException(QualityErrorCode.REVIEW_NOT_FOUND));
+  }
+
+  /**
+   * Golden Set 초안에 넣을 항목을 고른다. LABELED이고 verdict가 uncertain이 아니며 판정 결과가 있는 항목만이다(R-12).
+   *
+   * @throws BusinessException 없으면 {@link QualityErrorCode#REVIEW_NOT_FOUND}, 넣을 수 없으면 {@link
+   *     QualityErrorCode#REVIEW_NOT_LABELED}
+   */
+  @Transactional(readOnly = true)
+  public GoldenCandidate goldenCandidate(UUID itemId) {
+    ReviewItem item = find(itemId);
+    ReviewLabel label = item.label();
+    // alert_dismissed 항목은 판정 결과(VLMAnalysis)가 없어 매니페스트 entries.analysis를 채울 수 없다.
+    if (item.status() != ReviewStatus.LABELED
+        || label == null
+        || !label.hasDecidedVerdict()
+        || item.reason() == ReviewReason.ALERT_DISMISSED) {
+      throw new BusinessException(QualityErrorCode.REVIEW_NOT_LABELED);
+    }
+    return new GoldenCandidate(item.id(), item.itemId(), item.sourceId(), item.eventId(), label);
   }
 
   ReviewItemView view(ReviewItem item) {

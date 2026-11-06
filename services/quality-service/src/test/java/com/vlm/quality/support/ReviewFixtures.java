@@ -1,7 +1,10 @@
 package com.vlm.quality.support;
 
 import com.vlm.quality.review.application.AnalyzedEvent;
+import com.vlm.quality.review.application.ReviewAssignmentService;
 import com.vlm.quality.review.application.ReviewIntakeService;
+import com.vlm.quality.review.application.ReviewLabelService;
+import com.vlm.quality.shared.domain.ReviewLabel;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -16,10 +19,31 @@ public class ReviewFixtures {
           + "\"riskDetected\":true,\"riskType\":\"fall\",\"riskReason\":\"쓰러짐\","
           + "\"solution\":\"확인\",\"severity\":\"high\",\"evidenceStart\":1.0,\"evidenceEnd\":2.0}";
 
-  private final ReviewIntakeService intake;
+  public static final ReviewLabel CORRECT =
+      new ReviewLabel("correct", true, "fall", 1_000L, 4_000L, "high", "넘어짐 맞음");
 
-  public ReviewFixtures(ReviewIntakeService intake) {
+  private final ReviewIntakeService intake;
+  private final ReviewAssignmentService assignments;
+  private final ReviewLabelService labels;
+
+  public ReviewFixtures(
+      ReviewIntakeService intake, ReviewAssignmentService assignments, ReviewLabelService labels) {
     this.intake = intake;
+    this.assignments = assignments;
+    this.labels = labels;
+  }
+
+  /** 맡아서 라벨까지 붙인 항목을 넣는다. */
+  public UUID labeled(UUID sourceId, List<String> frameKeys, ReviewLabel label) {
+    UUID itemId = reviewRequired(sourceId, "fall", frameKeys);
+    UUID operator = UUID.randomUUID();
+    assignments.assign(itemId, operator);
+    labels.label(itemId, operator, label);
+    return itemId;
+  }
+
+  public UUID labeled(UUID sourceId) {
+    return labeled(sourceId, List.of(frameKey(sourceId, 0)), CORRECT);
   }
 
   /** reviewRequired 항목을 넣고 itemId를 돌려준다. */
