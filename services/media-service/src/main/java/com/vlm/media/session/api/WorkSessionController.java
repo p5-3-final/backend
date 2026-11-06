@@ -3,6 +3,8 @@ package com.vlm.media.session.api;
 import com.vlm.common.web.UserHeaders;
 import com.vlm.media.session.application.WorkSessionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.net.URI;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -32,6 +35,15 @@ class WorkSessionController {
             sessionService.create(
                 UserHeaders.userId(userId), request.name(), request.site(), request.area()));
     return ResponseEntity.created(URI.create(SESSIONS + "/" + session.id())).body(session);
+  }
+
+  @GetMapping(SESSIONS)
+  WorkSessionPageResponse list(
+      @RequestHeader(value = UserHeaders.USER_ID, required = false) @Nullable String userId,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+    return WorkSessionPageResponse.from(
+        sessionService.list(UserHeaders.userId(userId), page, size));
   }
 
   @GetMapping(SESSIONS + "/{sessionId}")

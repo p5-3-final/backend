@@ -6,6 +6,7 @@ import com.vlm.media.shared.domain.SessionOrder;
 import com.vlm.media.shared.domain.Video;
 import com.vlm.media.shared.domain.VideoRepository;
 import com.vlm.media.shared.domain.WorkSession;
+import com.vlm.media.shared.domain.WorkSessionPage;
 import com.vlm.media.shared.domain.WorkSessionRepository;
 import java.time.Clock;
 import java.util.List;
@@ -28,6 +29,12 @@ public class WorkSessionService {
   public WorkSession create(
       UUID ownerId, String name, @Nullable String site, @Nullable String area) {
     return sessionRepository.save(WorkSession.create(ownerId, name, site, area, clock.instant()));
+  }
+
+  /** 요청자의 세션을 최신순으로 한 페이지 돌려준다(SPEC-017 R-3). */
+  @Transactional(readOnly = true)
+  public WorkSessionPage list(UUID ownerId, int page, int size) {
+    return sessionRepository.findByOwner(ownerId, page, size);
   }
 
   /**

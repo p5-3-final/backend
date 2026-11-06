@@ -33,7 +33,7 @@ updated: 2026-11-06
 - [x] T008 [R-7] 역할 순서 → 완료 시각 순 → 미완료는 역할 끝에 만든 시각 순 — 테스트 `M/test/.../shared/domain/SessionOrderTest.java`, 구현 `shared/domain/SessionOrder`
 - [x] T009 [R-4] 세션 상세에 "삭제"가 아닌 영상을 R-7 순서로, ADMIN도 조회 — 테스트 `WorkSessionApiTest`, 구현 `WorkSessionService#get`, `VideoRepository#findVisibleInSession`
 - [x] T010 [R-5] 없는 세션·남의 세션은 404 `MEDIA_SESSION_NOT_FOUND` — 테스트 `WorkSessionApiTest`, 구현 `WorkSessionService#get`
-- [ ] T011 [R-3] 세션 목록은 내 세션만 최신순 페이지 — 테스트 `WorkSessionApiTest`, 구현 `WorkSessionService#list`
+- [x] T011 [R-3] 세션 목록은 내 세션만 최신순 페이지 — 테스트 `WorkSessionApiTest`, 구현 `WorkSessionService#list`
 
 ## Phase 3: US-3 잘못된 세션 지정 (P2)
 

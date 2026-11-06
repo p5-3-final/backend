@@ -7,6 +7,7 @@ import static com.vlm.media.support.MediaApi.createSessionRequest;
 import static com.vlm.media.support.MediaApi.createSessionVideo;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.sessionRequest;
+import static com.vlm.media.support.MediaApi.sessionsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -111,5 +112,22 @@ class WorkSessionApiTest {
     mvc.perform(asUser(sessionRequest(UUID.randomUUID().toString()), ownerId))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("MEDIA_SESSION_NOT_FOUND"));
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-3] 세션 목록은 내 세션만 만든 시각 최신순으로 페이지 단위로 반환한다")
+  void listsOwnSessionsNewestFirst() throws Exception {
+    String first = createSession(mvc, ownerId, "첫째");
+    String second = createSession(mvc, ownerId, "둘째");
+    String third = createSession(mvc, ownerId, "셋째");
+    createSession(mvc, UUID.randomUUID(), "남의 세션");
+
+    mvc.perform(asUser(sessionsRequest().param("size", "2"), ownerId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items[*].id").value(contains(third, second)))
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$.page.totalPages").value(2));
+    mvc.perform(asUser(sessionsRequest().param("page", "1").param("size", "2"), ownerId))
+        .andExpect(jsonPath("$.items[*].id").value(contains(first)));
   }
 }
