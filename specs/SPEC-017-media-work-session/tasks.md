@@ -22,7 +22,7 @@ updated: 2026-11-06
 
 ## Phase 1: US-1 작업 전후 영상 묶기 (P1)
 
-- [ ] T003 [R-1] 세션 만들기 201·`Location`·소유자=요청자 — 테스트 `M/test/.../session/api/WorkSessionApiTest.java`, 구현 `shared/domain/{WorkSession,WorkSessionRepository}`, `shared/infra/persistence/WorkSession*`, `session/api/*`, `session/application/WorkSessionService`
+- [x] T003 [R-1] 세션 만들기 201·`Location`·소유자=요청자 — 테스트 `M/test/.../session/api/WorkSessionApiTest.java`, 구현 `shared/domain/{WorkSession,WorkSessionRepository}`, `shared/infra/persistence/WorkSession*`, `session/api/*`, `session/application/WorkSessionService`
 - [ ] T004 [R-2] 이름 없음·101자, 현장 101자면 400 `MEDIA_INVALID_REQUEST` — 테스트 `WorkSessionApiTest`, 구현 `CreateWorkSessionRequest`
 - [ ] T005 [R-6] [R-13] 세션·역할로 업로드 자리 발급하면 영상이 세션에 들어가고 응답 `session`에 담김 — 테스트 `M/test/.../video/api/CreateVideoSessionApiTest.java`, 구현 `shared/domain/{Video,SessionRole}`, `video/api/{CreateVideoRequest,VideoResponse,VideoController}`, `video/application/CreateVideoService`
 - [ ] T006 [R-11] [R-12] `video.uploaded`에 세션이 있으면 `sessionId`·`role`, 없으면 두 필드 없음(계약 스키마 통과) — 테스트 `M/test/.../event/VideoUploadedEventTest.java`, 구현 `video/application/event/VideoUploaded`

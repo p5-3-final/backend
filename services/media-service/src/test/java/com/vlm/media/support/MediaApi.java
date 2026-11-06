@@ -50,6 +50,28 @@ public final class MediaApi {
     return JSON.readTree(result.andReturn().getResponse().getContentAsString());
   }
 
+  /** 세션 만들기 요청. 값이 null인 항목은 본문에서 뺀다. */
+  public static MockHttpServletRequestBuilder createSessionRequest(Map<String, ?> body)
+      throws Exception {
+    return post("/api/v1/media/sessions")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(body));
+  }
+
+  /** 세션을 만들고 세션 ID를 돌려준다. */
+  public static String createSession(MockMvc mvc, UUID ownerId, String name) throws Exception {
+    ResultActions result = mvc.perform(asUser(createSessionRequest(Map.of("name", name)), ownerId));
+    return JSON.readTree(result.andReturn().getResponse().getContentAsString()).get("id").asText();
+  }
+
+  public static MockHttpServletRequestBuilder sessionRequest(String sessionId) {
+    return get("/api/v1/media/sessions/{id}", sessionId);
+  }
+
+  public static MockHttpServletRequestBuilder sessionsRequest() {
+    return get("/api/v1/media/sessions");
+  }
+
   public static MockHttpServletRequestBuilder listRequest() {
     return get("/api/v1/media/videos");
   }
