@@ -10,10 +10,10 @@ updated: 2026-11-07
 # Plan: SPEC-029 quality-service 검토 큐·Golden Set·평가 실행·처리 단계 리포트 — backend
 
 - spec: docs 레포 `docs/specs/SPEC-029-quality-service/spec.md`
-- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 1.2.0, `quality/v1/golden-manifest.schema.json`, `events/{event.analyzed,stage.timing,video.deleted,_vlm-analysis,_envelope}.schema.json`, `stages/v1/{stage-timing,stages}.schema.json`, `taxonomy/v2/taxonomy.schema.json` (계약 묶음 3.14.0)
+- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 2.0.0, `quality/v1/golden-manifest.schema.json`, `events/{event.analyzed,stage.timing,video.deleted,_vlm-analysis,_envelope}.schema.json`, `stages/v1/{stage-timing,stages}.schema.json`, `taxonomy/v2/taxonomy.schema.json` (계약 묶음 4.1.0)
 - ADR: ADR-0007, ADR-0008(배포 단위 quality-service), ADR-0010 ⑨·⑩, ADR-0011(Golden Set 확정 버전 보존)
 
-- v5.1(계약 묶음 4.0.0, 2026-11-07, ADR-0016): `openapi/quality-service.yaml` 2.0.0은 검토 항목 `reason`을 `x-extensible-enum`으로 바꾸고 `budget_exceeded`·`call_cap_reached`·`model_unavailable`·`alert_dismissed`를 더했으며, 목록 필터 `reason`과 알림 지표 리포트 `GET /api/v1/quality/alert-reports`를 더했다. 소비 토픽에 `alert.raised`(`events/alert.raised.schema.json`)가 더해지고 `event.analyzed`에 `unverifiedReason`이 생겼다. R-27(사유별 재판정 큐)·R-28(긴급 알림 기록·지표)을 아래 설계 절대로 더한다. 잠금은 T001에서 4.0.0으로 올린다.
+- v5.1(계약 묶음 4.0.0, 2026-11-07, ADR-0016): `openapi/quality-service.yaml` 2.0.0은 검토 항목 `reason`을 `x-extensible-enum`으로 바꾸고 `budget_exceeded`·`call_cap_reached`·`model_unavailable`·`alert_dismissed`를 더했으며, 목록 필터 `reason`과 알림 지표 리포트 `GET /api/v1/quality/alert-reports`를 더했다. 소비 토픽에 `alert.raised`(`events/alert.raised.schema.json`)가 더해지고 `event.analyzed`에 `unverifiedReason`이 생겼다. R-27(사유별 재판정 큐)·R-28(긴급 알림 기록·지표)을 아래 설계 절대로 더한다. 잠금은 T001에서 4.1.0(`quality-service.yaml` 2.0.0)으로 올렸다. 4.1.0은 4.0.0 위에 경계 박스 범위·stitched 쌍·예측 빈 구간을 고친 묶음이고 이 서비스가 쓰는 계약은 바뀌지 않았다.
 
 ## 1. 요약
 
@@ -497,3 +497,24 @@ sequenceDiagram
 - `dismissed`는 검토 항목(사유 `alert_dismissed`, 근거 프레임 = `evidenceFrameKeys`, `analysis` null)을 R-3 규칙으로 넣는다.
 - 리포트 `GET /api/v1/quality/alert-reports`(계약 파라미터 `from`·`to`·`cameraId`): `resolved_at − pending_at`의 p50·p95(`percentile_cont`), 건수, `dismissed` 비율. 둘 다 채워진 행만 지연에 넣고 미해결 건수는 따로 낸다. OPERATOR 전용(R-4).
 - 삭제 전파(R-16)에 `alert_events`의 `source_id` 행 삭제를 더한다.
+
+## 12. 구현 중 바뀐 점
+
+구현하면서 위 설계와 달라진 점이다. spec·계약은 바꾸지 않았다.
+
+| 항목 | 설계 | 구현 | 이유 |
+| --- | --- | --- | --- |
+| 저장 방식 | JPA + 일부 JDBC | 전부 `NamedParameterJdbcTemplate` | 상태 전이(R-6~R-9)·멱등 적재(R-3, R-21)·확정 잠금(R-14)이 모두 조건부 `UPDATE`·`ON CONFLICT`라 엔티티 상태를 거치지 않는다. JPA와 JDBC를 섞으면 영속성 컨텍스트와 직접 쓴 행이 어긋날 수 있다. 의존성은 `spring-boot-starter-data-jpa` 대신 `spring-boot-starter-jdbc`다 |
+| `ReviewLabel` 위치 | `review/domain` | `shared/domain` | `golden`이 초안 라벨 사본(R-12)·매니페스트(R-15)에 같은 값을 쓴다. 기능 경계 규칙(다른 기능은 application만)에 따라 공유 값으로 옮겼다 |
+| 기능 사이 값 | — | `review/application/GoldenCandidate`, `golden/application/GoldenSetView` | `golden`·`evaluation`이 상대 기능의 domain을 import하지 않게 application 레코드로 넘긴다 |
+| `reason` 인덱스 | 별도 마이그레이션 | 첫 마이그레이션(`V202611071000`)에 포함 | 아직 배포 전인 새 서비스라 마이그레이션을 나눌 이유가 없다 |
+| `alert_events` 키 | `candidate_id` PK | `id BIGINT` PK + `candidate_id UNIQUE` | persistence.md의 PK 규칙(`id BIGINT IDENTITY`)을 따른다. `owner_id`는 리포트·삭제에 쓰지 않아 두지 않았다 |
+| 알림 리포트 | 기간 합계 | 날짜별(`days[]`) | 계약 `AlertReport`가 날짜별 행이다. 날짜는 pending 발행 시각(없으면 판정 시각)의 UTC 날짜다. `pendingCount`는 아직 판정이 오지 않은 후보 수다. 기각 비율은 `dismissedCount / (confirmedCount + dismissedCount)`로 화면이 계산한다 |
+| 1차 알림 지연 | — | `stage_timings`의 `analyzer.alert` 측정 | 계약 설명은 "alert.candidate occurredAt부터 pending occurredAt까지"이지만 quality-service는 `alert.candidate`를 소비하지 않는다(계약 소비자 목록에 없음). event-analyzer가 같은 구간(alert.candidate 수신부터 첫 alert.raised 발행)을 `analyzer.alert`로 재므로 `subject.candidateId`로 잇는다. 이를 위해 `stage_timings`에 `candidate_id` 열을 두었다. Kafka 대기 시간은 빠진다 |
+| 같은 후보의 두 번째 판정 | — | 무시 | confirmed 뒤 dismissed처럼 판정이 두 번 오면 처음 판정만 남기고 검토 큐에도 넣지 않는다 |
+| 추이 `versionKey`만 있음 | 미정 | 400 `QUALITY_INVALID_REQUEST` | D-28. 키만 있을 때 돌려줄 집계가 spec·계약에 없다 |
+| Gate 지표 누락 | 기준에만 있는 지표 = 실패 | `passed: false`, 그 지표는 `failures[]`에서 빼고 경고 로그 | 계약 `GateResult.failures[].value`가 null을 허용하지 않아 후보 값이 없는 실패를 표현할 수 없다(C-30) |
+| alert_dismissed 검토 항목 | `analysis` null | `analysis` = `{}` | 계약 `ReviewItem.analysis`가 null을 허용하지 않는다. 판정 결과가 없어 Golden Set에는 넣지 못한다(409 `QUALITY_REVIEW_NOT_LABELED`) |
+| 영상 시각 범위 | `int64` | `Integer.MAX_VALUE` ms(약 24.8일) 이하만 적재 | 계약 `ReviewItem.startMs`·`endMs`가 상한 없는 `integer`라 생성 모델이 `Integer`다. 넘는 이벤트는 건너뛰고 경고 로그를 남긴다 |
+| `evaluateStageGate` | 범위 밖 | 501 | SPEC-030 범위다. 생성 인터페이스를 구현해야 해서 자리만 둔다 |
+| 이미지 빌드 | `CONTRACTS_DIR` 빌드 인자 | `ARG CONTRACTS_DIR`(기본 `/workspace/.service-contracts/service-contracts`), `.dockerignore`에서 `.service-contracts` 제외 해제 | 빌드 전에 `scripts/fetch-service-contracts.sh`로 받은 사본을 컨텍스트에 넣는다(C-35) |

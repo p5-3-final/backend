@@ -49,6 +49,11 @@ spring:
               uri: ${SEARCH_SERVICE_URI:http://localhost:8086}
               predicates:
                 - Path=/api/v1/search/**
+            # SPEC-029 R-26: 운영자 API만 전달한다. /internal/v1/quality/**는 클러스터 안에서만 부른다.
+            - id: quality-service
+              uri: ${QUALITY_SERVICE_URI:http://localhost:8088}
+              predicates:
+                - Path=/api/v1/quality/**
             - id: notification-service
               uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8087}
               predicates:

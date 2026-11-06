@@ -1,0 +1,3 @@
+# 로컬 compose(docs 레포 local/)의 quality-service 포트(service-catalog.md)
+server:
+  port: 8088
