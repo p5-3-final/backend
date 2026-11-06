@@ -1,6 +1,7 @@
 package com.vlm.quality.alert.api;
 
 import static com.vlm.quality.support.QualityApi.operator;
+import static org.hamcrest.Matchers.closeTo;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @IntegrationTest
 class AlertReportApiTest {
 
+  // percentile_cont 보간은 부동소수점이라 CPU(FMA 사용 여부)에 따라 마지막 자리가 다르다.
+  private static final double EPSILON = 1e-6;
   private static final String REPORTS = "/api/v1/quality/alert-reports";
 
   @Autowired MockMvc mvc;
@@ -59,10 +62,10 @@ class AlertReportApiTest {
         .andExpect(jsonPath("$.days[0].pendingCount").value(1))
         .andExpect(jsonPath("$.days[0].confirmedCount").value(2))
         .andExpect(jsonPath("$.days[0].dismissedCount").value(1))
-        .andExpect(jsonPath("$.days[0].judgeP50Ms").value(2000.0))
-        .andExpect(jsonPath("$.days[0].judgeP95Ms").value(2900.0))
-        .andExpect(jsonPath("$.days[0].firstAlertP50Ms").value(200.0))
-        .andExpect(jsonPath("$.days[0].firstAlertP95Ms").value(290.0));
+        .andExpect(jsonPath("$.days[0].judgeP50Ms", closeTo(2000.0, EPSILON)))
+        .andExpect(jsonPath("$.days[0].judgeP95Ms", closeTo(2900.0, EPSILON)))
+        .andExpect(jsonPath("$.days[0].firstAlertP50Ms", closeTo(200.0, EPSILON)))
+        .andExpect(jsonPath("$.days[0].firstAlertP95Ms", closeTo(290.0, EPSILON)));
 
     mvc.perform(
             operator(

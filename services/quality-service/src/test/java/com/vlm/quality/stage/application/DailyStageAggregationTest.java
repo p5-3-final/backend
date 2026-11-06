@@ -1,6 +1,7 @@
 package com.vlm.quality.stage.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import com.vlm.quality.support.IntegrationTest;
 import com.vlm.quality.support.StageFixtures;
@@ -60,9 +61,10 @@ class DailyStageAggregationTest {
     assertThat(rows.get(0))
         .containsEntry("version_key", null)
         .containsEntry("record_count", 4L)
-        .containsEntry("p50_ms", 250.0)
-        .containsEntry("p95_ms", 385.0)
         .containsEntry("error_count", 1L);
+    // percentile_cont 보간은 부동소수점이라 CPU(FMA 사용 여부)에 따라 마지막 자리가 다르다.
+    assertThat((Double) rows.get(0).get("p50_ms")).isCloseTo(250.0, within(1e-6));
+    assertThat((Double) rows.get(0).get("p95_ms")).isCloseTo(385.0, within(1e-6));
     assertThat(rows.get(1)).containsEntry("version_value", "a").containsEntry("p50_ms", 150.0);
     assertThat(rows.get(2)).containsEntry("version_value", "b").containsEntry("error_count", 1L);
   }

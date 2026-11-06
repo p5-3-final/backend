@@ -1,6 +1,8 @@
 package com.vlm.quality.stage.api;
 
 import static com.vlm.quality.support.QualityApi.operator;
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,6 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @IntegrationTest
 class SourceStageReportApiTest {
 
+  // percentile_cont 보간은 부동소수점이라 CPU(FMA 사용 여부)에 따라 마지막 자리가 다르다.
+  private static final double EPSILON = 1e-6;
   private static final String REPORT = "/api/v1/quality/stage-reports/sources/{sourceId}";
 
   @Autowired MockMvc mvc;
@@ -47,8 +51,14 @@ class SourceStageReportApiTest {
         .andExpect(jsonPath("$.recordCount").value(12))
         .andExpect(jsonPath("$.stages[?(@.stageId=='analyzer.judge')].count").value(11))
         .andExpect(jsonPath("$.stages[?(@.stageId=='analyzer.judge')].totalMs").value(5500.0))
-        .andExpect(jsonPath("$.stages[?(@.stageId=='analyzer.judge')].p50Ms").value(550.0))
-        .andExpect(jsonPath("$.stages[?(@.stageId=='analyzer.judge')].p95Ms").value(955.0))
+        .andExpect(
+            jsonPath(
+                "$.stages[?(@.stageId=='analyzer.judge')].p50Ms",
+                contains(closeTo(550.0, EPSILON))))
+        .andExpect(
+            jsonPath(
+                "$.stages[?(@.stageId=='analyzer.judge')].p95Ms",
+                contains(closeTo(955.0, EPSILON))))
         .andExpect(jsonPath("$.stages[?(@.stageId=='analyzer.judge')].errorCount").value(1))
         .andExpect(
             jsonPath("$.stages[?(@.stageId=='event-analyzer.queue_wait')].totalMs").value(0.0))
