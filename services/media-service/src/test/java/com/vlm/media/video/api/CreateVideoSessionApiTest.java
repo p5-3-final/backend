@@ -1,5 +1,6 @@
 package com.vlm.media.video.api;
 
+import static com.vlm.media.support.MediaApi.asAdmin;
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.createSession;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
@@ -93,6 +94,32 @@ class CreateVideoSessionApiTest {
                     "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "AFTER")),
                 ownerId))
         .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("[SPEC-017 R-9] 없는 세션이나 남의 세션(ADMIN 포함)이면 404를 반환하고 영상을 만들지 않는다")
+  void rejectsOthersSession() throws Exception {
+    String othersSession = createSession(mvc, UUID.randomUUID(), "남의 세션");
+
+    for (String sessionId : new String[] {othersSession, UUID.randomUUID().toString()}) {
+      mvc.perform(
+              asUser(
+                  createVideoRequest(
+                      "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "BEFORE")),
+                  ownerId))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.code").value("MEDIA_SESSION_NOT_FOUND"));
+    }
+    mvc.perform(
+            asAdmin(
+                createVideoRequest(
+                    "a.mp4",
+                    1000,
+                    "video/mp4",
+                    Map.of("sessionId", othersSession, "role", "BEFORE")),
+                ownerId))
+        .andExpect(status().isNotFound());
+    assertThat(videoCount()).isZero();
   }
 
   @ParameterizedTest

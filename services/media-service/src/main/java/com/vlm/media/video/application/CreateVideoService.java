@@ -35,8 +35,8 @@ public class CreateVideoService {
   /**
    * 업로드 자리를 만든다(SPEC-003 R-1~R-6). 세션과 역할이 있으면 영상을 그 세션에 넣는다(SPEC-017 R-6).
    *
-   * @throws BusinessException 세션이 없으면 {@link MediaErrorCode#SESSION_NOT_FOUND}, 영상이 이미 100개면 {@link
-   *     MediaErrorCode#SESSION_FULL}
+   * @throws BusinessException 세션이 없거나 요청자 소유가 아니면 {@link MediaErrorCode#SESSION_NOT_FOUND}, 영상이 이미
+   *     100개면 {@link MediaErrorCode#SESSION_FULL}
    */
   @Transactional
   public CreatedVideo create(
@@ -54,6 +54,8 @@ public class CreateVideoService {
       WorkSession session =
           sessionRepository
               .findByPublicIdForUpdate(sessionId)
+              // ADMIN도 자기 세션에만 넣는다. 영상 소유자와 세션 소유자가 달라지면 안 된다(SPEC-017 R-9).
+              .filter(found -> found.isOwnedBy(ownerId))
               .orElseThrow(() -> new BusinessException(MediaErrorCode.SESSION_NOT_FOUND));
       // 세션 행을 잠근 채 세므로 동시에 와도 한 요청씩 세고 넣는다(SPEC-017 NFR-2).
       if (videoRepository.countVisibleInSession(session.getPublicId()) >= MAX_SESSION_VIDEOS) {
