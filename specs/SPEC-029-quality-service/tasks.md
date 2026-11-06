@@ -65,16 +65,16 @@ updated: 2026-11-07
 
 ## Phase 5: 마무리
 
-- [ ] T034 [P] 19개 작업의 정상·오류 응답이 `quality-service.yaml` 1.2.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
-- [ ] T035 [P] [NFR-2] [NFR-4] 항목 10,000개 목록 p95 300ms, 기록 5,000건 영상 리포트 p95 500ms — 테스트 `Q/test/.../QualityLatencyTest.java`
-- [ ] T036 [P] [NFR-3] `stage.timing` 기록을 Pod 하나에서 초당 200건 이상 적재 — 테스트 `Q/test/.../stage/StageTimingThroughputTest.java`(6,000건을 30초 안에)
+- [x] T034 [P] 19개 작업의 정상·오류 응답이 `quality-service.yaml` 1.2.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
+- [x] T035 [P] [NFR-2] [NFR-4] 항목 10,000개 목록 p95 300ms, 기록 5,000건 영상 리포트 p95 500ms — 테스트 `Q/test/.../QualityLatencyTest.java`
+- [x] T036 [P] [NFR-3] `stage.timing` 기록을 Pod 하나에서 초당 200건 이상 적재 — 테스트 `Q/test/.../stage/StageTimingThroughputTest.java`(6,000건을 30초 안에)
 - [ ] T037 이미지 빌드: Dockerfile `CONTRACTS_DIR` 빌드 인자, `docker build --build-arg SERVICE=quality-service` 성공 확인 — 구현 `Dockerfile`(ci-common.md, hadolint)
 - [ ] T038 설정·예시·문서: `application.yml`, `.env.example`, README(서비스·API·환경변수). docs 레포 `local/`(compose·`kafka-init` 그룹·`.env.example`)는 별도 docs PR
-- [ ] T039 로그·추적 확인: 건너뛴 메시지·재시도·주기 작업 처리 수 로그, 서명 주소가 로그에 없음 — 테스트 `Q/test/.../SensitiveLogTest.java`
+- [x] T039 로그·추적 확인: 건너뛴 메시지·재시도·주기 작업 처리 수 로그, 서명 주소가 로그에 없음 — 테스트 `Q/test/.../SensitiveLogTest.java`
 
 ## Phase 9: v5.1 추가(계약 묶음 4.0.0)
 
-- [ ] T040 [R-27] 생성 코드 2.0.0, `ReviewReason` 목록과 계약 대조, `unverified` → 사유별 큐 적재 — 테스트 `QualityContractTest`, `EventAnalyzedIntakeTest`, 구현 `review/domain/ReviewReason`, `review/application/ReviewIntakeService`
+- [x] T040 [R-27] 생성 코드 2.0.0, `ReviewReason` 목록과 계약 대조, `unverified` → 사유별 큐 적재 — 테스트 `QualityContractTest`, `EventAnalyzedIntakeTest`, 구현 `review/domain/ReviewReason`, `review/application/ReviewIntakeService`
 - [x] T041 [R-27] 목록 필터 `reason`과 인덱스 — 테스트 `ReviewQueueApiTest`, 구현 `review/api/ReviewItemController`, `ReviewQueryService`, 마이그레이션(인덱스)
 - [x] T042 [R-28] `alert_events` 테이블, `alert.raised` 소비와 candidateId upsert(순서 역전, 재수신 무시) — 테스트 `AlertRaisedIntakeTest`, 구현 `A/infra/messaging/AlertRaisedListener`, `A/application/AlertIntakeService`, `V202611071200__create_alert_events.sql`, Kafka 소비 설정
 - [x] T043 [R-28] `dismissed`를 검토 큐에 사유 `alert_dismissed`로 적재 — 테스트 `AlertRaisedIntakeTest`, 구현 `A/application/AlertIntakeService`(→ `ReviewIntakeService`)
