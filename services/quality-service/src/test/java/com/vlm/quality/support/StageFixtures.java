@@ -44,6 +44,24 @@ public final class StageFixtures {
         versions);
   }
 
+  /** event-analyzer가 alert.candidate를 받아 첫 alert.raised를 낼 때까지 잰 기록. */
+  public static StageTiming alertTiming(
+      UUID sourceId, UUID candidateId, Instant startedAt, double durationMs) {
+    return new StageTiming(
+        UUID.randomUUID(),
+        "analyzer.alert",
+        "event-analyzer.alert/analyzer.alert",
+        sourceId,
+        candidateId.toString(),
+        "event-analyzer",
+        1,
+        startedAt,
+        startedAt.plusMillis((long) durationMs),
+        durationMs,
+        "ok",
+        Map.of());
+  }
+
   public static StageTimingBatch batch(StageTiming... timings) {
     return new StageTimingBatch(List.of(timings));
   }

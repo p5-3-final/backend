@@ -76,6 +76,32 @@ class VideoDeletedIntakeTest {
     assertThat(count("SELECT count(*) FROM review_items WHERE event_id = ?", late)).isZero();
   }
 
+  @Test
+  @DisplayName("[SPEC-029 R-16] video.deleted를 받으면 그 영상의 긴급 알림 기록을 지운다")
+  void deletesAlertEvents() {
+    UUID source = UUID.randomUUID();
+    UUID other = UUID.randomUUID();
+    insertAlert(source);
+    insertAlert(other);
+
+    send("video.deleted", Events.videoDeleted(source));
+
+    await()
+        .atMost(WAIT)
+        .until(() -> count("SELECT count(*) FROM alert_events WHERE source_id = ?", source) == 0);
+    assertThat(count("SELECT count(*) FROM alert_events WHERE source_id = ?", other)).isEqualTo(1);
+  }
+
+  private void insertAlert(UUID source) {
+    jdbc.update(
+        "INSERT INTO alert_events (candidate_id, source_id, camera_id, event_type, severity,"
+            + " pending_at, status, evidence_frame_keys)"
+            + " VALUES (?, ?, ?, 'fall', 'high', now(), 'pending', '[]'::jsonb)",
+        UUID.randomUUID(),
+        source,
+        UUID.randomUUID());
+  }
+
   private void send(String topic, ObjectNode event) {
     kafka.send(topic, event.get("sourceId").asText(), event.toString()).join();
   }

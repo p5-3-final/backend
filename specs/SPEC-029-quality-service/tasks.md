@@ -75,11 +75,11 @@ updated: 2026-11-07
 ## Phase 9: v5.1 추가(계약 묶음 4.0.0)
 
 - [ ] T040 [R-27] 생성 코드 2.0.0, `ReviewReason` 목록과 계약 대조, `unverified` → 사유별 큐 적재 — 테스트 `QualityContractTest`, `EventAnalyzedIntakeTest`, 구현 `review/domain/ReviewReason`, `review/application/ReviewIntakeService`
-- [ ] T041 [R-27] 목록 필터 `reason`과 인덱스 — 테스트 `ReviewQueueApiTest`, 구현 `review/api/ReviewItemController`, `ReviewQueryService`, 마이그레이션(인덱스)
-- [ ] T042 [R-28] `alert_events` 테이블, `alert.raised` 소비와 candidateId upsert(순서 역전, 재수신 무시) — 테스트 `AlertRaisedIntakeTest`, 구현 `A/infra/messaging/AlertRaisedListener`, `A/application/AlertIntakeService`, `V202611071200__create_alert_events.sql`, Kafka 소비 설정
-- [ ] T043 [R-28] `dismissed`를 검토 큐에 사유 `alert_dismissed`로 적재 — 테스트 `AlertRaisedIntakeTest`, 구현 `A/application/AlertIntakeService`(→ `ReviewIntakeService`)
-- [ ] T044 [R-28] `GET /api/v1/quality/alert-reports`(p50·p95·건수·dismissed 비율, 기간·카메라 필터, OPERATOR) — 테스트 `AlertReportApiTest`, 구현 `A/api/AlertReportController`, `A/application/AlertReportService`
-- [ ] T045 [R-16] 삭제 전파에 `alert_events` 포함 — 테스트 `VideoDeletedIntakeTest`, 구현 `deletion/application/SourceDeletionService`
+- [x] T041 [R-27] 목록 필터 `reason`과 인덱스 — 테스트 `ReviewQueueApiTest`, 구현 `review/api/ReviewItemController`, `ReviewQueryService`, 마이그레이션(인덱스)
+- [x] T042 [R-28] `alert_events` 테이블, `alert.raised` 소비와 candidateId upsert(순서 역전, 재수신 무시) — 테스트 `AlertRaisedIntakeTest`, 구현 `A/infra/messaging/AlertRaisedListener`, `A/application/AlertIntakeService`, `V202611071200__create_alert_events.sql`, Kafka 소비 설정
+- [x] T043 [R-28] `dismissed`를 검토 큐에 사유 `alert_dismissed`로 적재 — 테스트 `AlertRaisedIntakeTest`, 구현 `A/application/AlertIntakeService`(→ `ReviewIntakeService`)
+- [x] T044 [R-28] `GET /api/v1/quality/alert-reports`(p50·p95·건수·dismissed 비율, 기간·카메라 필터, OPERATOR) — 테스트 `AlertReportApiTest`, 구현 `A/api/AlertReportController`, `A/application/AlertReportService`
+- [x] T045 [R-16] 삭제 전파에 `alert_events` 포함 — 테스트 `VideoDeletedIntakeTest`, 구현 `deletion/application/SourceDeletionService`
 
 ## 완료 조건 (Definition of Done)
 

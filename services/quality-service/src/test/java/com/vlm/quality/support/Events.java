@@ -2,6 +2,7 @@ package com.vlm.quality.support;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.time.Instant;
 import java.util.UUID;
 
 /** 계약 예시를 바꿔 만든 테스트용 이벤트. */
@@ -43,6 +44,28 @@ public final class Events {
     ObjectNode event = ContractExamples.example("events/video.deleted.schema.json", 0);
     event.put("eventId", UUID.randomUUID().toString());
     event.put("sourceId", sourceId.toString());
+    return event;
+  }
+
+  /**
+   * alert.raised. pending·confirmed는 계약 예시 0·1번을, dismissed는 0번을 바꿔 쓴다.
+   *
+   * @param status pending, confirmed, dismissed
+   */
+  public static ObjectNode alertRaised(
+      UUID candidateId, UUID sourceId, UUID cameraId, String status, Instant occurredAt) {
+    ObjectNode event =
+        ContractExamples.example(
+            "events/alert.raised.schema.json", "confirmed".equals(status) ? 1 : 0);
+    event.put("eventId", UUID.randomUUID().toString());
+    event.put("sourceId", sourceId.toString());
+    event.put("cameraId", cameraId.toString());
+    event.put("candidateId", candidateId.toString());
+    event.put("status", status);
+    event.put("occurredAt", occurredAt.toString());
+    if ("dismissed".equals(status)) {
+      event.put("dismissReason", "rejected");
+    }
     return event;
   }
 

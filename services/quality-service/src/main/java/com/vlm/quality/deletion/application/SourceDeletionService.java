@@ -1,5 +1,6 @@
 package com.vlm.quality.deletion.application;
 
+import com.vlm.quality.alert.application.AlertDeletion;
 import com.vlm.quality.review.application.ReviewDeletion;
 import com.vlm.quality.shared.domain.DeletedSources;
 import java.time.Instant;
@@ -23,11 +24,17 @@ public class SourceDeletionService {
 
   private final DeletedSources deletedSources;
   private final ReviewDeletion reviews;
+  private final AlertDeletion alerts;
 
   @Transactional
   public void delete(UUID sourceId, Instant deletedAt) {
     deletedSources.record(sourceId, deletedAt);
     int reviewItems = reviews.deleteSource(sourceId);
-    log.info("Deleted source data sourceId={} reviewItems={}", sourceId, reviewItems);
+    int alertEvents = alerts.deleteSource(sourceId);
+    log.info(
+        "Deleted source data sourceId={} reviewItems={} alertEvents={}",
+        sourceId,
+        reviewItems,
+        alertEvents);
   }
 }
