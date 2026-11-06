@@ -18,7 +18,7 @@ updated: 2026-11-06
 ## Phase 0: 준비
 
 - [x] T001 마이그레이션 `videos.retention_consent`, `retention_settings`, `retained_videos` — 테스트 `M/test/.../SchemaMigrationTest.java`, 구현 `M/main/resources/db/migration/V202611061400__create_retention.sql`
-- [ ] T002 [R-11] 보존 키 = HMAC-SHA256 16진 소문자 64자(RFC 4231 시험 벡터) — 테스트 `M/test/.../retention/application/RetentionKeysTest.java`, 구현 `retention/application/{RetentionKeys,RetentionSettingsProperties}`
+- [x] T002 [R-11] 보존 키 = HMAC-SHA256 16진 소문자 64자(RFC 4231 시험 벡터) — 테스트 `M/test/.../retention/application/RetentionKeysTest.java`, 구현 `retention/application/{RetentionKeys,RetentionSettingsProperties}`
 - [ ] T003 [R-12] 비밀 키가 없거나 32바이트보다 짧으면 기동 실패 — 테스트 `RetentionKeysTest`, 구현 `RetentionKeys`
 
 ## Phase 1: US-1 학습용 보존에 동의 (P1)

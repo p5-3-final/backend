@@ -34,6 +34,9 @@ vlm:
   problem:
     validation-error-code: MEDIA_INVALID_REQUEST
   media:
+    retention:
+      # 보존 키 비밀 키(Base64, 32바이트 이상). 기본값을 두지 않아 없으면 기동에 실패한다(SPEC-018 R-12).
+      hmac-key: ${MEDIA_RETENTION_HMAC_KEY}
     storage:
       bucket: ${MEDIA_S3_BUCKET}
       region: ${MEDIA_S3_REGION}

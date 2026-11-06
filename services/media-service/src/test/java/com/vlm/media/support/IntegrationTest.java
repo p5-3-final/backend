@@ -21,7 +21,9 @@ import org.springframework.test.context.jdbc.Sql;
       "vlm.media.jobs.scheduling-enabled=false",
       // 큰 파일 없이 멀티파트를 확인하려고 기준값을 낮춘다. 조각은 S3 최소 크기(5MiB)다. 기본값은 계약 값(100MB, 64MiB).
       "vlm.media.upload.single-max-bytes=1048576",
-      "vlm.media.upload.part-size-bytes=5242880"
+      "vlm.media.upload.part-size-bytes=5242880",
+      // 테스트 전용 보존 키 비밀 키(0x00..0x1f 32바이트)
+      "vlm.media.retention.hmac-key=AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
     })
 @AutoConfigureMockMvc
 // 테스트에서는 Spring Boot가 추적을 꺼 두므로, 운영처럼 traceparent를 이어 받도록 켠다.
