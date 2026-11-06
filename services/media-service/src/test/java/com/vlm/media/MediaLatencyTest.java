@@ -2,15 +2,20 @@ package com.vlm.media;
 
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
+import static com.vlm.media.support.MediaApi.consentRequest;
 import static com.vlm.media.support.MediaApi.createSession;
 import static com.vlm.media.support.MediaApi.createSessionRequest;
 import static com.vlm.media.support.MediaApi.createVideoRequest;
+import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.listRequest;
 import static com.vlm.media.support.MediaApi.playbackRequest;
+import static com.vlm.media.support.MediaApi.retainedVideosRequest;
+import static com.vlm.media.support.MediaApi.revokeRequest;
 import static com.vlm.media.support.MediaApi.sessionRequest;
 import static com.vlm.media.support.MediaApi.sessionsRequest;
+import static com.vlm.media.support.MediaApi.updateRetentionSettingsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -138,6 +143,54 @@ class MediaLatencyTest {
     assertThat(p95(create)).as("session create p95").isLessThanOrEqualTo(P95_LIMIT);
     assertThat(p95(list)).as("session list p95").isLessThanOrEqualTo(P95_LIMIT);
     assertThat(p95(detail)).as("session detail p95").isLessThanOrEqualTo(P95_LIMIT);
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 NFR-2] 보존 설정·동의 변경·보존 목록·영상별 철회 요청의 p95 응답 시간이 300ms 이하다")
+  void retentionP95IsWithinLimit() throws Exception {
+    String videoId =
+        json(mvc.perform(asUser(createVideoRequest("a.mp4", 1000, "video/mp4"), ownerId)))
+            .at("/video/id")
+            .asText();
+    List<Duration> settings = new ArrayList<>();
+    List<Duration> consent = new ArrayList<>();
+    List<Duration> retained = new ArrayList<>();
+    List<Duration> revoke = new ArrayList<>();
+
+    for (int i = 0; i < WARM_UP + SAMPLES; i++) {
+      boolean measured = i >= WARM_UP;
+      long start = System.nanoTime();
+      mvc.perform(asUser(updateRetentionSettingsRequest(i % 2 == 0), ownerId))
+          .andExpect(status().isOk());
+      record(settings, start, measured);
+
+      start = System.nanoTime();
+      mvc.perform(asUser(consentRequest(videoId, i % 2 == 0), ownerId)).andExpect(status().isOk());
+      record(consent, start, measured);
+
+      String retainedId =
+          json(mvc.perform(
+                  asUser(
+                      createVideoRequest(
+                          "r.mp4", 1000, "video/mp4", Map.of("retentionConsent", true)),
+                      ownerId)))
+              .at("/video/id")
+              .asText();
+      mvc.perform(asUser(deleteRequest(retainedId), ownerId)).andExpect(status().isNoContent());
+
+      start = System.nanoTime();
+      mvc.perform(asUser(retainedVideosRequest(), ownerId)).andExpect(status().isOk());
+      record(retained, start, measured);
+
+      start = System.nanoTime();
+      mvc.perform(asUser(revokeRequest(retainedId), ownerId)).andExpect(status().isNoContent());
+      record(revoke, start, measured);
+    }
+
+    assertThat(p95(settings)).as("settings p95").isLessThanOrEqualTo(P95_LIMIT);
+    assertThat(p95(consent)).as("consent p95").isLessThanOrEqualTo(P95_LIMIT);
+    assertThat(p95(retained)).as("retained list p95").isLessThanOrEqualTo(P95_LIMIT);
+    assertThat(p95(revoke)).as("revoke p95").isLessThanOrEqualTo(P95_LIMIT);
   }
 
   private static void record(List<Duration> samples, long startNanos, boolean measured) {

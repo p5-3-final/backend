@@ -3,10 +3,13 @@ package com.vlm.media.support;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.MediaType;
@@ -99,6 +102,36 @@ public final class MediaApi {
     return get("/api/v1/media/sessions");
   }
 
+  public static MockHttpServletRequestBuilder retentionSettingsRequest() {
+    return get("/api/v1/media/retention-settings");
+  }
+
+  public static MockHttpServletRequestBuilder updateRetentionSettingsRequest(boolean defaultConsent)
+      throws Exception {
+    return put("/api/v1/media/retention-settings")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(Map.of("defaultConsent", defaultConsent)));
+  }
+
+  public static MockHttpServletRequestBuilder consentRequest(String videoId, boolean consent)
+      throws Exception {
+    return put("/api/v1/media/videos/{id}/retention-consent", videoId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(JSON.writeValueAsString(Map.of("consent", consent)));
+  }
+
+  public static MockHttpServletRequestBuilder retainedVideosRequest() {
+    return get("/api/v1/media/retained-videos");
+  }
+
+  public static MockHttpServletRequestBuilder revokeRequest(String videoId) {
+    return delete("/api/v1/media/retained-videos/{id}", videoId);
+  }
+
+  public static MockHttpServletRequestBuilder revokeAllRequest() {
+    return delete("/api/v1/media/retained-videos");
+  }
+
   public static MockHttpServletRequestBuilder listRequest() {
     return get("/api/v1/media/videos");
   }
@@ -124,6 +157,13 @@ public final class MediaApi {
     return completeRequest(videoId)
         .contentType(MediaType.APPLICATION_JSON)
         .content(JSON.writeValueAsString(Map.of("parts", parts)));
+  }
+
+  /** 객체 노드의 필드 이름. */
+  public static List<String> fieldNames(JsonNode node) {
+    List<String> names = new ArrayList<>();
+    node.fieldNames().forEachRemaining(names::add);
+    return names;
   }
 
   public static JsonNode json(ResultActions result) throws Exception {

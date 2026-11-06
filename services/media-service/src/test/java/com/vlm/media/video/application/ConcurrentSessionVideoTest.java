@@ -54,7 +54,7 @@ class ConcurrentSessionVideoTest {
                 () -> {
                   start.await();
                   return createVideoService.create(
-                      ownerId, "a.mp4", 1000, "video/mp4", sessionId, SessionRole.AFTER);
+                      ownerId, "a.mp4", 1000, "video/mp4", sessionId, SessionRole.AFTER, null);
                 }));
       }
       start.countDown();

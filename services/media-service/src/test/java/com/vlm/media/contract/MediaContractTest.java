@@ -2,6 +2,7 @@ package com.vlm.media.contract;
 
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
+import static com.vlm.media.support.MediaApi.consentRequest;
 import static com.vlm.media.support.MediaApi.createSessionRequest;
 import static com.vlm.media.support.MediaApi.createSessionVideo;
 import static com.vlm.media.support.MediaApi.createVideo;
@@ -10,8 +11,13 @@ import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.getRequest;
 import static com.vlm.media.support.MediaApi.listRequest;
 import static com.vlm.media.support.MediaApi.playbackRequest;
+import static com.vlm.media.support.MediaApi.retainedVideosRequest;
+import static com.vlm.media.support.MediaApi.retentionSettingsRequest;
+import static com.vlm.media.support.MediaApi.revokeAllRequest;
+import static com.vlm.media.support.MediaApi.revokeRequest;
 import static com.vlm.media.support.MediaApi.sessionRequest;
 import static com.vlm.media.support.MediaApi.sessionsRequest;
+import static com.vlm.media.support.MediaApi.updateRetentionSettingsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -327,6 +333,54 @@ class MediaContractTest {
                     "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "DURING")),
                 ownerId))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-1] [SPEC-018 R-2] 보존 설정 조회·변경 응답이 계약과 일치한다")
+  void retentionSettings() throws Exception {
+    perform(asUser(retentionSettingsRequest(), ownerId)).andExpect(status().isOk());
+    perform(asUser(updateRetentionSettingsRequest(true), ownerId)).andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-4] 동의 값을 넣은 업로드 자리 응답이 계약과 일치한다")
+  void createVideoWithConsent() throws Exception {
+    perform(
+            asUser(
+                createVideoRequest("a.mp4", 1000, "video/mp4", Map.of("retentionConsent", true)),
+                ownerId))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 R-6] [SPEC-018 R-7] 영상 동의 변경 응답과 없음 응답이 계약과 일치한다")
+  void changeConsent() throws Exception {
+    JsonNode created = createVideo(mvc, ownerId, "a.mp4", 1000, "video/mp4");
+
+    perform(asUser(consentRequest(id(created), true), ownerId)).andExpect(status().isOk());
+    perform(asUser(consentRequest(UUID.randomUUID().toString(), true), ownerId))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName(
+      "[SPEC-018 R-13] [SPEC-018 R-14] [SPEC-018 R-15] [SPEC-018 R-16] 보존 목록·철회·전체 철회 응답이 계약과 일치한다")
+  void retainedVideos() throws Exception {
+    String videoId =
+        MediaApi.json(
+                mvc.perform(
+                    asUser(
+                        createVideoRequest(
+                            "a.mp4", 1000, "video/mp4", Map.of("retentionConsent", true)),
+                        ownerId)))
+            .at("/video/id")
+            .asText();
+    mvc.perform(asUser(deleteRequest(videoId), ownerId)).andExpect(status().isNoContent());
+
+    perform(asUser(retainedVideosRequest(), ownerId)).andExpect(status().isOk());
+    perform(asUser(revokeRequest(videoId), ownerId)).andExpect(status().isNoContent());
+    perform(asUser(revokeRequest(videoId), ownerId)).andExpect(status().isNotFound());
+    perform(asUser(revokeAllRequest(), ownerId)).andExpect(status().isNoContent());
   }
 
   private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {

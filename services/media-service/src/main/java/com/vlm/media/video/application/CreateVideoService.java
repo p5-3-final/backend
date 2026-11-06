@@ -1,6 +1,7 @@
 package com.vlm.media.video.application;
 
 import com.vlm.common.error.BusinessException;
+import com.vlm.media.retention.application.RetentionService;
 import com.vlm.media.shared.domain.MediaErrorCode;
 import com.vlm.media.shared.domain.SessionRole;
 import com.vlm.media.shared.domain.UploadStorage;
@@ -28,6 +29,7 @@ public class CreateVideoService {
 
   private final VideoRepository videoRepository;
   private final WorkSessionRepository sessionRepository;
+  private final RetentionService retentionService;
   private final UploadStorage uploadStorage;
   private final UploadSettings settings;
   private final Clock clock;
@@ -45,10 +47,14 @@ public class CreateVideoService {
       long sizeBytes,
       String contentType,
       @Nullable UUID sessionId,
-      @Nullable SessionRole role) {
+      @Nullable SessionRole role,
+      @Nullable Boolean retentionConsent) {
     Instant now = clock.instant();
     Video video =
         Video.startUpload(ownerId, fileName, sizeBytes, contentType, now, settings.uploadExpiry());
+    // SPEC-018 R-3: 동의 값이 없으면 그 시점의 계정 기본값을 쓴다. 기본값을 나중에 바꿔도 이 영상은 그대로다.
+    video.changeRetentionConsent(
+        retentionConsent != null ? retentionConsent : retentionService.defaultConsent(ownerId));
     // 저장소 자리는 세션 확인 뒤에 준비한다. 거절될 요청에 멀티파트 업로드를 만들지 않는다.
     if (sessionId != null && role != null) {
       WorkSession session =

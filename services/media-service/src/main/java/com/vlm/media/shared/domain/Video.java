@@ -76,6 +76,9 @@ public class Video {
   @Enumerated(EnumType.STRING)
   private @Nullable SessionRole sessionRole;
 
+  // 학습용 보존 동의. 영상을 지울 때의 값으로 보존 여부를 정한다(SPEC-018, ADR-0011).
+  private boolean retentionConsent;
+
   @CreationTimestamp
   @Column(updatable = false)
   private Instant createdAt;
@@ -125,6 +128,11 @@ public class Video {
   public void joinSession(UUID sessionId, SessionRole role) {
     this.sessionId = sessionId;
     this.sessionRole = role;
+  }
+
+  /** 학습용 보존 동의를 바꾼다(SPEC-018 R-3, R-4, R-6). */
+  public void changeRetentionConsent(boolean consent) {
+    this.retentionConsent = consent;
   }
 
   /** 멀티파트 업로드로 올린다는 것을 기록한다. */
