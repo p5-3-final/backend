@@ -1,7 +1,7 @@
 ---
 spec: SPEC-029
 repo: backend
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Tasks: SPEC-029 quality-service 검토 큐·Golden Set·평가 실행·처리 단계 리포트 — backend
@@ -17,7 +17,7 @@ updated: 2026-11-06
 
 ## Phase 0: 준비
 
-- [ ] T001 계약 잠금 3.14.0: `scripts/fetch-service-contracts.sh --update 3.14.0`(이미 3.14.0 이상이면 건너뜀) — 테스트 기존 전체 `./gradlew build`(media `MediaContractTest`가 `media-service.yaml` 1.4.0으로 통과), 구현 `service-contracts.lock`. pipeline-service 테스트가 깨지면 고치지 않고 멈춰 보고한다
+- [ ] T001 계약 잠금 4.0.0: `scripts/fetch-service-contracts.sh --update 4.0.0`(이미 4.0.0 이상이면 건너뜀) — 테스트 기존 전체 `./gradlew build`(media `MediaContractTest`가 `media-service.yaml` 1.4.0으로 통과), 구현 `service-contracts.lock`. pipeline-service 테스트가 깨지면 고치지 않고 멈춰 보고한다
 - [ ] T002 quality-service 모듈 뼈대: 기동·health UP, 기능 구조 ArchUnit 규칙 — 테스트 `Q/test/.../ArchitectureTest.java`, `Q/test/.../QualityApplicationTest.java`, 구현 `settings.gradle.kts`, `services/quality-service/build.gradle.kts`, `Q/main/.../QualityServiceApplication.java`, `Q/main/resources/application{,-local}.yml`, `Q/test/.../{TestcontainersConfiguration,support/IntegrationTest}.java`
 - [ ] T003 openapi-generator로 `quality-service.yaml` 1.2.0의 서버 인터페이스·모델 생성, `-Werror` 컴파일 통과 확인 — 테스트 `./gradlew :services:quality-service:compileJava`와 `ArchitectureTest`(생성 패키지 `vlm.contracts.quality`는 `api` 레이어에서만 씀), 구현 `gradle/libs.versions.toml`(`[plugins] openapi-generator`), `services/quality-service/build.gradle.kts`. 경고로 실패하면 멈추고 plan 10절 1로 확인받는다
 - [ ] T004 [P] 마이그레이션 `review_items`, `deleted_sources`, `golden_sets`, `golden_draft_entries`, `golden_set_versions`, `evaluation_runs`, `stage_timings`(파티션), `stage_daily_stats` — 테스트 `Q/test/.../SchemaMigrationTest.java`(테이블·제약·파티션 3개 존재), 구현 `Q/main/resources/db/migration/V202611071000__create_review_golden_evaluation.sql`, `V202611071100__create_stage_timings.sql`
@@ -71,6 +71,15 @@ updated: 2026-11-06
 - [ ] T037 이미지 빌드: Dockerfile `CONTRACTS_DIR` 빌드 인자, `docker build --build-arg SERVICE=quality-service` 성공 확인 — 구현 `Dockerfile`(ci-common.md, hadolint)
 - [ ] T038 설정·예시·문서: `application.yml`, `.env.example`, README(서비스·API·환경변수). docs 레포 `local/`(compose·`kafka-init` 그룹·`.env.example`)는 별도 docs PR
 - [ ] T039 로그·추적 확인: 건너뛴 메시지·재시도·주기 작업 처리 수 로그, 서명 주소가 로그에 없음 — 테스트 `Q/test/.../SensitiveLogTest.java`
+
+## Phase 9: v5.1 추가(계약 묶음 4.0.0)
+
+- [ ] T040 [R-27] 생성 코드 2.0.0, `ReviewReason` 목록과 계약 대조, `unverified` → 사유별 큐 적재 — 테스트 `QualityContractTest`, `EventAnalyzedIntakeTest`, 구현 `review/domain/ReviewReason`, `review/application/ReviewIntakeService`
+- [ ] T041 [R-27] 목록 필터 `reason`과 인덱스 — 테스트 `ReviewQueueApiTest`, 구현 `review/api/ReviewItemController`, `ReviewQueryService`, 마이그레이션(인덱스)
+- [ ] T042 [R-28] `alert_events` 테이블, `alert.raised` 소비와 candidateId upsert(순서 역전, 재수신 무시) — 테스트 `AlertRaisedIntakeTest`, 구현 `A/infra/messaging/AlertRaisedListener`, `A/application/AlertIntakeService`, `V202611071200__create_alert_events.sql`, Kafka 소비 설정
+- [ ] T043 [R-28] `dismissed`를 검토 큐에 사유 `alert_dismissed`로 적재 — 테스트 `AlertRaisedIntakeTest`, 구현 `A/application/AlertIntakeService`(→ `ReviewIntakeService`)
+- [ ] T044 [R-28] `GET /api/v1/quality/alert-reports`(p50·p95·건수·dismissed 비율, 기간·카메라 필터, OPERATOR) — 테스트 `AlertReportApiTest`, 구현 `A/api/AlertReportController`, `A/application/AlertReportService`
+- [ ] T045 [R-16] 삭제 전파에 `alert_events` 포함 — 테스트 `VideoDeletedIntakeTest`, 구현 `deletion/application/SourceDeletionService`
 
 ## 완료 조건 (Definition of Done)
 
