@@ -8,7 +8,8 @@ dependencies {
     implementation(project(":libs:common-web"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // 조건부 UPDATE·ON CONFLICT·JSONB·집계 SQL이 대부분이라 JPA 대신 JDBC로 다룬다(plan "데이터 모델").
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springframework.kafka:spring-kafka")
