@@ -42,7 +42,6 @@ public record VideoResponse(
         video.getSessionId() == null || video.getSessionRole() == null
             ? null
             : new VideoSessionResponse(video.getSessionId(), video.getSessionRole().name()),
-        // SPEC-018 구현 전에는 동의 수단이 없어 모든 영상이 미동의(기본값)다.
-        false);
+        video.isRetentionConsent());
   }
 }
