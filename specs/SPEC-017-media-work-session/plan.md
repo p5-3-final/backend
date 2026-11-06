@@ -10,7 +10,7 @@ updated: 2026-11-06
 # Plan: SPEC-017 작업 세션 — backend
 
 - spec: docs 레포 `docs/specs/SPEC-017-media-work-session/spec.md`
-- 계약: docs 레포 `service-contracts/openapi/media-service.yaml` 1.3.0, `events/video.uploaded.schema.json` (계약 묶음 2.9.0)
+- 계약: docs 레포 `service-contracts/openapi/media-service.yaml` 1.3.1, `events/video.uploaded.schema.json` (계약 묶음 2.9.1. 세션 상세 스키마는 docs #103에서 allOf 없이 펼쳐 고쳤다)
 - ADR: ADR-0010 ④
 
 ## 1. 요약
