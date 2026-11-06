@@ -45,7 +45,7 @@ updated: 2026-11-06
 
 ## Phase 4: 마무리
 
-- [ ] T017 [P] [NFR-3] 같은 기록에 철회 동시 10건이면 이벤트 1건 — 테스트 `M/test/.../retention/application/ConcurrentRevokeTest.java`
+- [x] T017 [P] [NFR-3] 같은 기록에 철회 동시 10건이면 이벤트 1건 — 테스트 `M/test/.../retention/application/ConcurrentRevokeTest.java` (T014에서 행 잠금을 넣어 통과. 잠금을 빼면 실패하는 것을 확인)
 - [ ] T018 [P] 보존 API 6개와 `retentionConsent` 요청이 계약 1.3.1과 일치 — 테스트 `MediaContractTest`
 - [ ] T019 [P] [NFR-1] 비밀 키가 로그에 없음 — 테스트 `M/test/.../SensitiveLogTest.java`
 - [ ] T020 [P] [NFR-2] 보존 API p95 300ms 이하 — 테스트 `M/test/.../MediaLatencyTest.java`
