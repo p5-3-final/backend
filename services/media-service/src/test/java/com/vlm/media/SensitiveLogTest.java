@@ -3,12 +3,16 @@ package com.vlm.media;
 import static com.vlm.media.support.MediaApi.asUser;
 import static com.vlm.media.support.MediaApi.completeRequest;
 import static com.vlm.media.support.MediaApi.createVideo;
+import static com.vlm.media.support.MediaApi.createVideoRequest;
 import static com.vlm.media.support.MediaApi.deleteRequest;
 import static com.vlm.media.support.MediaApi.json;
 import static com.vlm.media.support.MediaApi.playbackRequest;
+import static com.vlm.media.support.MediaApi.revokeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.vlm.media.retention.application.RetentionExpiryJob;
+import com.vlm.media.retention.application.RetentionSettingsProperties;
 import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.StorageUploads;
 import com.vlm.media.video.application.StorageCleanupJob;
@@ -16,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +44,8 @@ class SensitiveLogTest {
 
   @Autowired MockMvc mvc;
   @Autowired StorageCleanupJob cleanupJob;
+  @Autowired RetentionExpiryJob expiryJob;
+  @Autowired RetentionSettingsProperties retentionProperties;
 
   private final UUID ownerId = UUID.randomUUID();
 
@@ -91,6 +98,28 @@ class SensitiveLogTest {
     for (String secret : secrets) {
       assertThat(output.getAll()).doesNotContain(secret);
     }
+  }
+
+  @Test
+  @DisplayName("[SPEC-018 NFR-1] 동의한 영상의 삭제·철회·만료 정리와 설정 출력에 보존 키 비밀 키를 남기지 않는다")
+  void doesNotLogRetentionKey(CapturedOutput output) throws Exception {
+    String videoId =
+        json(mvc.perform(
+                asUser(
+                    createVideoRequest(
+                        "a.mp4", 1000, "video/mp4", Map.of("retentionConsent", true)),
+                    ownerId)))
+            .at("/video/id")
+            .asText();
+    mvc.perform(asUser(deleteRequest(videoId), ownerId));
+    mvc.perform(asUser(revokeRequest(videoId), ownerId));
+    expiryJob.expire();
+
+    // IntegrationTest의 테스트 키(0x00..0x1f)를 Base64와 16진으로 쓴 값
+    String base64Key = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=";
+    String hexKey = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+    assertThat(output.getAll()).doesNotContain(base64Key).doesNotContainIgnoringCase(hexKey);
+    assertThat(retentionProperties.toString()).doesNotContain(base64Key);
   }
 
   private static byte[] content(int size) {
