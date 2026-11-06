@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: quality-service
+  datasource:
+    url: ${QUALITY_DB_URL}
+    username: ${QUALITY_DB_USERNAME}
+    password: ${QUALITY_DB_PASSWORD}
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+vlm:
+  problem:
+    validation-error-code: QUALITY_INVALID_REQUEST
+  quality:
+    storage:
+      region: ${QUALITY_S3_REGION}
+      # 비우면 SDK가 리전 기본 주소를 쓴다(운영 S3). 로컬은 SeaweedFS 주소를 넣는다(ADR-0006).
+      endpoint: ${QUALITY_S3_ENDPOINT:}
+      public-endpoint: ${QUALITY_S3_PUBLIC_ENDPOINT:}
+      path-style: ${QUALITY_S3_PATH_STYLE:false}
+      # 근거 프레임(블러 사본)이 있는 media 버킷. 읽기·서버 쪽 복사만 한다.
+      source-bucket: ${QUALITY_SOURCE_BUCKET}
+      # Golden Set 확정 버전 버킷. 운영은 Versioning·Object Lock을 켠다(ADR-0011).
+      golden-bucket: ${QUALITY_GOLDEN_BUCKET}
+      # 화면에 줄 근거 프레임 서명 주소 유효 시간(SPEC-035 R-4)
+      signed-url-ttl: 1h
+    review:
+      # 표본 비율(SPEC-029 R-2). 유형별로 sample-rates.<eventType>을 더한다.
+      sample-rates:
+        default: 0.05
+      assignment-timeout: 24h
+    golden:
+      # Pod가 죽어 남은 확정 진행 표시를 무시하는 시간(R-15)
+      freeze-lock-timeout: 30m
+    gate:
+      tolerance: 0.02
+    internal:
+      allowed-callers: ${QUALITY_INTERNAL_ALLOWED_CALLERS:quality-evals}
+    stage:
+      retention: 90d
+    consumers-enabled: true
+    jobs:
+      scheduling-enabled: true

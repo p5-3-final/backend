@@ -23,4 +23,5 @@ include(
     "services:auth-service",
     "services:media-service",
     "services:pipeline-service",
+    "services:quality-service",
 )
