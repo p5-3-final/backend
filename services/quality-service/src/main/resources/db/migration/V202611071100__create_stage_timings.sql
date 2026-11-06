@@ -6,6 +6,8 @@ CREATE TABLE stage_timings (
     stage_id    VARCHAR(100)     NOT NULL,
     path        VARCHAR(500)     NOT NULL,
     source_id   UUID,
+    -- subject.candidateId. analyzer.alert 단계를 긴급 알림과 이어 1차 알림 지연을 낸다(R-28).
+    candidate_id VARCHAR(100),
     service     VARCHAR(100)     NOT NULL,
     attempt     INT              NOT NULL,
     started_at  TIMESTAMPTZ      NOT NULL,
@@ -21,6 +23,7 @@ CREATE TABLE stage_timings (
 CREATE INDEX idx_stage_timings_timing ON stage_timings (timing_id);
 CREATE INDEX idx_stage_timings_source ON stage_timings (source_id, started_at);
 CREATE INDEX idx_stage_timings_stage ON stage_timings (stage_id, started_at);
+CREATE INDEX idx_stage_timings_candidate ON stage_timings (candidate_id) WHERE candidate_id IS NOT NULL;
 
 -- 마이그레이션 시점의 이번 달부터 3개월을 만든다. 이후는 StageTimingPartitionJob이 미리 만든다(R-25).
 -- 이름 규칙(stage_timings_yYYYYmMM)은 파티션 작업과 같다.

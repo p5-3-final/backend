@@ -1,6 +1,8 @@
 package com.vlm.quality.config;
 
 import com.vlm.quality.review.application.StaleAssignmentJob;
+import com.vlm.quality.stage.application.DailyStageAggregationJob;
+import com.vlm.quality.stage.application.StageTimingPartitionJob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -18,10 +20,24 @@ import org.springframework.scheduling.annotation.Scheduled;
 class QualityJobScheduling {
 
   private final StaleAssignmentJob staleAssignmentJob;
+  private final DailyStageAggregationJob dailyStageAggregationJob;
+  private final StageTimingPartitionJob stageTimingPartitionJob;
 
   // R-10: 10분마다
   @Scheduled(fixedDelayString = "${vlm.quality.jobs.stale-assignment-interval-ms:600000}")
   void releaseStaleAssignments() {
     staleAssignmentJob.releaseStale();
+  }
+
+  // R-23: 매일 00:15 UTC, 전날 하루
+  @Scheduled(cron = "0 15 0 * * *", zone = "UTC")
+  void aggregateStageTimings() {
+    dailyStageAggregationJob.aggregateYesterday();
+  }
+
+  // R-25: 매일 00:30 UTC
+  @Scheduled(cron = "0 30 0 * * *", zone = "UTC")
+  void manageStageTimingPartitions() {
+    stageTimingPartitionJob.manage();
   }
 }
