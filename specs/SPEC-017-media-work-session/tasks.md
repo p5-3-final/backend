@@ -37,7 +37,7 @@ updated: 2026-11-06
 
 ## Phase 3: US-3 잘못된 세션 지정 (P2)
 
-- [ ] T012 [R-8] 세션 ID·역할 중 하나만 있거나 역할이 정해진 값이 아니면 400, 영상 안 만듦 — 테스트 `CreateVideoSessionApiTest`, 구현 `CreateVideoRequest`, `CreateVideoService`
+- [x] T012 [R-8] 세션 ID·역할 중 하나만 있거나 역할이 정해진 값이 아니면 400, 영상 안 만듦 — 테스트 `CreateVideoSessionApiTest`, 구현 `CreateVideoRequest`, `CreateVideoService` (정해지지 않은 역할 값은 역직렬화 오류라 처음부터 400)
 - [ ] T013 [R-9] 없는 세션·남의 세션(ADMIN 포함)이면 404 `MEDIA_SESSION_NOT_FOUND`, 영상 안 만듦 — 테스트 `CreateVideoSessionApiTest`, 구현 `CreateVideoService`
 
 ## Phase 4: 마무리

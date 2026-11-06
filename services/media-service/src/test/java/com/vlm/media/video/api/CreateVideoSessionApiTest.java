@@ -10,10 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.MediaApi;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
@@ -89,6 +93,27 @@ class CreateVideoSessionApiTest {
                     "a.mp4", 1000, "video/mp4", Map.of("sessionId", sessionId, "role", "AFTER")),
                 ownerId))
         .andExpect(status().isCreated());
+  }
+
+  @ParameterizedTest
+  @MethodSource("partialSessions")
+  @DisplayName("[SPEC-017 R-8] 세션 ID와 역할 중 하나만 있거나 역할이 정해진 값이 아니면 400을 반환하고 영상을 만들지 않는다")
+  void rejectsPartialSession(Map<String, String> extra) throws Exception {
+    String sessionId = createSession(mvc, ownerId, "세션");
+    Map<String, String> body = new HashMap<>(extra);
+    body.replace("sessionId", "SESSION", sessionId);
+
+    mvc.perform(asUser(createVideoRequest("a.mp4", 1000, "video/mp4", body), ownerId))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("MEDIA_INVALID_REQUEST"));
+    assertThat(videoCount()).isZero();
+  }
+
+  static Stream<Map<String, String>> partialSessions() {
+    return Stream.of(
+        Map.of("sessionId", "SESSION"),
+        Map.of("role", "BEFORE"),
+        Map.of("sessionId", "SESSION", "role", "LATER"));
   }
 
   private void fillSession(String sessionId, int count) {
