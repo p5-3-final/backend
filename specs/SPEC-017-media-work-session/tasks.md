@@ -18,7 +18,7 @@ updated: 2026-11-06
 ## Phase 0: 준비
 
 - [x] T001 계약 잠금 2.9.0, 영상 응답에 `session`(null)·`retentionConsent`(false) — 테스트 `MediaContractTest`(기존 케이스가 2.9.0 계약으로 통과), 구현 `service-contracts.lock`, `video/api/VideoResponse`
-- [ ] T002 마이그레이션 `work_sessions`·`videos.session_id`·`session_role` — 테스트 `M/test/.../SchemaMigrationTest.java`, 구현 `M/main/resources/db/migration/V202611061000__create_work_sessions.sql`
+- [x] T002 마이그레이션 `work_sessions`·`videos.session_id`·`session_role` — 테스트 `M/test/.../SchemaMigrationTest.java`, 구현 `M/main/resources/db/migration/V202611061000__create_work_sessions.sql`
 
 ## Phase 1: US-1 작업 전후 영상 묶기 (P1)
 
