@@ -7,6 +7,7 @@ Spring Boot 멀티모듈 MSA. 구조와 규칙은 [AGENTS.md](AGENTS.md)에 있�
 | `services/api-gateway` | 라우팅, 토큰 검증(JWKS), CORS, 알림 티켓 검증, 요청 수 제한 | 8080 |
 | `services/auth-service` | 가입, 로그인, 토큰 발급·재발급·폐기, 공개키 목록, 알림 티켓 | 8081 |
 | `services/media-service` | 영상 업로드 자리 발급(단일·멀티파트), 완료 확인, 목록·상세·삭제, 원본 재생·내려받기 주소 발급, 만료·저장소 정리 | 8082 |
+| `services/quality-service` | 검토 큐·라벨, Golden Set 초안·확정, 평가 실행·Gate 결과, 처리 단계 측정 리포트, 긴급 알림 지표 | 8088 |
 | `libs/common-core`, `libs/common-web` | 공통 오류 타입, ProblemDetail 핸들러 | — |
 | `libs/common-messaging` | Outbox 기록·발행(Kafka) | — |
 
@@ -113,6 +114,32 @@ SESSION=$(curl -s -X POST localhost:8082/api/v1/media/sessions -H 'Content-Type:
 curl -s -X POST localhost:8082/api/v1/media/videos -H 'Content-Type: application/json' \
   -H "X-User-Id: $USER_ID" -H 'X-User-Roles: USER' \
   -d "{\"fileName\":\"before.mp4\",\"sizeBytes\":1000,\"contentType\":\"video/mp4\",\"sessionId\":\"$SESSION\",\"role\":\"BEFORE\"}"
+```
+
+### quality-service 단독 실행 (SPEC-029)
+
+검토 큐, Golden Set, 평가 실행 기록, 처리 단계 측정, 긴급 알림 지표를 맡는다. 계약은 docs 레포 `service-contracts/openapi/quality-service.yaml`(2.0.0)이다.
+
+- 계약에서 API 인터페이스·모델을 생성한다(`openApiGenerate`, 출력 `build/generated/openapi`). 루트 구조가 아니면 `CONTRACTS_DIR`을 준다. 이미지 빌드는 `scripts/fetch-service-contracts.sh`로 계약을 먼저 받은 뒤 `docker build --build-arg SERVICE=quality-service .`로 한다.
+- 소비 토픽(그룹 `quality-service`): `event.analyzed`(검토 큐), `video.deleted`(삭제 전파), `stage.timing`(측정 원본), `alert.raised`(긴급 알림 기록). 발행은 없다.
+- 운영자 API(`/api/v1/quality/**`)는 `X-User-Roles`에 `OPERATOR`가 있어야 한다. 게이트웨이는 `QUALITY_SERVICE_URI`로 전달한다. 평가 잡 API(`/internal/v1/quality/**`)는 게이트웨이로 전달하지 않고 `X-Caller`가 허용 목록에 있어야 한다.
+- 주기 작업: 맡은 지 24시간 지난 항목 풀기(10분마다), 전날 측정 일 집계(매일 00:15 UTC), 측정 원본 월 파티션 생성·삭제(매일 00:30 UTC). 여러 Pod 중 하나만 돈다(advisory lock).
+
+| 환경변수 | 내용 | 기본값 |
+| --- | --- | --- |
+| `QUALITY_DB_URL`, `QUALITY_DB_USERNAME`, `QUALITY_DB_PASSWORD` | 전용 PostgreSQL | 없음(필수) |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka | `localhost:9092` |
+| `QUALITY_S3_REGION` | 저장소 리전 | 없음(필수) |
+| `QUALITY_S3_ENDPOINT`, `QUALITY_S3_PUBLIC_ENDPOINT`, `QUALITY_S3_PATH_STYLE` | S3 호환 저장소(로컬 SeaweedFS) 주소, 서명 주소에 쓸 외부 주소, 경로 방식 | 비움, 비움, `false` |
+| `QUALITY_SOURCE_BUCKET` | 근거 프레임을 읽는 원본 버킷 | 없음(필수) |
+| `QUALITY_GOLDEN_BUCKET` | 확정 버전 매니페스트·프레임 사본 버킷 | 없음(필수) |
+| `QUALITY_INTERNAL_ALLOWED_CALLERS` | 내부 API를 부를 수 있는 `X-Caller` 값(쉼표 구분) | `quality-evals` |
+
+```bash
+set -a; source .env; set +a
+./gradlew :services:quality-service:bootRun --args='--spring.profiles.active=local'
+curl -s 'localhost:8088/api/v1/quality/review-items?status=UNASSIGNED' \
+  -H "X-User-Id: $(uuidgen)" -H 'X-User-Roles: USER,OPERATOR'
 ```
 
 ## 문서

@@ -68,7 +68,7 @@ updated: 2026-11-07
 - [x] T034 [P] 19개 작업의 정상·오류 응답이 `quality-service.yaml` 1.2.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
 - [x] T035 [P] [NFR-2] [NFR-4] 항목 10,000개 목록 p95 300ms, 기록 5,000건 영상 리포트 p95 500ms — 테스트 `Q/test/.../QualityLatencyTest.java`
 - [x] T036 [P] [NFR-3] `stage.timing` 기록을 Pod 하나에서 초당 200건 이상 적재 — 테스트 `Q/test/.../stage/StageTimingThroughputTest.java`(6,000건을 30초 안에)
-- [ ] T037 이미지 빌드: Dockerfile `CONTRACTS_DIR` 빌드 인자, `docker build --build-arg SERVICE=quality-service` 성공 확인 — 구현 `Dockerfile`(ci-common.md, hadolint)
+- [x] T037 이미지 빌드: Dockerfile `CONTRACTS_DIR` 빌드 인자, `docker build --build-arg SERVICE=quality-service` 성공 확인 — 구현 `Dockerfile`(ci-common.md, hadolint)
 - [ ] T038 설정·예시·문서: `application.yml`, `.env.example`, README(서비스·API·환경변수). docs 레포 `local/`(compose·`kafka-init` 그룹·`.env.example`)는 별도 docs PR
 - [x] T039 로그·추적 확인: 건너뛴 메시지·재시도·주기 작업 처리 수 로그, 서명 주소가 로그에 없음 — 테스트 `Q/test/.../SensitiveLogTest.java`
 

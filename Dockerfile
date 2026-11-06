@@ -1,16 +1,19 @@
 # syntax=docker/dockerfile:1
 # Spring 서비스 공통 이미지. 서비스는 빌드 인자로 고른다.
 #   docker build --build-arg SERVICE=auth-service -t vlm/auth-service .
+# 계약에서 코드를 만드는 서비스(quality-service)는 먼저 scripts/fetch-service-contracts.sh로 잠금 버전 계약을 받는다.
+# 빌드 컨텍스트에는 작업 공간의 ../../service-contracts가 없어 받은 사본(.service-contracts/)을 CONTRACTS_DIR로 읽는다.
 # 로컬 compose(docs 레포 local/)와 서비스 workflow가 같은 파일을 쓴다.
 
 FROM eclipse-temurin:21.0.13_9-jdk-noble@sha256:114cabb73033ca4ce7ceec3deb62396bc1b716282bae051ed3c1d82e38fcab2d AS build
 ARG SERVICE
+ARG CONTRACTS_DIR=/workspace/.service-contracts/service-contracts
 WORKDIR /workspace
 COPY . .
 # Gradle 배포본과 의존성은 BuildKit 캐시에 두어 다시 빌드할 때 받지 않는다. 테스트는 CI의 checks에서 돌린다.
 RUN --mount=type=cache,target=/root/.gradle \
     test -n "${SERVICE}" \
-    && ./gradlew --no-daemon ":services:${SERVICE}:bootJar" \
+    && CONTRACTS_DIR="${CONTRACTS_DIR}" ./gradlew --no-daemon ":services:${SERVICE}:bootJar" \
     && java -Djarmode=tools -jar "services/${SERVICE}/build/libs/${SERVICE}.jar" \
         extract --layers --launcher --destination /extracted
 
