@@ -40,4 +40,29 @@ public final class StorageFixtures {
           .toList();
     }
   }
+
+  /** 가져오기 버킷에 넣는다(SPEC-030). */
+  public static void putImport(String key, byte[] content) {
+    try (S3Client s3 = TestcontainersConfiguration.s3()) {
+      s3.putObject(
+          p -> p.bucket(TestcontainersConfiguration.IMPORT_BUCKET).key(key),
+          RequestBody.fromBytes(content));
+    }
+  }
+
+  /** 원본 버킷에 넣는다(결과 파일 등). */
+  public static void putSource(String key, byte[] content) {
+    try (S3Client s3 = TestcontainersConfiguration.s3()) {
+      s3.putObject(
+          p -> p.bucket(TestcontainersConfiguration.SOURCE_BUCKET).key(key),
+          RequestBody.fromBytes(content));
+    }
+  }
+
+  public static byte[] exportObject(String key) {
+    try (S3Client s3 = TestcontainersConfiguration.s3()) {
+      return s3.getObjectAsBytes(g -> g.bucket(TestcontainersConfiguration.EXPORT_BUCKET).key(key))
+          .asByteArray();
+    }
+  }
 }

@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
  * @param datasetName 매니페스트를 읽기 전에는 null
  * @param devSetId 만든(또는 찾은) Golden Set. 확정까지 가지 않았으면 null
  * @param devVersion 그 분할에 이번 가져오기 항목이 없으면 확정하지 않아 null(R-8)
+ * @param datasetOriginJson 매니페스트 origin(JSON). 검증 전에는 null
  */
 public record DatasetImport(
     long id,
@@ -29,7 +30,8 @@ public record DatasetImport(
     List<ImportError> errors,
     UUID requestedBy,
     Instant requestedAt,
-    @Nullable Instant finishedAt) {
+    @Nullable Instant finishedAt,
+    @Nullable String datasetOriginJson) {
 
   public DatasetImport {
     errors = List.copyOf(errors);

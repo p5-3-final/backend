@@ -143,4 +143,18 @@ class GoldenDraftApiTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"reviewItemId\":\"" + itemId + "\"}"));
   }
+
+  @Test
+  @DisplayName(
+      "[SPEC-030 R-10] 데이터셋 Golden Set(origin import)에 검토 항목을 넣으면 409 QUALITY_GOLDEN_ORIGIN_MISMATCH다")
+  void rejectsReviewItemInDatasetSet() throws Exception {
+    UUID setId = UUID.randomUUID();
+    jdbc.update(
+        "INSERT INTO golden_sets (set_id, name, split, origin) VALUES (?, 'ds-dev', 'dev', 'import')",
+        setId);
+
+    add(setId, reviews.labeled(UUID.randomUUID()))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("QUALITY_GOLDEN_ORIGIN_MISMATCH"));
+  }
 }

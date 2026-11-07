@@ -11,6 +11,8 @@ CREATE TABLE dataset_imports (
     import_id        UUID             NOT NULL UNIQUE,
     manifest_key     VARCHAR(200)     NOT NULL UNIQUE,
     dataset_name     VARCHAR(51),
+    -- 매니페스트 origin(출처·사용 조건). 이어받은 작업자가 매니페스트를 다시 읽지 않고 Golden Set에 쓴다(R-10).
+    dataset_origin   JSONB,
     eval_ratio       DOUBLE PRECISION NOT NULL,
     split_seed       BIGINT           NOT NULL,
     status           VARCHAR(20)      NOT NULL,

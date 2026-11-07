@@ -43,7 +43,12 @@ public interface DatasetImportRepository {
 
   /** 검증한 영상을 저장하고 REGISTERING으로 바꾼다. 이전 시도의 영상 행은 지운다. */
   void saveValidated(
-      long id, String datasetName, List<NewImportVideo> videos, int labelCount, Instant now);
+      long id,
+      String datasetName,
+      String originJson,
+      List<NewImportVideo> videos,
+      int labelCount,
+      Instant now);
 
   /** 매니페스트 오류로 끝낸다. 영상은 등록하지 않았다(R-2). */
   void fail(long id, List<ImportError> errors, Instant now);

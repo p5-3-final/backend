@@ -1,5 +1,8 @@
 package com.vlm.quality;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -26,10 +29,19 @@ public class TestcontainersConfiguration {
 
   public static final String SOURCE_BUCKET = "vlm-media-test";
   public static final String GOLDEN_BUCKET = "vlm-golden-test";
+  public static final String IMPORT_BUCKET = "vlm-imports-test";
+  public static final String EXPORT_BUCKET = "vlm-exports-test";
   static final String ACCESS_KEY = "testkey";
   static final String SECRET_KEY = "testsecret";
 
   private static volatile String storageEndpoint = "";
+  // media-service를 대신한다(SPEC-030 R-4). 컨텍스트 하나를 모든 테스트가 같이 쓰므로 서버도 하나다.
+  private static final WireMockServer MEDIA = new WireMockServer(wireMockConfig().dynamicPort());
+
+  /** media-service 대역. 테스트마다 {@code resetAll()}로 비운다. */
+  public static WireMockServer media() {
+    return MEDIA;
+  }
 
   /** 테스트가 저장소를 직접 확인할 때 쓰는 클라이언트를 만든다. */
   public static S3Client s3() {
@@ -69,7 +81,14 @@ public class TestcontainersConfiguration {
     return new GenericContainer<>("chrislusf/seaweedfs:4.48")
         .withCopyFileToContainer(
             MountableFile.forClasspathResource("seaweedfs/s3.json"), "/cfg/s3.json")
-        .withCommand("server", "-s3", "-s3.config=/cfg/s3.json", "-dir=/data")
+        // 버킷마다 볼륨 묶음을 새로 만든다. 기본 볼륨 수 상한(8)으로는 세 번째 버킷부터 쓸 볼륨이 모자라 500이 난다.
+        .withCommand(
+            "server",
+            "-s3",
+            "-s3.config=/cfg/s3.json",
+            "-dir=/data",
+            "-volume.max=64",
+            "-master.volumeSizeLimitMB=64")
         .withExposedPorts(8333)
         .waitingFor(Wait.forHttp("/").forPort(8333).forStatusCodeMatching(code -> code < 500))
         .withStartupTimeout(Duration.ofMinutes(2));
@@ -84,11 +103,17 @@ public class TestcontainersConfiguration {
     System.setProperty("aws.accessKeyId", ACCESS_KEY);
     System.setProperty("aws.secretAccessKey", SECRET_KEY);
     try (S3Client s3 = s3()) {
-      for (String bucket : List.of(SOURCE_BUCKET, GOLDEN_BUCKET)) {
+      for (String bucket : List.of(SOURCE_BUCKET, GOLDEN_BUCKET, IMPORT_BUCKET, EXPORT_BUCKET)) {
         createBucket(s3, bucket);
       }
     }
+    if (!MEDIA.isRunning()) {
+      MEDIA.start();
+    }
     return registry -> {
+      registry.add("vlm.quality.media.base-url", () -> "http://localhost:" + MEDIA.port());
+      registry.add("vlm.quality.storage.import-bucket", () -> IMPORT_BUCKET);
+      registry.add("vlm.quality.storage.export-bucket", () -> EXPORT_BUCKET);
       registry.add("vlm.quality.storage.source-bucket", () -> SOURCE_BUCKET);
       registry.add("vlm.quality.storage.golden-bucket", () -> GOLDEN_BUCKET);
       registry.add("vlm.quality.storage.region", () -> "us-east-1");

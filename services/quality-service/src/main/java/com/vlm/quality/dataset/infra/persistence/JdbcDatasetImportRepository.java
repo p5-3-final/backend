@@ -40,7 +40,8 @@ class JdbcDatasetImportRepository implements DatasetImportRepository {
       "SELECT id, import_id, dataset_name, manifest_key, eval_ratio, split_seed, status,"
           + " video_count, registered_count, failed_count, label_count, dev_count, eval_count,"
           + " dev_set_id, eval_set_id, dev_version, eval_version, errors::text AS errors,"
-          + " requested_by, requested_at, finished_at FROM dataset_imports";
+          + " requested_by, requested_at, finished_at, dataset_origin::text AS dataset_origin"
+          + " FROM dataset_imports";
   private static final String VIDEO_SELECT =
       "SELECT id, external_id, path, content_type, split, labels::text AS labels, label_count,"
           + " status, source_id FROM dataset_import_videos";
@@ -95,7 +96,8 @@ class JdbcDatasetImportRepository implements DatasetImportRepository {
             .addValue("now", Timestamp.from(now));
     jdbc.update(CLEAR_VIDEOS, params);
     jdbc.update(
-        "UPDATE dataset_imports SET status = 'PENDING', dataset_name = NULL, eval_ratio = :ratio,"
+        "UPDATE dataset_imports SET status = 'PENDING', dataset_name = NULL, dataset_origin = NULL,"
+            + " eval_ratio = :ratio,"
             + " split_seed = :seed, video_count = 0, registered_count = 0, failed_count = 0,"
             + " label_count = 0, dev_count = 0, eval_count = 0, dev_set_id = NULL,"
             + " eval_set_id = NULL, dev_version = NULL, eval_version = NULL, errors = '[]',"
@@ -171,7 +173,12 @@ class JdbcDatasetImportRepository implements DatasetImportRepository {
 
   @Override
   public void saveValidated(
-      long id, String datasetName, List<NewImportVideo> videos, int labelCount, Instant now) {
+      long id,
+      String datasetName,
+      String originJson,
+      List<NewImportVideo> videos,
+      int labelCount,
+      Instant now) {
     Timestamp at = Timestamp.from(now);
     jdbc.update(CLEAR_VIDEOS, new MapSqlParameterSource("id", id));
     for (int from = 0; from < videos.size(); from += INSERT_BATCH) {
@@ -199,11 +206,12 @@ class JdbcDatasetImportRepository implements DatasetImportRepository {
     }
     jdbc.update(
         "UPDATE dataset_imports SET status = 'REGISTERING', dataset_name = :name,"
-            + " video_count = :videos, label_count = :labels, heartbeat_at = :now,"
+            + " dataset_origin = CAST(:origin AS JSONB), video_count = :videos, label_count = :labels, heartbeat_at = :now,"
             + " updated_at = :now WHERE id = :id",
         new MapSqlParameterSource()
             .addValue("id", id)
             .addValue("name", datasetName)
+            .addValue("origin", originJson)
             .addValue("videos", videos.size())
             .addValue("labels", labelCount)
             .addValue("now", at));
@@ -333,7 +341,8 @@ class JdbcDatasetImportRepository implements DatasetImportRepository {
         read(rs.getString("errors")),
         rs.getObject("requested_by", UUID.class),
         rs.getTimestamp("requested_at").toInstant(),
-        finished == null ? null : finished.toInstant());
+        finished == null ? null : finished.toInstant(),
+        rs.getString("dataset_origin"));
   }
 
   private static final RowMapper<ImportVideo> VIDEO =

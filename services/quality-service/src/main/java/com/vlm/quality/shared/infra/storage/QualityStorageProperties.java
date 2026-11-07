@@ -14,6 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param sourceBucket 블러 사본이 있는 media 버킷
  * @param goldenBucket Golden Set 확정 버전 버킷
  * @param signedUrlTtl 근거 프레임 서명 주소 유효 시간
+ * @param importBucket 외부 데이터셋 가져오기 버킷(SPEC-030). 매니페스트를 읽기만 한다
+ * @param exportBucket 특징 내보내기 버킷(SPEC-030 R-14). Golden Set 버킷은 Object Lock이라 따로 둔다
  */
 @ConfigurationProperties("vlm.quality.storage")
 public record QualityStorageProperties(
@@ -23,4 +25,15 @@ public record QualityStorageProperties(
     boolean pathStyle,
     String sourceBucket,
     String goldenBucket,
-    Duration signedUrlTtl) {}
+    Duration signedUrlTtl,
+    @Nullable String importBucket,
+    @Nullable String exportBucket) {
+
+  /** 설정하지 않은 버킷을 쓰려 하면 기동 설정 오류다. */
+  public static String required(@Nullable String bucket, String key) {
+    if (bucket == null || bucket.isBlank()) {
+      throw new IllegalStateException(key + " is not configured");
+    }
+    return bucket;
+  }
+}

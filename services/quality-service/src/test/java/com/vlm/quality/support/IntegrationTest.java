@@ -16,7 +16,11 @@ import org.springframework.test.context.jdbc.Sql;
 @SpringBootTest(
     properties = {
       // 주기 작업은 테스트가 직접 불러 시점을 정한다.
-      "vlm.quality.jobs.scheduling-enabled=false"
+      "vlm.quality.jobs.scheduling-enabled=false",
+      // media 재시도 대기를 줄여 실패 경로 테스트가 빨리 끝나게 한다.
+      "vlm.quality.media.retry-wait=10ms",
+      // 테스트마다 실패를 일부러 내므로 서킷이 다른 테스트에 번지지 않게 사실상 끈다.
+      "vlm.quality.media.circuit-minimum-calls=100000"
     })
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
