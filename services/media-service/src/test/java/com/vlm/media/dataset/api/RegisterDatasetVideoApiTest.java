@@ -168,4 +168,24 @@ class RegisterDatasetVideoApiTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("MEDIA_INVALID_REQUEST"));
   }
+
+  @Test
+  @DisplayName(
+      "[SPEC-030 R-5] X-Request-Deadline이 이미 지났으면 504 MEDIA_DEADLINE_EXCEEDED이고 영상을 만들지 않는다(C-33)")
+  void honorsRequestDeadline() throws Exception {
+    String importKey = "imports/ds-a/videos/clip-0007.mp4";
+    StoragePuts.putImport(s3, importKey, CONTENT);
+
+    mvc.perform(
+            DatasetVideos.register(importId, "clip-0007", ownerId, importKey)
+                .header("X-Request-Deadline", System.currentTimeMillis() - 1_000))
+        .andExpect(status().isGatewayTimeout())
+        .andExpect(jsonPath("$.code").value("MEDIA_DEADLINE_EXCEEDED"));
+    mvc.perform(
+            DatasetVideos.register(importId, "clip-0007", ownerId, importKey)
+                .header("X-Request-Deadline", System.currentTimeMillis() + 30_000))
+        .andExpect(status().isCreated());
+
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM videos", Integer.class)).isEqualTo(1);
+  }
 }

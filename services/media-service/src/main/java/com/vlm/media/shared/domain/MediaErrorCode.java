@@ -14,7 +14,9 @@ public enum MediaErrorCode implements ErrorCode {
   UPLOAD_INCOMPLETE(409, "MEDIA_UPLOAD_INCOMPLETE", "업로드가 아직 끝나지 않았습니다."),
   SESSION_FULL(409, "MEDIA_SESSION_FULL", "세션에는 영상을 100개까지 넣을 수 있습니다."),
   INVALID_STATE(409, "MEDIA_INVALID_STATE", "지금 상태에서는 업로드를 완료할 수 없습니다."),
-  NOT_PLAYABLE(409, "MEDIA_NOT_PLAYABLE", "업로드가 끝난 영상만 재생할 수 있습니다.");
+  NOT_PLAYABLE(409, "MEDIA_NOT_PLAYABLE", "업로드가 끝난 영상만 재생할 수 있습니다."),
+  // 내부 호출 규약: 호출자가 준 마감(X-Request-Deadline)까지 끝낼 수 없다. 계약 registerDatasetVideo에는 아직 없다(C-33).
+  DEADLINE_EXCEEDED(504, "MEDIA_DEADLINE_EXCEEDED", "요청 마감 시각을 넘었습니다.");
 
   private final int status;
   private final String code;

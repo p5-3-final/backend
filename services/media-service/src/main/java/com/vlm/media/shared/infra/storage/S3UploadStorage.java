@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -191,13 +192,18 @@ class S3UploadStorage implements UploadStorage {
   }
 
   @Override
-  public void copyFromImport(String importKey, String storageKey) {
-    s3.copyObject(
-        c ->
-            c.sourceBucket(importBucket())
-                .sourceKey(importKey)
-                .destinationBucket(properties.bucket())
-                .destinationKey(storageKey));
+  public void copyFromImport(String importKey, String storageKey, Duration timeout) {
+    try {
+      s3.copyObject(
+          c ->
+              c.sourceBucket(importBucket())
+                  .sourceKey(importKey)
+                  .destinationBucket(properties.bucket())
+                  .destinationKey(storageKey)
+                  .overrideConfiguration(o -> o.apiCallTimeout(timeout)));
+    } catch (ApiCallTimeoutException e) {
+      throw new CopyTimeoutException(e);
+    }
   }
 
   private String importBucket() {

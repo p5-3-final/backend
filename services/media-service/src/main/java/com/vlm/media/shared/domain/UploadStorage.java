@@ -54,8 +54,18 @@ public interface UploadStorage {
    * 가져오기 버킷의 파일을 영상 저장소로 서버 쪽 복사한다(SPEC-030 R-5). 같은 대상 경로에 다시 복사해도 결과가 같다.
    *
    * @param storageKey 대상 원본 키({@link StorageKey#original})
+   * @param timeout 이 시간 안에 끝나지 않으면 {@link CopyTimeoutException}
    */
-  void copyFromImport(String importKey, String storageKey);
+  void copyFromImport(String importKey, String storageKey, Duration timeout);
+
+  /** 복사가 제한 시간 안에 끝나지 않았다. */
+  final class CopyTimeoutException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public CopyTimeoutException(Throwable cause) {
+      super("copy timed out", cause);
+    }
+  }
 
   /** 업로드 방법. */
   sealed interface UploadTarget permits SingleUploadTarget, MultipartUploadTarget {}

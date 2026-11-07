@@ -33,7 +33,7 @@ class ConcurrentDatasetVideoTest {
     StoragePuts.putImport(s3, importKey, new byte[1000]);
     var command =
         new RegisterDatasetVideoCommand(
-            UUID.randomUUID(), "clip-0001", UUID.randomUUID(), importKey, "video/mp4");
+            UUID.randomUUID(), "clip-0001", UUID.randomUUID(), importKey, "video/mp4", null);
 
     CountDownLatch start = new CountDownLatch(1);
     List<Future<RegisteredDatasetVideo>> results = new ArrayList<>();

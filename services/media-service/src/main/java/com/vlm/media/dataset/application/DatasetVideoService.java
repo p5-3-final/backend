@@ -9,6 +9,7 @@ import com.vlm.media.shared.domain.Video;
 import com.vlm.media.shared.domain.VideoRepository;
 import com.vlm.media.video.application.event.VideoUploaded;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
@@ -38,6 +39,7 @@ public class DatasetVideoService {
 
   private static final Logger log = LoggerFactory.getLogger(DatasetVideoService.class);
 
+  private final DatasetVideoProperties properties;
   private final VideoRepository videos;
   private final UploadStorage storage;
   private final OutboxRecorder outbox;
@@ -67,6 +69,7 @@ public class DatasetVideoService {
       throw new BusinessException(MediaErrorCode.IMPORT_OBJECT_NOT_FOUND);
     }
     Instant now = clock.instant();
+    Duration remaining = remaining(command, now);
     Video video =
         Video.registerDataset(
             videoId,
@@ -75,7 +78,12 @@ public class DatasetVideoService {
             size.getAsLong(),
             command.contentType(),
             now);
-    storage.copyFromImport(command.importKey(), video.getStorageKey());
+    try {
+      storage.copyFromImport(command.importKey(), video.getStorageKey(), remaining);
+    } catch (UploadStorage.CopyTimeoutException e) {
+      throw new BusinessException(
+          MediaErrorCode.DEADLINE_EXCEEDED, MediaErrorCode.DEADLINE_EXCEEDED.defaultMessage(), e);
+    }
     try {
       Video saved = transactions.execute(status -> save(video, now));
       log.info(
@@ -89,6 +97,17 @@ public class DatasetVideoService {
       Video winner = videos.findByPublicId(videoId).orElseThrow(() -> new IllegalStateException(e));
       return new RegisteredDatasetVideo(winner, false);
     }
+  }
+
+  // 내부 호출 규약: 남은 시간이 없으면 일을 시작하지 않고 504, 있으면 그 시간을 복사 제한 시간으로 넘긴다.
+  private Duration remaining(RegisterDatasetVideoCommand command, Instant now) {
+    Instant deadline =
+        command.deadline() == null ? now.plus(properties.defaultTimeout()) : command.deadline();
+    Duration remaining = Duration.between(now, deadline);
+    if (remaining.isNegative() || remaining.isZero()) {
+      throw new BusinessException(MediaErrorCode.DEADLINE_EXCEEDED);
+    }
+    return remaining;
   }
 
   private Video save(Video video, Instant now) {

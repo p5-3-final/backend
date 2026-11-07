@@ -37,6 +37,9 @@ vlm:
     internal:
       # 내부 경로(/internal/**) 호출자 허용 목록(SPEC-030 R-6)
       allowed-callers: ${MEDIA_INTERNAL_ALLOWED_CALLERS:quality-service}
+    dataset:
+      # X-Request-Deadline이 없을 때 데이터셋 영상 등록 한 건의 제한 시간(SPEC-030, C-33). quality의 read 타임아웃(60s)과 맞춘다.
+      default-timeout: 60s
     retention:
       # 보존 키 비밀 키(Base64, 32바이트 이상). 기본값을 두지 않아 없으면 기동에 실패한다(SPEC-018 R-12).
       hmac-key: ${MEDIA_RETENTION_HMAC_KEY}

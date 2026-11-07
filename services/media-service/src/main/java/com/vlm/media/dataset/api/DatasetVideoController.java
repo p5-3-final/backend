@@ -4,11 +4,14 @@ import com.vlm.media.dataset.application.DatasetVideoService;
 import com.vlm.media.dataset.application.RegisterDatasetVideoCommand;
 import com.vlm.media.dataset.application.RegisteredDatasetVideo;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -22,6 +25,7 @@ class DatasetVideoController {
 
   @PostMapping("/internal/v1/media/dataset-videos")
   ResponseEntity<DatasetVideoResponse> register(
+      @RequestHeader(value = "X-Request-Deadline", required = false) @Nullable Long deadlineEpochMs,
       @Valid @RequestBody RegisterDatasetVideoRequest request) {
     RegisteredDatasetVideo registered =
         datasetVideos.register(
@@ -30,7 +34,8 @@ class DatasetVideoController {
                 request.externalId(),
                 request.ownerId(),
                 request.importKey(),
-                request.contentType()));
+                request.contentType(),
+                deadlineEpochMs == null ? null : Instant.ofEpochMilli(deadlineEpochMs)));
     return ResponseEntity.status(registered.created() ? HttpStatus.CREATED : HttpStatus.OK)
         .body(DatasetVideoResponse.from(registered.video()));
   }
