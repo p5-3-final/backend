@@ -63,6 +63,7 @@ public class FeatureExportWorker {
       return false;
     }
     FeatureExport job = claimed.get();
+    log.info("Feature export started exportId={}", job.exportId());
     try {
       run(job);
     } catch (RuntimeException e) {

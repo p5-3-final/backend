@@ -73,9 +73,7 @@ class ImportIsolationLatencyTest {
     assertThat(p95(samples)).as("review list p95").isLessThanOrEqualTo(Duration.ofMillis(300));
     // 남은 영상은 지연 없이 끝내 다음 테스트에 작업이 남지 않게 한다.
     stubMedia(ids, 0);
-    await()
-        .atMost(Duration.ofMinutes(2))
-        .until(() -> !imports.get(importId).status().inProgress());
+    await().atMost(Duration.ofMinutes(2)).until(() -> !imports.get(importId).status().inProgress());
   }
 
   private void insertReviewItems() {

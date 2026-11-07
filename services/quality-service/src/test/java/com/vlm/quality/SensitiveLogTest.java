@@ -6,10 +6,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.vlm.quality.export.application.FeatureExportService;
+import com.vlm.quality.export.application.SourceCompleted;
+import com.vlm.quality.export.application.SourceResultService;
+import com.vlm.quality.export.domain.ExportScope;
+import com.vlm.quality.support.DatasetFixtures;
+import com.vlm.quality.support.Events;
+import com.vlm.quality.support.ExportFixtures;
 import com.vlm.quality.support.IntegrationTest;
 import com.vlm.quality.support.ReviewFixtures;
 import com.vlm.quality.support.StorageFixtures;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +53,10 @@ class SensitiveLogTest {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
   @Autowired ReviewFixtures reviews;
+  @Autowired DatasetFixtures datasets;
+  @Autowired ExportFixtures exportFixtures;
+  @Autowired SourceResultService sourceResults;
+  @Autowired FeatureExportService featureExports;
 
   @BeforeEach
   void enableDebug() {
@@ -82,6 +97,52 @@ class SensitiveLogTest {
     for (String signature : signatures) {
       assertThat(output.getAll()).doesNotContain(signature);
     }
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 T031] 가져오기 시작·끝·실패를 importId와 함께 남기고 매니페스트 내용은 남기지 않는다")
+  void logsImportsWithoutManifestContent(CapturedOutput output) {
+    TestcontainersConfiguration.media().resetAll();
+    String marker = "manifest-secret-" + UUID.randomUUID();
+    ObjectNode manifest = DatasetFixtures.manifest("log-import", "clip-0001");
+    ((ObjectNode) manifest.get("origin")).put("url", "https://example.org/" + marker);
+    ((ObjectNode) manifest.get("videos").get(0).get("labels").get(0)).put("severity", "high");
+    DatasetFixtures.upload("log-import", manifest);
+    DatasetFixtures.mediaAnswers("clip-0001", 201);
+
+    UUID done = datasets.importNow("log-import", 0.2, 7, UUID.randomUUID());
+    UUID failed = datasets.importNow("log-missing", 0.2, 7, UUID.randomUUID());
+
+    assertThat(output.getAll())
+        .contains("Accepted dataset import importId=" + done)
+        .contains("Dataset import started importId=" + done)
+        .contains("Dataset import completed importId=" + done)
+        .contains("Dataset import failed importId=" + failed)
+        .doesNotContain(marker);
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 T031] 내보내기 시작·끝을 exportId와 함께 남기고 결과 파일 내용은 남기지 않는다")
+  void logsExportsWithoutFileContent(CapturedOutput output) {
+    String marker = "result-secret-" + UUID.randomUUID();
+    UUID source = UUID.randomUUID();
+    UUID jobId = UUID.randomUUID();
+    ObjectNode result = ExportFixtures.resultFile(source, jobId, 1);
+    ((ObjectNode) result.get("risks").get(0)).put("reason", marker);
+    String key = Events.resultKey(source, jobId);
+    StorageFixtures.putSource(key, result.toString().getBytes(StandardCharsets.UTF_8));
+    sourceResults.record(new SourceCompleted(source, jobId, 1, key));
+    LocalDate today = LocalDate.now(ZoneOffset.UTC);
+
+    UUID exportId =
+        featureExports.request(ExportScope.of(null, today, today), UUID.randomUUID()).exportId();
+    exportFixtures.runWorker();
+
+    assertThat(output.getAll())
+        .contains("Accepted feature export exportId=" + exportId)
+        .contains("Feature export started exportId=" + exportId)
+        .contains("Feature export completed exportId=" + exportId)
+        .doesNotContain(marker);
   }
 
   private static String signatureOf(String url) {
