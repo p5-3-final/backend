@@ -54,7 +54,7 @@ vlm:
     gate:
       tolerance: 0.02
     internal:
-      allowed-callers: ${QUALITY_INTERNAL_ALLOWED_CALLERS:quality-evals}
+      allowed-callers: ${QUALITY_INTERNAL_ALLOWED_CALLERS:quality-eval}
     stage:
       retention: 90d
     export:

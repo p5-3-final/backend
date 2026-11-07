@@ -163,7 +163,7 @@ class StageGateApiTest {
   private ResultActions gate(String body) throws Exception {
     return mvc.perform(
         MockMvcRequestBuilders.post(GATE)
-            .header("X-Caller", "quality-evals")
+            .header("X-Caller", "quality-eval")
             .contentType(MediaType.APPLICATION_JSON)
             .content(body));
   }

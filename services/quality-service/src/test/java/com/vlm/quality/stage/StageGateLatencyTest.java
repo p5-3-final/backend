@@ -60,7 +60,7 @@ class StageGateLatencyTest {
       long started = System.nanoTime();
       mvc.perform(
               MockMvcRequestBuilders.post("/internal/v1/quality/stage-gates")
-                  .header("X-Caller", "quality-evals")
+                  .header("X-Caller", "quality-eval")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(body))
           .andExpect(status().isOk());
