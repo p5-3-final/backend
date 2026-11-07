@@ -148,7 +148,7 @@ quality-service가 외부 데이터셋을 가져올 때 영상마다 부르는 �
 | `QUALITY_S3_ENDPOINT`, `QUALITY_S3_PUBLIC_ENDPOINT`, `QUALITY_S3_PATH_STYLE` | S3 호환 저장소(로컬 SeaweedFS) 주소, 서명 주소에 쓸 외부 주소, 경로 방식 | 비움, 비움, `false` |
 | `QUALITY_SOURCE_BUCKET` | 근거 프레임을 읽는 원본 버킷 | 없음(필수) |
 | `QUALITY_GOLDEN_BUCKET` | 확정 버전 매니페스트·프레임 사본 버킷 | 없음(필수) |
-| `QUALITY_INTERNAL_ALLOWED_CALLERS` | 내부 API를 부를 수 있는 `X-Caller` 값(쉼표 구분) | `quality-evals` |
+| `QUALITY_INTERNAL_ALLOWED_CALLERS` | 내부 API를 부를 수 있는 `X-Caller` 값(쉼표 구분) | `quality-eval` |
 | `QUALITY_IMPORT_BUCKET` | 외부 데이터셋 가져오기 버킷(매니페스트를 읽기만, SPEC-030) | 비움(가져오기를 처리하면 설정 오류) |
 | `QUALITY_EXPORT_BUCKET` | 특징 내보내기 버킷(SPEC-030) | 비움(내보내기를 처리하면 설정 오류) |
 | `MEDIA_SERVICE_INTERNAL_URI` | media-service 내부 API 주소(SPEC-030) | `http://localhost:8082` |

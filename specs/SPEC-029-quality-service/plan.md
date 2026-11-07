@@ -375,7 +375,7 @@ CREATE INDEX idx_stage_daily_stats_trend ON stage_daily_stats (stage_id, version
 - stage-reports: `getSourceStageReport`, `getStageTrend`
 
 - 공개 경로는 `OperatorRoleInterceptor`가 `X-User-Id`(없으면 401, `UserHeaders`)와 `X-User-Roles`에 `OPERATOR`가 있는지(없으면 403 `QUALITY_FORBIDDEN`)를 먼저 본다.
-- 내부 경로는 `InternalCallerFilter`가 `X-Caller`가 허용 목록(`vlm.quality.internal.allowed-callers`, 기본 `quality-evals`)에 있는지 본다. 아니면 403 `QUALITY_CALLER_NOT_ALLOWED`.
+- 내부 경로는 `InternalCallerFilter`가 `X-Caller`가 허용 목록(`vlm.quality.internal.allowed-callers`, 기본 `quality-eval`)에 있는지 본다. 아니면 403 `QUALITY_CALLER_NOT_ALLOWED`.
 - 요청 검증 오류는 `libs/common-web` 핸들러가 `vlm.problem.validation-error-code: QUALITY_INVALID_REQUEST`로 낸다.
 
 ### openapi-generator 설정
@@ -396,7 +396,7 @@ CREATE INDEX idx_stage_daily_stats_trend ON stage_daily_stats (stage_id, version
 | `vlm.quality.review.assignment-timeout` | — | 24h | R-10 |
 | `vlm.quality.golden.freeze-lock-timeout` | — | 30m | 남은 확정 표시 무시 |
 | `vlm.quality.gate.tolerance` | — | 0.02 | R-18 |
-| `vlm.quality.internal.allowed-callers` | `QUALITY_INTERNAL_ALLOWED_CALLERS` | `quality-evals` | 내부 API 호출자 |
+| `vlm.quality.internal.allowed-callers` | `QUALITY_INTERNAL_ALLOWED_CALLERS` | `quality-eval` | 내부 API 호출자 |
 | `vlm.quality.stage.retention` | — | 90d | R-25 |
 
 - `server.port`는 다른 서비스처럼 8080이고 `application-local.yml`에서 8088(catalog)로 둔다.
