@@ -10,7 +10,7 @@ updated: 2026-11-06
 # Plan: SPEC-030 외부 데이터셋 가져오기·특징 내보내기·성능 Gate — backend
 
 - spec: docs 레포 `docs/specs/SPEC-030-quality-datasets/spec.md`
-- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 1.2.0(가져오기 3개, 내보내기 2개, 내부 성능 Gate 1개, `GoldenSet.origin`), `openapi/media-service.yaml` 1.4.0(`registerDatasetVideo`), `quality/v1/{dataset-import-manifest,golden-manifest,feature-row}.schema.json`, `aggregates/v1/source-result.schema.json`, `events/{source.completed,video.uploaded}.schema.json` (계약 묶음 3.14.0)
+- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 3.0.0(가져오기 3개, 내보내기 2개, 내부 성능 Gate 1개, `GoldenSet.origin`), `openapi/media-service.yaml` 1.4.0(`registerDatasetVideo`), `quality/v1/{dataset-import-manifest,golden-manifest,feature-row}.schema.json`, `aggregates/v1/source-result.schema.json`, `events/{source.completed,video.uploaded}.schema.json` (계약 묶음 5.0.0)
 - ADR: ADR-0010 ⑨·⑩, ADR-0011(외부 데이터셋은 Golden Set 관리 규칙)
 - 선행: SPEC-029 plan(quality-service 모듈, Golden Set 확정, `stage_timings`, `SingleRunLock`, `NameBasedUuid`)
 
@@ -54,7 +54,7 @@ updated: 2026-11-06
 | 원칙 | 준수 | 비고 |
 | --- | --- | --- |
 | I 스펙 우선 — spec이 Approved 상태인가 | ☑ | SPEC-030 Approved, 머지됨(미결 사항 없음) |
-| II 계약 우선 — 계약 변경이 먼저 머지됐는가 | ☑ | `quality-service.yaml` 1.2.0, `media-service.yaml` 1.4.0, `quality/v1` 3종 머지(계약 묶음 3.14.0). 계약 문제는 10절 |
+| II 계약 우선 — 계약 변경이 먼저 머지됐는가 | ☑ | `quality-service.yaml` 3.0.0, `media-service.yaml` 1.4.0, `quality/v1` 3종 머지(계약 묶음 5.0.0). 계약 문제는 10절 |
 | III 테스트 우선 — 모든 R-*에 테스트가 매핑되고, 태스크가 요구사항 단위 TDD 사이클로 나뉘었는가 | ☑ | backend 담당 R-1~R-10, R-13~R-18, NFR-1~3 매핑 |
 | IV 서비스 자율성 — 다른 서비스 DB나 코드에 직접 의존하지 않는가 | ☑ | quality는 media를 계약 API로만, aggregator 결과는 계약 파일(`source-result`)로만 읽는다. pipeline·analysis 등 다른 담당자 서비스는 바꾸지 않는다 |
 | V 단순성 — 새 의존성이나 추상화가 정당한가 | ☑ | 비동기 작업은 큐 시스템 없이 DB 행 + 실행기 하나. Resilience4j는 확인 뒤(10절 1) |
@@ -69,7 +69,7 @@ updated: 2026-11-06
 
 | 경로 | 변경 |
 | --- | --- |
-| `Q/main/resources/db/migration/V202611071200__create_dataset_imports_exports.sql` | 가져오기·영상·데이터셋 항목·결과 경로·내보내기 테이블, `golden_sets.dataset_origin` |
+| `Q/main/resources/db/migration/V202611071300__create_dataset_imports_exports.sql` | 가져오기·영상·데이터셋 항목·결과 경로·내보내기 테이블, `golden_sets.dataset_origin` |
 | `Q/main/.../dataset/{api,application,domain,infra}/` | 가져오기 |
 | `Q/main/.../export/{api,application,domain,infra}/` | `source.completed` 소비, 특징 내보내기 |
 | `Q/main/.../golden/application/GoldenDatasetService.java` | 데이터셋 세트 찾기·만들기, 데이터셋 항목 upsert |
@@ -77,7 +77,7 @@ updated: 2026-11-06
 | `Q/main/.../golden/application/GoldenDraftService.java` | 데이터셋 세트에 검토 항목을 넣으면 409 `QUALITY_GOLDEN_ORIGIN_MISMATCH` |
 | `Q/main/.../stage/{api,application,domain}/` | 내부 성능 Gate |
 | `services/quality-service/build.gradle.kts` | `media-service.yaml`의 `registerDatasetVideo`만 걸러 클라이언트 생성 |
-| `M/main/resources/db/migration/V202611071200__add_dataset_videos.sql` | `videos.retention_grade` |
+| `M/main/resources/db/migration/V202611071300__add_dataset_videos.sql` | `videos.retention_grade` |
 | `M/main/.../dataset/{api,application}/` | 데이터셋 영상 등록 |
 | `M/main/.../shared/domain/{Video,UploadStorage,RetentionGrade}.java` | `registerDataset` 생성, 가져오기 버킷 크기 확인·복사, 보존 등급 |
 | `M/main/.../shared/infra/storage/{MediaStorageProperties,S3UploadStorage}.java` | `import-bucket`, CopyObject |
@@ -86,7 +86,7 @@ updated: 2026-11-06
 ### 데이터 모델 — quality_db
 
 ```sql
--- V202611071200__create_dataset_imports_exports.sql
+-- V202611071300__create_dataset_imports_exports.sql
 -- 데이터셋 Golden Set의 출처·사용 조건. 가져오기마다 매니페스트 값으로 바꾼다(R-10 datasetOrigin).
 ALTER TABLE golden_sets ADD COLUMN dataset_origin JSONB;
 
@@ -195,7 +195,7 @@ CREATE INDEX idx_feature_exports_work ON feature_exports (status, heartbeat_at)
 ### 데이터 모델 — media_db
 
 ```sql
--- V202611071200__add_dataset_videos.sql
+-- V202611071300__add_dataset_videos.sql
 -- SPEC-030 R-5: 외부 데이터셋 영상은 보존 등급 DATASET(ADR-0011, overview 보존 표 외부 데이터셋 행)
 ALTER TABLE videos ADD COLUMN retention_grade VARCHAR(20) NOT NULL DEFAULT 'STANDARD';
 ```

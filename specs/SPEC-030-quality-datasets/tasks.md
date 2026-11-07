@@ -15,13 +15,13 @@ updated: 2026-11-06
 
 경로 약어: `Q` = `services/quality-service/src`(패키지 `com.vlm.quality`), `M` = `services/media-service/src`(패키지 `com.vlm.media`)
 
-선행: SPEC-029 tasks T001~T004(계약 잠금 3.14.0, 모듈 뼈대, 생성 설정, 마이그레이션), T005(`NameBasedUuid`), T020(Golden Set 확정), T028(`stage_timings` 적재)
+선행: SPEC-029 tasks T001~T004(계약 잠금, 모듈 뼈대, 생성 설정, 마이그레이션), T005(`NameBasedUuid`), T020(Golden Set 확정), T028(`stage_timings` 적재)
 
 ## Phase 0: 준비
 
-- [ ] T001 계약 잠금 3.14.0 — SPEC-029 T001에서 이미 올렸으면 건너뛴다. 아니면 `scripts/fetch-service-contracts.sh --update 3.14.0`, 테스트 기존 전체 `./gradlew build`
-- [ ] T002 [P] quality 마이그레이션 `dataset_imports`, `dataset_import_videos`, `golden_dataset_items`, `source_results`, `feature_exports`, `golden_sets.dataset_origin` — 테스트 `Q/test/.../SchemaMigrationTest.java`, 구현 `Q/main/resources/db/migration/V202611071200__create_dataset_imports_exports.sql`
-- [ ] T003 [P] media 마이그레이션 `videos.retention_grade` — 테스트 `M/test/.../SchemaMigrationTest.java`, 구현 `M/main/resources/db/migration/V202611071200__add_dataset_videos.sql`
+- [x] T001 계약 잠금 5.0.0 — SPEC-029 수정과 함께 이 PR에서 올렸다(4.1.0 → 5.0.0). `scripts/fetch-service-contracts.sh --update 5.0.0`, 테스트 기존 전체 `./gradlew build`
+- [x] T002 [P] quality 마이그레이션 `dataset_imports`, `dataset_import_videos`, `golden_dataset_items`, `source_results`, `feature_exports`, `golden_sets.dataset_origin` — 테스트 `Q/test/.../SchemaMigrationTest.java`, 구현 `Q/main/resources/db/migration/V202611071300__create_dataset_imports_exports.sql`
+- [x] T003 [P] media 마이그레이션 `videos.retention_grade` — 테스트 `M/test/.../SchemaMigrationTest.java`, 구현 `M/main/resources/db/migration/V202611071300__add_dataset_videos.sql`
 
 ## Phase 1: US-1 외부 데이터셋으로 평가 세트 만들기 (P1) — media-service
 
@@ -59,7 +59,7 @@ updated: 2026-11-06
 
 ## Phase 5: 마무리
 
-- [ ] T026 [P] 6개 작업(가져오기 3, 내보내기 2, 성능 Gate 1)의 정상·오류 응답이 `quality-service.yaml` 1.2.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
+- [ ] T026 [P] 6개 작업(가져오기 3, 내보내기 2, 성능 Gate 1)의 정상·오류 응답이 `quality-service.yaml` 3.0.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
 - [ ] T027 [P] [NFR-1] 영상 1,000개·라벨 100,000개 매니페스트 검증 10초 이하 — 테스트 `Q/test/.../dataset/application/ImportManifestPerformanceTest.java`
 - [ ] T028 [P] [NFR-2] 영상 1,000개 가져오기 중(WireMock media 지연 50ms) 검토 목록 p95 300ms — 테스트 `Q/test/.../dataset/ImportIsolationLatencyTest.java`, 구현 `config/ImportExecutorConfig`(T011에서 전용 실행기를 넣어 통과. 요청 스레드 풀에서 돌리면 실패하는 것을 확인)
 - [ ] T029 [P] [NFR-3] 영상 200개 기준·후보 성능 Gate p95 2초 — 테스트 `Q/test/.../stage/StageGateLatencyTest.java`

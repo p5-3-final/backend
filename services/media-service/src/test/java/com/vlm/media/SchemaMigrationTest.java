@@ -35,6 +35,18 @@ class SchemaMigrationTest {
   }
 
   @Test
+  @DisplayName("[SPEC-030 R-5] 영상에 보존 등급 열이 있고 기존 영상은 STANDARD다")
+  void createsRetentionGrade() {
+    String defaultGrade =
+        jdbcTemplate.queryForObject(
+            "SELECT column_default FROM information_schema.columns"
+                + " WHERE table_name = 'videos' AND column_name = 'retention_grade'",
+            String.class);
+
+    assertThat(defaultGrade).startsWith("'STANDARD'");
+  }
+
+  @Test
   @DisplayName("[SPEC-017] 작업 세션 테이블과 영상의 세션·역할 컬럼을 만든다")
   void createsWorkSessionColumns() {
     List<String> columns =
