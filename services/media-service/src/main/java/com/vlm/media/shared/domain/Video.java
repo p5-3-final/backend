@@ -79,6 +79,10 @@ public class Video {
   // 학습용 보존 동의. 영상을 지울 때의 값으로 보존 여부를 정한다(SPEC-018, ADR-0011).
   private boolean retentionConsent;
 
+  // 외부 데이터셋 영상은 DATASET이다(SPEC-030 R-5). 이번에는 저장만 하고 삭제·보존 정리 동작은 바꾸지 않는다(D-29).
+  @Enumerated(EnumType.STRING)
+  private RetentionGrade retentionGrade = RetentionGrade.STANDARD;
+
   @CreationTimestamp
   @Column(updatable = false)
   private Instant createdAt;
@@ -122,6 +126,27 @@ public class Video {
     VideoFilePolicy.check(fileName, sizeBytes, contentType);
     return new Video(
         UUID.randomUUID(), ownerId, fileName, sizeBytes, contentType, now, uploadExpiry);
+  }
+
+  /**
+   * 외부 데이터셋 영상을 업로드 완료 상태로 등록한다(SPEC-030 R-5). 파일은 이미 원본 경로에 있으므로 업로드 기한이 없어 만료 시각을 등록 시각으로 둔다.
+   *
+   * @param videoId (importId, externalId)로 정한 결정적 ID
+   * @throws BusinessException 크기·형식이 업로드 조건(SPEC-003 R-4, R-5)에 맞지 않으면
+   */
+  public static Video registerDataset(
+      UUID videoId,
+      UUID ownerId,
+      String fileName,
+      long sizeBytes,
+      String contentType,
+      Instant now) {
+    VideoFilePolicy.check(fileName, sizeBytes, contentType);
+    Video video = new Video(videoId, ownerId, fileName, sizeBytes, contentType, now, Duration.ZERO);
+    video.status = VideoStatus.UPLOADED;
+    video.uploadedAt = now;
+    video.retentionGrade = RetentionGrade.DATASET;
+    return video;
   }
 
   /** 작업 세션에 넣는다(SPEC-017 R-6). 업로드 자리를 발급할 때만 부른다. */

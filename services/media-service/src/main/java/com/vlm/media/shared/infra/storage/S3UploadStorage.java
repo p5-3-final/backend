@@ -180,6 +180,34 @@ class S3UploadStorage implements UploadStorage {
     }
   }
 
+  @Override
+  public OptionalLong importObjectSize(String importKey) {
+    try {
+      return OptionalLong.of(
+          s3.headObject(r -> r.bucket(importBucket()).key(importKey)).contentLength());
+    } catch (NoSuchKeyException e) {
+      return OptionalLong.empty();
+    }
+  }
+
+  @Override
+  public void copyFromImport(String importKey, String storageKey) {
+    s3.copyObject(
+        c ->
+            c.sourceBucket(importBucket())
+                .sourceKey(importKey)
+                .destinationBucket(properties.bucket())
+                .destinationKey(storageKey));
+  }
+
+  private String importBucket() {
+    String bucket = properties.importBucket();
+    if (bucket == null || bucket.isBlank()) {
+      throw new IllegalStateException("vlm.media.storage.import-bucket is not configured");
+    }
+    return bucket;
+  }
+
   /** 브라우저가 POST할 버킷 주소. 서명용 공개 주소를 기준으로 path-style이면 경로에, 아니면 호스트에 버킷을 넣는다. */
   private String bucketUrl() {
     var utilities =

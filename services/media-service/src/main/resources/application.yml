@@ -34,6 +34,9 @@ vlm:
   problem:
     validation-error-code: MEDIA_INVALID_REQUEST
   media:
+    internal:
+      # 내부 경로(/internal/**) 호출자 허용 목록(SPEC-030 R-6)
+      allowed-callers: ${MEDIA_INTERNAL_ALLOWED_CALLERS:quality-service}
     retention:
       # 보존 키 비밀 키(Base64, 32바이트 이상). 기본값을 두지 않아 없으면 기동에 실패한다(SPEC-018 R-12).
       hmac-key: ${MEDIA_RETENTION_HMAC_KEY}
@@ -44,6 +47,8 @@ vlm:
       endpoint: ${MEDIA_S3_ENDPOINT:}
       public-endpoint: ${MEDIA_S3_PUBLIC_ENDPOINT:}
       path-style: ${MEDIA_S3_PATH_STYLE:false}
+      # 외부 데이터셋 가져오기 버킷(SPEC-030 R-5). 읽기·서버 쪽 복사만 한다.
+      import-bucket: ${MEDIA_IMPORT_S3_BUCKET:}
     normalization:
       # 영상 1초당 예상 처리 초(SPEC-007 R-20). 처리 실측 전 임시값이며 측정한 뒤 바꾼다.
       estimate-factor: 1.0

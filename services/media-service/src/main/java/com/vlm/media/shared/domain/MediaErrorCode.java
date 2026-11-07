@@ -8,6 +8,8 @@ public enum MediaErrorCode implements ErrorCode {
   UNSUPPORTED_FORMAT(400, "MEDIA_UNSUPPORTED_FORMAT", "mp4, mov, mkv, avi 영상만 올릴 수 있습니다."),
   VIDEO_NOT_FOUND(404, "MEDIA_VIDEO_NOT_FOUND", "영상을 찾을 수 없습니다."),
   SESSION_NOT_FOUND(404, "MEDIA_SESSION_NOT_FOUND", "작업 세션을 찾을 수 없습니다."),
+  IMPORT_OBJECT_NOT_FOUND(404, "MEDIA_IMPORT_OBJECT_NOT_FOUND", "가져오기 버킷에 파일이 없습니다."),
+  CALLER_NOT_ALLOWED(403, "MEDIA_CALLER_NOT_ALLOWED", "허용된 호출자가 아닙니다."),
   RETAINED_VIDEO_NOT_FOUND(404, "MEDIA_RETAINED_VIDEO_NOT_FOUND", "보존 중인 영상을 찾을 수 없습니다."),
   UPLOAD_INCOMPLETE(409, "MEDIA_UPLOAD_INCOMPLETE", "업로드가 아직 끝나지 않았습니다."),
   SESSION_FULL(409, "MEDIA_SESSION_FULL", "세션에는 영상을 100개까지 넣을 수 있습니다."),

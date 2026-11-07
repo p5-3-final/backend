@@ -47,6 +47,16 @@ public interface UploadStorage {
   /** 저장소에 있는 파일 크기. 파일이 없으면 비어 있다. */
   OptionalLong objectSize(String storageKey);
 
+  /** 가져오기 버킷에 있는 파일 크기. 파일이 없으면 비어 있다(SPEC-030 R-6). */
+  OptionalLong importObjectSize(String importKey);
+
+  /**
+   * 가져오기 버킷의 파일을 영상 저장소로 서버 쪽 복사한다(SPEC-030 R-5). 같은 대상 경로에 다시 복사해도 결과가 같다.
+   *
+   * @param storageKey 대상 원본 키({@link StorageKey#original})
+   */
+  void copyFromImport(String importKey, String storageKey);
+
   /** 업로드 방법. */
   sealed interface UploadTarget permits SingleUploadTarget, MultipartUploadTarget {}
 

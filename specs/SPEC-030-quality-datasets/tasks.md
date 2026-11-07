@@ -25,10 +25,10 @@ updated: 2026-11-06
 
 ## Phase 1: US-1 외부 데이터셋으로 평가 세트 만들기 (P1) — media-service
 
-- [ ] T004 [R-5] 데이터셋 영상 등록: 가져오기 버킷 파일을 `sources/<videoId>/original`로 복사, videoId=uuid5(importId, externalId), `UPLOADED`·`DATASET`, 같은 트랜잭션에서 `video.uploaded` Outbox(계약 스키마 통과), 201 — 테스트 `M/test/.../dataset/api/RegisterDatasetVideoApiTest.java`, 구현 `dataset/api/{DatasetVideoController,RegisterDatasetVideoRequest,DatasetVideoResponse}`, `dataset/application/DatasetVideoService`, `shared/domain/{Video#registerDataset,RetentionGrade,UploadStorage}`, `shared/infra/storage/{MediaStorageProperties,S3UploadStorage}`. SeaweedFS 버킷 사이 CopyObject가 안 되면 멈추고 보고한다
-- [ ] T005 [R-6] 같은 (importId, externalId)면 복사·발행 없이 200, 파일 없음 404 `MEDIA_IMPORT_OBJECT_NOT_FOUND`, 허용 목록 밖 `X-Caller` 403 `MEDIA_CALLER_NOT_ALLOWED`, 형식·크기 위반 400 — 테스트 `RegisterDatasetVideoApiTest`, 구현 `DatasetVideoService`, `config/{InternalCallerProperties,InternalCallerFilter}`
-- [ ] T006 [R-6] 같은 요청 5건 동시 → 영상 1개, Outbox 1건, 모두 201 또는 200 — 테스트 `M/test/.../dataset/application/ConcurrentDatasetVideoTest.java`, 구현 `DatasetVideoService`(고유 제약 충돌 시 다시 읽기)
-- [ ] T007 [P] `registerDatasetVideo` 201·200·400·403·404 응답이 `media-service.yaml` 1.4.0과 일치 — 테스트 `M/test/.../contract/MediaContractTest.java`
+- [x] T004 [R-5] 데이터셋 영상 등록: 가져오기 버킷 파일을 `sources/<videoId>/original`로 복사, videoId=uuid5(importId, externalId), `UPLOADED`·`DATASET`, 같은 트랜잭션에서 `video.uploaded` Outbox(계약 스키마 통과), 201 — 테스트 `M/test/.../dataset/api/RegisterDatasetVideoApiTest.java`, 구현 `dataset/api/{DatasetVideoController,RegisterDatasetVideoRequest,DatasetVideoResponse}`, `dataset/application/DatasetVideoService`, `shared/domain/{Video#registerDataset,RetentionGrade,UploadStorage}`, `shared/infra/storage/{MediaStorageProperties,S3UploadStorage}`. SeaweedFS 버킷 사이 CopyObject가 안 되면 멈추고 보고한다
+- [x] T005 [R-6] 같은 (importId, externalId)면 복사·발행 없이 200, 파일 없음 404 `MEDIA_IMPORT_OBJECT_NOT_FOUND`, 허용 목록 밖 `X-Caller` 403 `MEDIA_CALLER_NOT_ALLOWED`, 형식·크기 위반 400 — 테스트 `RegisterDatasetVideoApiTest`, 구현 `DatasetVideoService`, `config/{InternalCallerProperties,InternalCallerFilter}`
+- [x] T006 [R-6] 같은 요청 5건 동시 → 영상 1개, Outbox 1건, 모두 201 또는 200 — 테스트 `M/test/.../dataset/application/ConcurrentDatasetVideoTest.java`, 구현 `DatasetVideoService`(고유 제약 충돌 시 다시 읽기)
+- [x] T007 [P] `registerDatasetVideo` 201·200·400·403·404 응답이 `media-service.yaml` 1.4.0과 일치 — 테스트 `M/test/.../contract/MediaContractTest.java`
 
 ## Phase 2: US-1 외부 데이터셋으로 평가 세트 만들기 (P1) — quality-service
 
