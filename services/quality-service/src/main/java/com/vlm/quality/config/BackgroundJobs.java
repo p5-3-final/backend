@@ -1,6 +1,7 @@
 package com.vlm.quality.config;
 
 import com.vlm.quality.dataset.application.ImportWorker;
+import com.vlm.quality.export.application.FeatureExportWorker;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,12 +17,16 @@ class BackgroundJobs {
   private static final Logger log = LoggerFactory.getLogger(BackgroundJobs.class);
 
   private final ImportWorker imports;
+  private final FeatureExportWorker exports;
   private final ExecutorService executor;
   private final AtomicBoolean running = new AtomicBoolean();
 
   BackgroundJobs(
-      ImportWorker imports, @Qualifier(BackgroundJobConfig.EXECUTOR) ExecutorService executor) {
+      ImportWorker imports,
+      FeatureExportWorker exports,
+      @Qualifier(BackgroundJobConfig.EXECUTOR) ExecutorService executor) {
     this.imports = imports;
+    this.exports = exports;
     this.executor = executor;
   }
 
@@ -48,7 +53,10 @@ class BackgroundJobs {
     try {
       boolean worked = true;
       while (worked) {
-        worked = imports.runOnce();
+        // 한 바퀴에 가져오기와 내보내기를 하나씩 돌려 한쪽이 다른 쪽을 오래 막지 않게 한다.
+        boolean imported = imports.runOnce();
+        boolean exported = exports.runOnce();
+        worked = imported || exported;
       }
     } catch (RuntimeException e) {
       // DB 장애 등. 행은 진행 중으로 남아 heartbeat가 끊기면 다음 주기나 다른 Pod가 이어받는다.

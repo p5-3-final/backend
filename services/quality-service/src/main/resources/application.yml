@@ -57,6 +57,10 @@ vlm:
       allowed-callers: ${QUALITY_INTERNAL_ALLOWED_CALLERS:quality-evals}
     stage:
       retention: 90d
+    export:
+      # 이보다 오래 작업 표시가 없으면 Pod가 죽은 것으로 보고 다른 작업자가 처음부터 다시 쓴다.
+      # 결과 파일 하나를 읽고 쓰는 시간보다 충분히 길어야 한다.
+      heartbeat-timeout: 5m
     dataset:
       # 받을 매니페스트 taxonomyVersion(R-2)
       supported-taxonomy-versions: [v2]

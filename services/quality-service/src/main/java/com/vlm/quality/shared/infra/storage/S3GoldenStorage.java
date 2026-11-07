@@ -29,4 +29,10 @@ class S3GoldenStorage implements GoldenStorage {
         p -> p.bucket(properties.goldenBucket()).key(goldenKey).contentType("application/json"),
         RequestBody.fromBytes(json));
   }
+
+  @Override
+  public byte[] read(String goldenKey) {
+    return s3.getObjectAsBytes(g -> g.bucket(properties.goldenBucket()).key(goldenKey))
+        .asByteArray();
+  }
 }
