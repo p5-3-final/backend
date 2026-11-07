@@ -94,7 +94,7 @@ class GateCalculatorTest {
   }
 
   @Test
-  @DisplayName("[SPEC-029 R-18] 기준에만 있는 지표가 있으면 passed=false다(계약 C-30 전까지 실패 목록에는 넣지 않는다)")
+  @DisplayName("[SPEC-029 R-18] 기준에만 있는 지표가 있으면 passed=false이고 실패 목록에 value null로 넣는다")
   void baselineOnlyMetricFailsGate() {
     GateResult result =
         GateCalculator.compare(
@@ -105,9 +105,9 @@ class GateCalculatorTest {
             TOLERANCE);
 
     assertThat(result.passed()).isFalse();
-    assertThat(result.failures()).isEmpty();
-    assertThat(result.missingInCandidate())
-        .containsExactly(new MetricKey("candidate_recall", "ppe_missing"));
+    assertThat(result.failures())
+        .containsExactly(
+            new GateFailure("candidate_recall", "ppe_missing", new BigDecimal("0.80"), null));
   }
 
   private static Metric metric(String name, String value, boolean higherIsBetter) {

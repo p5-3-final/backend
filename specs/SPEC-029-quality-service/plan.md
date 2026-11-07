@@ -10,10 +10,10 @@ updated: 2026-11-07
 # Plan: SPEC-029 quality-service 검토 큐·Golden Set·평가 실행·처리 단계 리포트 — backend
 
 - spec: docs 레포 `docs/specs/SPEC-029-quality-service/spec.md`
-- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 2.0.0, `quality/v1/golden-manifest.schema.json`, `events/{event.analyzed,stage.timing,video.deleted,_vlm-analysis,_envelope}.schema.json`, `stages/v1/{stage-timing,stages}.schema.json`, `taxonomy/v2/taxonomy.schema.json` (계약 묶음 4.1.0)
+- 계약: docs 레포 `service-contracts/openapi/quality-service.yaml` 3.0.0, `quality/v1/golden-manifest.schema.json`, `events/{event.analyzed,stage.timing,video.deleted,_vlm-analysis,_envelope}.schema.json`, `stages/v1/{stage-timing,stages}.schema.json`, `taxonomy/v2/taxonomy.schema.json` (계약 묶음 5.0.0)
 - ADR: ADR-0007, ADR-0008(배포 단위 quality-service), ADR-0010 ⑨·⑩, ADR-0011(Golden Set 확정 버전 보존)
 
-- v5.1(계약 묶음 4.0.0, 2026-11-07, ADR-0016): `openapi/quality-service.yaml` 2.0.0은 검토 항목 `reason`을 `x-extensible-enum`으로 바꾸고 `budget_exceeded`·`call_cap_reached`·`model_unavailable`·`alert_dismissed`를 더했으며, 목록 필터 `reason`과 알림 지표 리포트 `GET /api/v1/quality/alert-reports`를 더했다. 소비 토픽에 `alert.raised`(`events/alert.raised.schema.json`)가 더해지고 `event.analyzed`에 `unverifiedReason`이 생겼다. R-27(사유별 재판정 큐)·R-28(긴급 알림 기록·지표)을 아래 설계 절대로 더한다. 잠금은 T001에서 4.1.0(`quality-service.yaml` 2.0.0)으로 올렸다. 4.1.0은 4.0.0 위에 경계 박스 범위·stitched 쌍·예측 빈 구간을 고친 묶음이고 이 서비스가 쓰는 계약은 바뀌지 않았다.
+- v5.1(계약 묶음 4.0.0, 2026-11-07, ADR-0016): `openapi/quality-service.yaml` 2.0.0은 검토 항목 `reason`을 `x-extensible-enum`으로 바꾸고 `budget_exceeded`·`call_cap_reached`·`model_unavailable`·`alert_dismissed`를 더했으며, 목록 필터 `reason`과 알림 지표 리포트 `GET /api/v1/quality/alert-reports`를 더했다. 소비 토픽에 `alert.raised`(`events/alert.raised.schema.json`)가 더해지고 `event.analyzed`에 `unverifiedReason`이 생겼다. R-27(사유별 재판정 큐)·R-28(긴급 알림 기록·지표)을 아래 설계 절대로 더한다. 잠금은 T001에서 4.1.0(`quality-service.yaml` 2.0.0)으로 올렸다. 4.1.0은 4.0.0 위에 경계 박스 범위·stitched 쌍·예측 빈 구간을 고친 묶음이고 이 서비스가 쓰는 계약은 바뀌지 않았다. 이후 SPEC-030 PR에서 잠금을 5.0.0(`quality-service.yaml` 3.0.0, ADR-0018)으로 올렸다. 3.0.0은 `GateResult.failures[].value`·`ReviewItem.analysis`에 null을 허용하고 `ReviewItem.startMs`·`endMs`를 int64로 바꿨다(12절).
 
 ## 1. 요약
 
@@ -513,8 +513,8 @@ sequenceDiagram
 | 1차 알림 지연 | — | `stage_timings`의 `analyzer.alert` 측정 | 계약 설명은 "alert.candidate occurredAt부터 pending occurredAt까지"이지만 quality-service는 `alert.candidate`를 소비하지 않는다(계약 소비자 목록에 없음). event-analyzer가 같은 구간(alert.candidate 수신부터 첫 alert.raised 발행)을 `analyzer.alert`로 재므로 `subject.candidateId`로 잇는다. 이를 위해 `stage_timings`에 `candidate_id` 열을 두었다. Kafka 대기 시간은 빠진다 |
 | 같은 후보의 두 번째 판정 | — | 무시 | confirmed 뒤 dismissed처럼 판정이 두 번 오면 처음 판정만 남기고 검토 큐에도 넣지 않는다 |
 | 추이 `versionKey`만 있음 | 미정 | 400 `QUALITY_INVALID_REQUEST` | D-28. 키만 있을 때 돌려줄 집계가 spec·계약에 없다 |
-| Gate 지표 누락 | 기준에만 있는 지표 = 실패 | `passed: false`, 그 지표는 `failures[]`에서 빼고 경고 로그 | 계약 `GateResult.failures[].value`가 null을 허용하지 않아 후보 값이 없는 실패를 표현할 수 없다(C-30) |
-| alert_dismissed 검토 항목 | `analysis` null | `analysis` = `{}` | 계약 `ReviewItem.analysis`가 null을 허용하지 않는다. 판정 결과가 없어 Golden Set에는 넣지 못한다(409 `QUALITY_REVIEW_NOT_LABELED`) |
-| 영상 시각 범위 | `int64` | `Integer.MAX_VALUE` ms(약 24.8일) 이하만 적재 | 계약 `ReviewItem.startMs`·`endMs`가 상한 없는 `integer`라 생성 모델이 `Integer`다. 넘는 이벤트는 건너뛰고 경고 로그를 남긴다 |
+| Gate 지표 누락 | 기준에만 있는 지표 = 실패 | `passed: false`, 그 지표를 `failures[]`에 `value: null`로 담는다 | 계약 묶음 5.0.0(quality-service 3.0.0, ADR-0018)이 `GateResult.failures[].value`에 null을 허용했다(C-30 해소) |
+| alert_dismissed 검토 항목 | `analysis` null | `analysis` null(`V202611071250`이 열을 nullable로 바꾸고 이전 `{}`를 null로 옮김). Golden Set 추가는 판정 결과가 없는 항목을 409 `QUALITY_REVIEW_NOT_LABELED`로 거절 | 계약 3.0.0 `ReviewItem.analysis`가 null을 허용한다. 매니페스트 `entries.analysis`는 여전히 필수라 판정 결과가 없는 항목은 넣지 못한다 |
+| 영상 시각 범위 | `int64` | `int64` 그대로 적재·응답 | 계약 3.0.0 `ReviewItem.startMs`·`endMs`가 int64다. 24.8일을 넘는 이벤트를 건너뛰던 처리를 없앴다 |
 | `evaluateStageGate` | 범위 밖 | 501 | SPEC-030 범위다. 생성 인터페이스를 구현해야 해서 자리만 둔다 |
 | 이미지 빌드 | `CONTRACTS_DIR` 빌드 인자 | `ARG CONTRACTS_DIR`(기본 `/workspace/.service-contracts/service-contracts`), `.dockerignore`에서 `.service-contracts` 제외 해제 | 빌드 전에 `scripts/fetch-service-contracts.sh`로 받은 사본을 컨텍스트에 넣는다(C-35) |

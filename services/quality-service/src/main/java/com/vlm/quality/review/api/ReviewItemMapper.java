@@ -29,8 +29,8 @@ class ReviewItemMapper {
         item.sourceId(),
         item.jobId(),
         vlm.contracts.quality.model.ReviewItem.EventTypeEnum.fromValue(item.eventType()),
-        Math.toIntExact(item.startMs()),
-        Math.toIntExact(item.endMs()),
+        item.startMs(),
+        item.endMs(),
         item.judgmentMethod(),
         item.reason().wire(),
         item.reviewReasons(),
@@ -78,8 +78,11 @@ class ReviewItemMapper {
     return instant == null ? null : instant.atOffset(ZoneOffset.UTC);
   }
 
-  // 계약 ReviewItem.analysis는 자유 객체다. 키 순서를 지키려고 LinkedHashMap으로 읽는다.
-  private Map<String, Object> analysis(String analysisJson) {
+  // 계약 ReviewItem.analysis는 자유 객체이거나 null이다. 키 순서를 지키려고 LinkedHashMap으로 읽는다.
+  private @Nullable Map<String, Object> analysis(@Nullable String analysisJson) {
+    if (analysisJson == null) {
+      return null;
+    }
     try {
       return json.readValue(
           analysisJson,

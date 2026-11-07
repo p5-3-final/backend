@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * 검토 큐 항목.
  *
  * @param id 내부 행 ID(Golden Set 초안이 참조)
- * @param analysisJson 판정 결과 VLMAnalysis JSON 그대로. alert_dismissed 항목은 {@code {}}다
+ * @param analysisJson 판정 결과 VLMAnalysis JSON 그대로. 판정 결과가 없는 alert_dismissed 항목은 null이다
  */
 public record ReviewItem(
     long id,
@@ -26,7 +26,7 @@ public record ReviewItem(
     ReviewReason reason,
     List<String> reviewReasons,
     List<String> evidenceFrameKeys,
-    String analysisJson,
+    @Nullable String analysisJson,
     ReviewStatus status,
     @Nullable UUID assigneeId,
     @Nullable Instant assignedAt,

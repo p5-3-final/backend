@@ -43,7 +43,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-/** quality-service 요청·응답이 계약 {@code quality-service.yaml} 2.0.0과 일치하는지 검증한다(T034, T040). */
+/** quality-service 요청·응답이 계약 {@code quality-service.yaml} 3.0.0과 일치하는지 검증한다(T034, T040). */
 @IntegrationTest
 class QualityContractTest {
 
@@ -115,6 +115,17 @@ class QualityContractTest {
     perform(operator(HttpMethod.GET, me, ITEMS + "?reason=budget_exceeded"))
         .andExpect(status().isOk());
     perform(operator(HttpMethod.GET, me, ITEMS + "/{id}", itemId)).andExpect(status().isOk());
+    // 계약 3.0.0: 판정 결과가 없는 항목은 analysis null, 영상 시각은 int64
+    perform(operator(HttpMethod.GET, me, ITEMS + "/{id}", reviews.dismissedAlert(source)))
+        .andExpect(status().isOk());
+    long beyondInt32 = Integer.MAX_VALUE + 1_000L;
+    perform(
+            operator(
+                HttpMethod.GET,
+                me,
+                ITEMS + "/{id}",
+                reviews.reviewRequired(source, beyondInt32, beyondInt32 + 1_000)))
+        .andExpect(status().isOk());
   }
 
   @Test

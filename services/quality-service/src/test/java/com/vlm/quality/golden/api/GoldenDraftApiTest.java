@@ -57,7 +57,7 @@ class GoldenDraftApiTest {
 
   @Test
   @DisplayName(
-      "[SPEC-029 R-12] 라벨이 없거나 uncertain이면 409 QUALITY_REVIEW_NOT_LABELED, 이미 든 항목은 409 QUALITY_GOLDEN_ENTRY_DUPLICATED다")
+      "[SPEC-029 R-12] 라벨이 없거나 uncertain이거나 판정 결과가 없으면 409 QUALITY_REVIEW_NOT_LABELED, 이미 든 항목은 409 QUALITY_GOLDEN_ENTRY_DUPLICATED다")
   void rejectsUnlabeledUncertainAndDuplicate() throws Exception {
     UUID setId = golden.create("reject-set");
     UUID unlabeled = reviews.reviewRequired(UUID.randomUUID());
@@ -69,8 +69,10 @@ class GoldenDraftApiTest {
             new ReviewLabel("uncertain", false, null, null, null, null, null));
     UUID labeled = reviews.labeled(UUID.randomUUID());
     golden.addEntry(setId, labeled);
+    // 판정 결과(analysis)가 없는 항목은 매니페스트 entries.analysis를 채울 수 없다.
+    UUID withoutAnalysis = reviews.labeledDismissedAlert(UUID.randomUUID());
 
-    for (UUID itemId : List.of(unlabeled, uncertain)) {
+    for (UUID itemId : List.of(unlabeled, uncertain, withoutAnalysis)) {
       add(setId, itemId)
           .andExpect(status().isConflict())
           .andExpect(jsonPath("$.code").value("QUALITY_REVIEW_NOT_LABELED"));

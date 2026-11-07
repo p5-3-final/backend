@@ -5,7 +5,6 @@ import com.vlm.quality.review.domain.ReviewFilter;
 import com.vlm.quality.review.domain.ReviewItem;
 import com.vlm.quality.review.domain.ReviewItemPage;
 import com.vlm.quality.review.domain.ReviewItemRepository;
-import com.vlm.quality.review.domain.ReviewReason;
 import com.vlm.quality.review.domain.ReviewStatus;
 import com.vlm.quality.shared.domain.EvidenceUrls;
 import com.vlm.quality.shared.domain.QualityErrorCode;
@@ -57,11 +56,11 @@ public class ReviewQueryService {
   public GoldenCandidate goldenCandidate(UUID itemId) {
     ReviewItem item = find(itemId);
     ReviewLabel label = item.label();
-    // alert_dismissed 항목은 판정 결과(VLMAnalysis)가 없어 매니페스트 entries.analysis를 채울 수 없다.
+    // 판정 결과(VLMAnalysis)가 없는 항목(alert_dismissed)은 매니페스트 entries.analysis를 채울 수 없다.
     if (item.status() != ReviewStatus.LABELED
         || label == null
         || !label.hasDecidedVerdict()
-        || item.reason() == ReviewReason.ALERT_DISMISSED) {
+        || item.analysisJson() == null) {
       throw new BusinessException(QualityErrorCode.REVIEW_NOT_LABELED);
     }
     return new GoldenCandidate(item.id(), item.itemId(), item.sourceId(), item.eventId(), label);

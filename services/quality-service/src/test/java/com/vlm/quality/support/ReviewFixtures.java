@@ -1,6 +1,7 @@
 package com.vlm.quality.support;
 
 import com.vlm.quality.review.application.AnalyzedEvent;
+import com.vlm.quality.review.application.DismissedAlert;
 import com.vlm.quality.review.application.ReviewAssignmentService;
 import com.vlm.quality.review.application.ReviewIntakeService;
 import com.vlm.quality.review.application.ReviewLabelService;
@@ -48,6 +49,16 @@ public class ReviewFixtures {
 
   /** reviewRequired 항목을 넣고 itemId를 돌려준다. */
   public UUID reviewRequired(UUID sourceId, String eventType, List<String> frameKeys) {
+    return reviewRequired(sourceId, eventType, frameKeys, 1_000, 5_000);
+  }
+
+  /** 영상 시각을 정한 reviewRequired 항목. */
+  public UUID reviewRequired(UUID sourceId, long startMs, long endMs) {
+    return reviewRequired(sourceId, "fall", List.of(frameKey(sourceId, 0)), startMs, endMs);
+  }
+
+  private UUID reviewRequired(
+      UUID sourceId, String eventType, List<String> frameKeys, long startMs, long endMs) {
     UUID eventId = UUID.randomUUID();
     intake.intake(
         new AnalyzedEvent(
@@ -55,8 +66,8 @@ public class ReviewFixtures {
             sourceId,
             UUID.randomUUID(),
             eventType,
-            1_000,
-            5_000,
+            startMs,
+            endMs,
             "vector+vlm+escalate",
             "v2",
             true,
@@ -70,6 +81,31 @@ public class ReviewFixtures {
 
   public UUID reviewRequired(UUID sourceId) {
     return reviewRequired(sourceId, "fall", List.of(frameKey(sourceId, 0)));
+  }
+
+  /** 기각된 긴급 알림(사유 alert_dismissed) 항목을 넣고 itemId를 돌려준다(R-28). 판정 결과가 없다. */
+  public UUID dismissedAlert(UUID sourceId) {
+    UUID eventId = UUID.randomUUID();
+    intake.intakeDismissedAlert(
+        new DismissedAlert(
+            eventId,
+            sourceId,
+            UUID.randomUUID(),
+            "fall",
+            3_000,
+            "rejected",
+            "v2",
+            List.of(frameKey(sourceId, 0))));
+    return ReviewIntakeService.itemIdOf(eventId);
+  }
+
+  /** 기각된 긴급 알림 항목을 맡아 라벨까지 붙인다. */
+  public UUID labeledDismissedAlert(UUID sourceId) {
+    UUID itemId = dismissedAlert(sourceId);
+    UUID operator = UUID.randomUUID();
+    assignments.assign(itemId, operator);
+    labels.label(itemId, operator, CORRECT);
+    return itemId;
   }
 
   /** unverified 항목을 넣고 itemId를 돌려준다(R-27). */

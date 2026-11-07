@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class EvaluationRunService {
-
-  private static final Logger log = LoggerFactory.getLogger(EvaluationRunService.class);
 
   private final EvaluationRunRepository runs;
   private final GoldenSetService goldenSets;
@@ -65,14 +61,6 @@ public class EvaluationRunService {
     if (!runs.insertIfAbsent(run)) {
       // 같은 runId가 동시에 들어와 다른 요청이 먼저 저장했다. 처음 것을 돌려준다.
       return new SubmittedRun(get(command.runId()), false);
-    }
-    if (!result.missingInCandidate().isEmpty()) {
-      // 계약 GateResult.failures[].value가 null을 허용하지 않아 기준에만 있는 지표는 failures에 넣지 못한다(계약 C-30 대기).
-      log.warn(
-          "Gate failed by metrics missing in candidate runId={} baselineRunId={} missing={}",
-          run.runId(),
-          result.baselineRunId(),
-          result.missingInCandidate());
     }
     return new SubmittedRun(run, true);
   }

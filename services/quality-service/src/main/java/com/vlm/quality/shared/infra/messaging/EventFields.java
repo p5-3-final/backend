@@ -10,9 +10,6 @@ import org.jspecify.annotations.Nullable;
 /** 계약으로 이미 검증한 메시지에서 값을 꺼낸다. 스키마가 형식을 보장하므로 여기서는 꺼내기만 한다. */
 public final class EventFields {
 
-  // 계약 응답(ReviewItem.startMs 등)이 integer라 생성 모델이 Integer다. 그보다 큰 영상 시각(약 24.8일)은 받지 않는다.
-  private static final long MAX_RESPONSE_MS = Integer.MAX_VALUE;
-
   private EventFields() {}
 
   public static String text(JsonNode event, String field) {
@@ -32,13 +29,9 @@ public final class EventFields {
     return Instant.parse(text(event, field));
   }
 
-  /** 응답에 담을 수 있는 영상 시각(밀리초). */
+  /** 영상 시각(밀리초). 계약이 int64라 long으로 꺼낸다. */
   public static long videoMs(JsonNode event, String field) {
-    long value = event.get(field).asLong();
-    if (value > MAX_RESPONSE_MS) {
-      throw new InvalidEventException(field + " exceeds the supported range");
-    }
-    return value;
+    return event.get(field).asLong();
   }
 
   public static List<String> texts(JsonNode event, String field) {

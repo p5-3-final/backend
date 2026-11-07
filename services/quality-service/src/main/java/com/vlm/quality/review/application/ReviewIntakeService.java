@@ -27,7 +27,6 @@ public class ReviewIntakeService {
 
   // 판정이 alert.raised에서 왔음을 나타내는 판정 방식. 계약 ReviewItem.judgmentMethod는 열린 문자열이다.
   static final String ALERT_JUDGMENT_METHOD = "alert";
-  private static final String EMPTY_ANALYSIS = "{}";
   private static final Set<String> DECIDED = Set.of("confirmed", "rejected");
   private static final String UNVERIFIED = "unverified";
 
@@ -100,8 +99,8 @@ public class ReviewIntakeService {
             ReviewReason.ALERT_DISMISSED,
             List.of(alert.dismissReason()),
             alert.evidenceFrameKeys(),
-            // 판정 결과가 없다. 계약 ReviewItem.analysis는 null을 허용하지 않아 빈 객체를 둔다.
-            EMPTY_ANALYSIS,
+            // 판정 결과가 없다(계약 ReviewItem.analysis null).
+            null,
             clock.instant()));
   }
 
