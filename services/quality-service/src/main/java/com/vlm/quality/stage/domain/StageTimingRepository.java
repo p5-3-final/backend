@@ -25,4 +25,15 @@ public interface StageTimingRepository {
 
   /** 상한이 cutoff 이하인 월 파티션을 지운다(R-25). 지운 파티션 이름. */
   List<String> dropPartitionsEndingBefore(Instant cutoff);
+
+  /**
+   * since 이후 기준·후보 영상 기록을 단계별로 묶어 개수와 p95를 구한다(SPEC-030 R-16). 음수 durationMs는 뺀다.
+   *
+   * @param stageIds 비어 있으면 양쪽에 기록이 있는 단계만, 아니면 그 단계 중 기록이 있는 단계
+   */
+  List<StageSample> p95BySources(
+      List<UUID> baselineSourceIds,
+      List<UUID> candidateSourceIds,
+      List<String> stageIds,
+      Instant since);
 }

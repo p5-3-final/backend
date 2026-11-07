@@ -53,9 +53,9 @@ updated: 2026-11-06
 
 ## Phase 4: US-4 처리 단계 성능 Gate (P2)
 
-- [ ] T023 [R-16] 기준·후보 영상 목록의 90일 안 원본으로 단계별 p95를 계산해 후보/기준 − 1 > `maxRegressionRatio`면 `failed`(3,400 → 4,300ms, 0.2), `stageIds` 지정 시 그 단계만, 허용 목록 밖 `X-Caller` 403 — 테스트 `Q/test/.../stage/domain/StageGateCalculatorTest.java`, `Q/test/.../stage/api/StageGateApiTest.java`, 구현 `stage/api/InternalStageGateController`, `stage/application/StageGateService`, `stage/domain/StageGateCalculator`, `JdbcStageTimingRepository#p95BySources`
-- [ ] T024 [R-17] 한쪽 기록 수가 `minSamples`보다 적은 단계(그리고 기준 p95가 0인 단계)는 `skipped`이고 결과에 영향 없음 — 테스트 `StageGateCalculatorTest`, 구현 `StageGateCalculator`
-- [ ] T025 [R-18] `failed`가 없으면 `passed: true`, 계산 뒤 DB 행 수가 그대로(저장 안 함) — 테스트 `StageGateApiTest`, 구현 `StageGateService`
+- [x] T023 [R-16] 기준·후보 영상 목록의 90일 안 원본으로 단계별 p95를 계산해 후보/기준 − 1 > `maxRegressionRatio`면 `failed`(3,400 → 4,300ms, 0.2), `stageIds` 지정 시 그 단계만, 허용 목록 밖 `X-Caller` 403 — 테스트 `Q/test/.../stage/domain/StageGateCalculatorTest.java`, `Q/test/.../stage/api/StageGateApiTest.java`, 구현 `evaluation/api/InternalEvaluationRunController#evaluateStageGate`(생성된 `InternalApi` 하나에 두 작업이 있어 컨트롤러를 나눌 수 없다. 계산은 stage 기능에 맡긴다), `stage/application/{StageGateService,StageGateCommand,StageGateReport}`, `stage/domain/{StageSample,StageVerdict,StageGate}`, `stage/domain/StageGateCalculator`, `JdbcStageTimingRepository#p95BySources`
+- [x] T024 [R-17] 한쪽 기록 수가 `minSamples`보다 적은 단계(그리고 기준 p95가 0인 단계)는 `skipped`이고 결과에 영향 없음 — 테스트 `StageGateCalculatorTest`, 구현 `StageGateCalculator`
+- [x] T025 [R-18] `failed`가 없으면 `passed: true`, 계산 뒤 DB 행 수가 그대로(저장 안 함) — 테스트 `StageGateApiTest`, 구현 `StageGateService`
 
 ## Phase 5: 마무리
 
