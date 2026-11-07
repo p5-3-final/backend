@@ -63,8 +63,8 @@ updated: 2026-11-06
 - [x] T027 [P] [NFR-1] 영상 1,000개·라벨 100,000개 매니페스트 검증 10초 이하 — 테스트 `Q/test/.../dataset/application/ImportManifestPerformanceTest.java`
 - [x] T028 [P] [NFR-2] 영상 1,000개 가져오기 중(WireMock media 지연 50ms) 검토 목록 p95 300ms — 테스트 `Q/test/.../dataset/ImportIsolationLatencyTest.java`, 구현 `config/{BackgroundJobConfig,BackgroundJobs}`(T011에서 넣은 전용 단일 스레드 실행기. 측정 중 가져오기가 `REGISTERING`인 것을 확인한다)
 - [x] T029 [P] [NFR-3] 영상 200개 기준·후보 성능 Gate p95 2초 — 테스트 `Q/test/.../stage/StageGateLatencyTest.java`
-- [ ] T030 설정·예시·문서: 두 서비스 `application.yml`, `.env.example`, README(내부 API·가져오기·내보내기). docs `local/`(가져오기 버킷, 환경변수)은 별도 docs PR
-- [ ] T031 로그 확인: 가져오기·내보내기 시작·끝·실패가 importId·exportId와 함께 남고 서명 주소·파일 내용은 남지 않음 — 테스트 `Q/test/.../SensitiveLogTest.java`에 추가
+- [x] T030 설정·예시·문서: 두 서비스 `application.yml`, README(내부 API·가져오기·내보내기, 새 환경변수 표). `.env.example`은 에이전트 권한 설정이 읽기를 막아 이 PR에서 고치지 못했다. 새 환경변수(`QUALITY_IMPORT_BUCKET`, `QUALITY_EXPORT_BUCKET`, `MEDIA_SERVICE_INTERNAL_URI`, `MEDIA_IMPORT_S3_BUCKET`, `MEDIA_INTERNAL_ALLOWED_CALLERS`)는 README 표에 있다. docs `local/`(가져오기 버킷, 환경변수)은 별도 docs PR
+- [x] T031 로그 확인: 가져오기·내보내기 시작·끝·실패가 importId·exportId와 함께 남고 서명 주소·파일 내용은 남지 않음 — 테스트 `Q/test/.../SensitiveLogTest.java`에 추가
 
 ## 완료 조건 (Definition of Done)
 
