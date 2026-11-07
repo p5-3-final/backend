@@ -59,7 +59,7 @@ updated: 2026-11-06
 
 ## Phase 5: 마무리
 
-- [ ] T026 [P] 6개 작업(가져오기 3, 내보내기 2, 성능 Gate 1)의 정상·오류 응답이 `quality-service.yaml` 3.0.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
+- [x] T026 [P] 6개 작업(가져오기 3, 내보내기 2, 성능 Gate 1)의 정상·오류 응답이 `quality-service.yaml` 3.0.0과 일치 — 테스트 `Q/test/.../contract/QualityContractTest.java`
 - [ ] T027 [P] [NFR-1] 영상 1,000개·라벨 100,000개 매니페스트 검증 10초 이하 — 테스트 `Q/test/.../dataset/application/ImportManifestPerformanceTest.java`
 - [ ] T028 [P] [NFR-2] 영상 1,000개 가져오기 중(WireMock media 지연 50ms) 검토 목록 p95 300ms — 테스트 `Q/test/.../dataset/ImportIsolationLatencyTest.java`, 구현 `config/ImportExecutorConfig`(T011에서 전용 실행기를 넣어 통과. 요청 스레드 풀에서 돌리면 실패하는 것을 확인)
 - [ ] T029 [P] [NFR-3] 영상 200개 기준·후보 성능 Gate p95 2초 — 테스트 `Q/test/.../stage/StageGateLatencyTest.java`
