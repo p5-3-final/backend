@@ -19,10 +19,13 @@ import org.springframework.stereotype.Repository;
 class JdbcGoldenSetRepository implements GoldenSetRepository {
 
   // 초안 수는 목록마다 하위 질의로 센다. 목록 한 쪽(최대 100개)마다 색인으로 세므로 N+1 질의가 없다.
+  // 데이터셋 세트(import)의 초안은 데이터셋 항목이다(SPEC-030).
   private static final String SELECT =
       "SELECT g.id, g.set_id, g.name, g.split, g.origin, g.description, g.latest_version,"
-          + " g.baseline_run_id, g.created_at,"
-          + " (SELECT count(*) FROM golden_draft_entries d WHERE d.golden_set_id = g.id) AS drafts"
+          + " g.baseline_run_id, g.created_at, g.dataset_origin::text AS dataset_origin,"
+          + " CASE WHEN g.origin = 'import' THEN (SELECT count(*) FROM golden_dataset_items i"
+          + " WHERE i.golden_set_id = g.id) ELSE (SELECT count(*) FROM golden_draft_entries d"
+          + " WHERE d.golden_set_id = g.id) END AS drafts"
           + " FROM golden_sets g";
 
   private final NamedParameterJdbcTemplate jdbc;
@@ -50,6 +53,39 @@ class JdbcGoldenSetRepository implements GoldenSetRepository {
             SELECT + " WHERE g.set_id = :setId", new MapSqlParameterSource("setId", setId), MAPPER)
         .stream()
         .findFirst();
+  }
+
+  @Override
+  public boolean insertDatasetSetIfNameFree(UUID setId, String name, String split, Instant now) {
+    return jdbc.update(
+            "INSERT INTO golden_sets (set_id, name, split, origin, created_at, updated_at)"
+                + " VALUES (:setId, :name, :split, 'import', :now, :now)"
+                + " ON CONFLICT (name) DO NOTHING",
+            new MapSqlParameterSource()
+                .addValue("setId", setId)
+                .addValue("name", name)
+                .addValue("split", split)
+                .addValue("now", Timestamp.from(now)))
+        == 1;
+  }
+
+  @Override
+  public Optional<GoldenSet> findByName(String name) {
+    return jdbc
+        .query(SELECT + " WHERE g.name = :name", new MapSqlParameterSource("name", name), MAPPER)
+        .stream()
+        .findFirst();
+  }
+
+  @Override
+  public void setDatasetOrigin(long goldenSetRowId, String originJson, Instant now) {
+    jdbc.update(
+        "UPDATE golden_sets SET dataset_origin = CAST(:origin AS JSONB), updated_at = :now"
+            + " WHERE id = :id",
+        new MapSqlParameterSource()
+            .addValue("id", goldenSetRowId)
+            .addValue("origin", originJson)
+            .addValue("now", Timestamp.from(now)));
   }
 
   @Override
@@ -119,5 +155,6 @@ class JdbcGoldenSetRepository implements GoldenSetRepository {
               rs.getObject("latest_version", Integer.class),
               rs.getObject("baseline_run_id", UUID.class),
               rs.getInt("drafts"),
-              rs.getTimestamp("created_at").toInstant());
+              rs.getTimestamp("created_at").toInstant(),
+              rs.getString("dataset_origin"));
 }

@@ -22,7 +22,10 @@ public enum QualityErrorCode implements ErrorCode {
   GOLDEN_FREEZE_IN_PROGRESS(409, "QUALITY_GOLDEN_FREEZE_IN_PROGRESS", "다른 확정이 진행 중입니다."),
   RUN_NOT_FOUND(404, "QUALITY_RUN_NOT_FOUND", "평가 실행이 없습니다."),
   RUN_SET_MISMATCH(409, "QUALITY_RUN_SET_MISMATCH", "다른 Golden Set으로 잰 실행입니다."),
-  SOURCE_NOT_FOUND(404, "QUALITY_SOURCE_NOT_FOUND", "그 영상의 측정 기록이 없습니다.");
+  SOURCE_NOT_FOUND(404, "QUALITY_SOURCE_NOT_FOUND", "그 영상의 측정 기록이 없습니다."),
+  IMPORT_NOT_FOUND(404, "QUALITY_IMPORT_NOT_FOUND", "가져오기가 없습니다."),
+  IMPORT_IN_PROGRESS(409, "QUALITY_IMPORT_IN_PROGRESS", "같은 매니페스트의 가져오기가 진행 중입니다."),
+  EXPORT_NOT_FOUND(404, "QUALITY_EXPORT_NOT_FOUND", "내보내기가 없습니다.");
 
   private final int status;
   private final String code;

@@ -97,6 +97,22 @@ class EventAnalyzedIntakeTest {
     assertThat(awaitItem(eventId).get("reason")).isEqualTo(reason);
   }
 
+  @Test
+  @DisplayName("[SPEC-029 R-1] 영상 시각이 24.8일(int32 ms)을 넘어도 건너뛰지 않고 항목을 만든다")
+  void keepsVideoTimeBeyondInt32() {
+    UUID eventId = UUID.randomUUID();
+    ObjectNode event = Events.reviewRequired(eventId, UUID.randomUUID());
+    long start = Integer.MAX_VALUE + 1_000L;
+    event.put("startMs", start);
+    event.put("endMs", start + 4_000);
+
+    send(event);
+
+    Map<String, Object> row = awaitItem(eventId);
+    assertThat(row.get("start_ms")).isEqualTo(start);
+    assertThat(row.get("end_ms")).isEqualTo(start + 4_000);
+  }
+
   private void send(ObjectNode event) {
     kafka.send("event.analyzed", event.get("sourceId").asText(), event.toString()).join();
   }

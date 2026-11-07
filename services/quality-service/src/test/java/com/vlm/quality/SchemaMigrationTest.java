@@ -35,6 +35,38 @@ class SchemaMigrationTest {
   }
 
   @Test
+  @DisplayName("[SPEC-030] 가져오기·데이터셋 항목·결과 경로·내보내기 테이블과 데이터셋 출처 열을 만든다")
+  void createsDatasetTables() {
+    List<String> tables =
+        jdbc.queryForList(
+            "SELECT tablename FROM pg_tables WHERE schemaname = 'public'", String.class);
+    List<String> goldenColumns =
+        jdbc.queryForList(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = 'golden_sets'",
+            String.class);
+
+    assertThat(tables)
+        .contains(
+            "dataset_imports",
+            "dataset_import_videos",
+            "golden_dataset_items",
+            "source_results",
+            "feature_exports");
+    assertThat(goldenColumns).contains("dataset_origin");
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 R-15] 내보내기는 Golden Set과 기간 중 하나만 가진다")
+  void exportHasOneScope() {
+    Integer constraints =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM pg_constraint WHERE conname = 'ck_feature_exports_scope'",
+            Integer.class);
+
+    assertThat(constraints).isEqualTo(1);
+  }
+
+  @Test
   @DisplayName("[SPEC-029 R-25] 측정 원본은 월 단위 파티션이고 이번 달부터 4개월 치가 있다")
   void createsMonthlyPartitions() {
     List<String> partitions =

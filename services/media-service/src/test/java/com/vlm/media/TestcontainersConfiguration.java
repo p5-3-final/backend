@@ -27,6 +27,8 @@ import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException
 public class TestcontainersConfiguration {
 
   public static final String BUCKET = "vlm-media-test";
+  // 외부 데이터셋 가져오기 버킷(SPEC-030 R-5)
+  public static final String IMPORT_BUCKET = "vlm-imports-test";
   static final String ACCESS_KEY = "testkey";
   static final String SECRET_KEY = "testsecret";
 
@@ -59,7 +61,14 @@ public class TestcontainersConfiguration {
         // POST 정책 서명을 검증하려면 접근 키(identity) 설정이 있어야 한다(ADR-0006).
         .withCopyFileToContainer(
             MountableFile.forClasspathResource("seaweedfs/s3.json"), "/cfg/s3.json")
-        .withCommand("server", "-s3", "-s3.config=/cfg/s3.json", "-dir=/data")
+        // 버킷마다 볼륨 묶음을 새로 만든다. 기본 볼륨 수 상한(8)으로는 두 번째 버킷(가져오기 버킷)에 쓸 볼륨이 모자라 500이 난다.
+        .withCommand(
+            "server",
+            "-s3",
+            "-s3.config=/cfg/s3.json",
+            "-dir=/data",
+            "-volume.max=64",
+            "-master.volumeSizeLimitMB=64")
         .withExposedPorts(8333)
         .waitingFor(Wait.forHttp("/").forPort(8333).forStatusCodeMatching(code -> code < 500))
         .withStartupTimeout(Duration.ofMinutes(2));
@@ -75,6 +84,7 @@ public class TestcontainersConfiguration {
     createBucket(endpoint);
     return registry -> {
       registry.add("vlm.media.storage.bucket", () -> BUCKET);
+      registry.add("vlm.media.storage.import-bucket", () -> IMPORT_BUCKET);
       registry.add("vlm.media.storage.region", () -> "us-east-1");
       registry.add("vlm.media.storage.endpoint", () -> endpoint);
       registry.add("vlm.media.storage.public-endpoint", () -> endpoint);
@@ -96,9 +106,9 @@ public class TestcontainersConfiguration {
       RuntimeException last = null;
       for (int attempt = 0; attempt < 30; attempt++) {
         try {
-          s3.createBucket(b -> b.bucket(BUCKET));
-          return;
-        } catch (BucketAlreadyOwnedByYouException e) {
+          for (String bucket : new String[] {BUCKET, IMPORT_BUCKET}) {
+            createIfAbsent(s3, bucket);
+          }
           return;
         } catch (RuntimeException e) {
           last = e;
@@ -106,6 +116,14 @@ public class TestcontainersConfiguration {
         }
       }
       throw new IllegalStateException("SeaweedFS 버킷을 만들지 못했다", last);
+    }
+  }
+
+  private static void createIfAbsent(S3Client s3, String bucket) {
+    try {
+      s3.createBucket(b -> b.bucket(bucket));
+    } catch (BucketAlreadyOwnedByYouException e) {
+      // 같은 JVM에서 컨텍스트를 다시 만들면 이미 있다.
     }
   }
 

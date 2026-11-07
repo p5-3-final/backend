@@ -83,4 +83,19 @@ public final class Events {
         + index
         + ".jpg";
   }
+
+  /** source.completed. 결과 경로는 {@link #resultKey}다. */
+  public static ObjectNode sourceCompleted(UUID sourceId, UUID jobId, int revision) {
+    ObjectNode event = ContractExamples.example("events/source.completed.schema.json", 0);
+    event.put("eventId", UUID.randomUUID().toString());
+    event.put("sourceId", sourceId.toString());
+    event.put("jobId", jobId.toString());
+    event.put("revision", revision);
+    event.put("resultKey", resultKey(sourceId, jobId));
+    return event;
+  }
+
+  public static String resultKey(UUID sourceId, UUID jobId) {
+    return "sources/" + sourceId + "/jobs/" + jobId + "/aggregate/source-result.json";
+  }
 }

@@ -50,7 +50,7 @@ updated: 2026-11-07
 
 - [x] T023 [R-17] 평가 실행 제출: 버전이 있으면 201, 같은 runId는 처음 실행을 200, 없는 Golden Set 버전 404 `QUALITY_GOLDEN_SET_NOT_FOUND`, 허용 목록 밖 `X-Caller` 403 `QUALITY_CALLER_NOT_ALLOWED` — 테스트 `Q/test/.../evaluation/api/SubmitEvaluationRunApiTest.java`, 구현 `evaluation/api/InternalEvaluationRunController`, `evaluation/application/EvaluationRunService#submit`, `evaluation/domain/{EvaluationRun,EvaluationRunRepository}`, `config/InternalCallerFilter`
 - [x] T024 [R-18] Gate: 기준 0.78·허용 0.02에서 0.74면 `passed: false`·실패에 `judge_precision`, 낮을수록 좋은 지표는 반대 방향, 허용폭 안이면 `passed: true`, 기준 없으면 `passed: null` — 테스트 `Q/test/.../evaluation/domain/GateCalculatorTest.java`, `SubmitEvaluationRunApiTest`, 구현 `evaluation/domain/{GateCalculator,GateResult}`, `config/GateProperties`
-- [x] T025 [R-18] 기준에만 있는 지표를 실패로 기록 — 계약 `GateResult.failures[].value`가 null을 허용하지 않아(plan 10절 2, 계약 C-30 대기) 기본안으로 구현: 기준에만 있는 지표가 있으면 `passed: false`로 하되 `failures`에는 넣지 않고 지표 키를 경고 로그로 남긴다. 계약이 `number | null`로 바뀌면 `failures`에 `value: null`로 넣는다 — 테스트 `GateCalculatorTest`, 구현 `evaluation/domain/{GateCalculator,MetricKey}`, `EvaluationRunService#submit`
+- [x] T025 [R-18] 기준에만 있는 지표를 실패로 기록 — 계약 묶음 5.0.0(quality-service 3.0.0, ADR-0018)에서 `GateResult.failures[].value`가 null을 허용하므로 `passed: false`이고 그 지표를 `failures`에 `value: null`로 넣는다 — 테스트 `GateCalculatorTest`, `SubmitEvaluationRunApiTest`, 구현 `evaluation/domain/{GateCalculator,GateFailure,GateResult}`
 - [x] T026 [R-19] 기준 실행 지정: 같은 Golden Set의 실행이면 200·`baselineRunId` 갱신, 다른 Golden Set이면 409 `QUALITY_RUN_SET_MISMATCH`, 없는 실행 404 `QUALITY_RUN_NOT_FOUND` — 테스트 `Q/test/.../evaluation/api/BaselineApiTest.java`, 구현 `evaluation/application/BaselineService`, `golden/application/GoldenSetService#setBaseline`
 - [x] T027 [P] [R-20] 실행 목록(Golden Set으로 거르기, 받은 시각 내림차순)·상세, 없으면 404 `QUALITY_RUN_NOT_FOUND` — 테스트 `Q/test/.../evaluation/api/EvaluationRunQueryApiTest.java`, 구현 `evaluation/api/EvaluationRunController`, `EvaluationRunService#list·get`
 
@@ -83,7 +83,7 @@ updated: 2026-11-07
 
 ## 완료 조건 (Definition of Done)
 
-- [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과(T025는 계약 수정 뒤)
+- [ ] 이 레포가 담당하는 모든 R-*, NFR-*의 테스트 통과
 - [x] lint, 타입 검사, 전체 테스트 통과(`./gradlew spotlessCheck build`)
 - [x] plan.md와 실제 구현이 일치함
 - [ ] docs 레포 spec 상태 갱신 (`Implementing` / `Done`)

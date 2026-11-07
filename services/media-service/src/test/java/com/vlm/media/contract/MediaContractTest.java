@@ -19,6 +19,7 @@ import static com.vlm.media.support.MediaApi.sessionRequest;
 import static com.vlm.media.support.MediaApi.sessionsRequest;
 import static com.vlm.media.support.MediaApi.updateRetentionSettingsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.atlassian.oai.validator.OpenApiInteractionValidator;
@@ -28,9 +29,11 @@ import com.atlassian.oai.validator.report.ValidationReport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vlm.media.normalization.application.NormalizationEventService;
 import com.vlm.media.shared.domain.RejectReason;
+import com.vlm.media.support.DatasetVideos;
 import com.vlm.media.support.IntegrationTest;
 import com.vlm.media.support.MediaApi;
 import com.vlm.media.support.Normalizations;
+import com.vlm.media.support.StoragePuts;
 import com.vlm.media.support.StorageUploads;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,11 +45,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /** media-service 요청·응답이 docs 레포 계약 {@code media-service.yaml}과 일치하는지 검증한다(T025). */
 // 테스트 설정: 단일 업로드 기준 1MiB, 조각 5MiB (IntegrationTest)
@@ -58,6 +63,7 @@ class MediaContractTest {
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
   @Autowired NormalizationEventService normalization;
+  @Autowired S3Client s3;
 
   private final UUID ownerId = UUID.randomUUID();
   private ResultMatcher matchesContract;
@@ -381,6 +387,31 @@ class MediaContractTest {
     perform(asUser(revokeRequest(videoId), ownerId)).andExpect(status().isNoContent());
     perform(asUser(revokeRequest(videoId), ownerId)).andExpect(status().isNotFound());
     perform(asUser(revokeAllRequest(), ownerId)).andExpect(status().isNoContent());
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 R-5] [SPEC-030 R-6] 데이터셋 영상 등록 201·200·400·403·404 응답이 계약과 일치한다")
+  void registerDatasetVideo() throws Exception {
+    UUID importId = UUID.randomUUID();
+    String mp4 = "imports/ds-contract/videos/clip-0001.mp4";
+    String webm = "imports/ds-contract/videos/clip-0002.webm";
+    StoragePuts.putImport(s3, mp4, new byte[1000]);
+    StoragePuts.putImport(s3, webm, new byte[1000]);
+
+    perform(DatasetVideos.register(importId, "clip-0001", ownerId, mp4))
+        .andExpect(status().isCreated());
+    perform(DatasetVideos.register(importId, "clip-0001", ownerId, mp4)).andExpect(status().isOk());
+    perform(DatasetVideos.register(importId, "clip-0002", ownerId, webm, "video/webm"))
+        .andExpect(status().isBadRequest());
+    perform(
+            DatasetVideos.register(
+                importId, "clip-0003", ownerId, "imports/ds-contract/videos/none.mp4"))
+        .andExpect(status().isNotFound());
+    performInvalidRequest(
+            post(DatasetVideos.PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(DatasetVideos.body(importId, "clip-0001", ownerId, mp4)))
+        .andExpect(status().isForbidden());
   }
 
   private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {

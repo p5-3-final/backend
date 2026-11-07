@@ -13,4 +13,11 @@ public final class StoragePuts {
     s3.putObject(
         r -> r.bucket(TestcontainersConfiguration.BUCKET).key(key), RequestBody.fromBytes(content));
   }
+
+  /** 가져오기 버킷에 넣는다(SPEC-030). */
+  public static void putImport(S3Client s3, String key, byte[] content) {
+    s3.putObject(
+        r -> r.bucket(TestcontainersConfiguration.IMPORT_BUCKET).key(key),
+        RequestBody.fromBytes(content));
+  }
 }

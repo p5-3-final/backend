@@ -2,6 +2,7 @@ package com.vlm.quality.review.api;
 
 import static com.vlm.quality.support.QualityApi.operator;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -116,6 +117,29 @@ class ReviewQueueApiTest {
 
     assertThat(image.statusCode()).isEqualTo(200);
     assertThat(image.body()).containsExactly(1, 2, 3);
+  }
+
+  @Test
+  @DisplayName("[SPEC-029 R-28] 판정 결과가 없는 alert_dismissed 항목의 상세는 analysis가 null이다")
+  void returnsNullAnalysisForDismissedAlert() throws Exception {
+    UUID itemId = fixtures.dismissedAlert(UUID.randomUUID());
+
+    mvc.perform(operator(HttpMethod.GET, OPERATOR, "/api/v1/quality/review-items/{id}", itemId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.reason").value("alert_dismissed"))
+        .andExpect(jsonPath("$.analysis").value(nullValue()));
+  }
+
+  @Test
+  @DisplayName("[SPEC-029 R-5] 24.8일(int32 ms)을 넘는 영상 시각도 그대로 담는다")
+  void returnsVideoTimeBeyondInt32() throws Exception {
+    long start = Integer.MAX_VALUE + 1_000L;
+    UUID itemId = fixtures.reviewRequired(UUID.randomUUID(), start, start + 4_000);
+
+    mvc.perform(operator(HttpMethod.GET, OPERATOR, "/api/v1/quality/review-items/{id}", itemId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.startMs").value(start))
+        .andExpect(jsonPath("$.endMs").value(start + 4_000));
   }
 
   @Test

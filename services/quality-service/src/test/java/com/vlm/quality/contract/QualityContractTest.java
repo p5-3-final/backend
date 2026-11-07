@@ -11,10 +11,14 @@ import com.atlassian.oai.validator.report.ValidationReport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.vlm.quality.TestcontainersConfiguration;
+import com.vlm.quality.dataset.application.DatasetImportService;
 import com.vlm.quality.review.domain.ReviewReason;
 import com.vlm.quality.stage.application.DailyStageAggregationJob;
 import com.vlm.quality.stage.application.StageTimingIngestService;
+import com.vlm.quality.support.DatasetFixtures;
 import com.vlm.quality.support.EvaluationFixtures;
+import com.vlm.quality.support.ExportFixtures;
 import com.vlm.quality.support.GoldenFixtures;
 import com.vlm.quality.support.IntegrationTest;
 import com.vlm.quality.support.ReviewFixtures;
@@ -43,12 +47,17 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-/** quality-service 요청·응답이 계약 {@code quality-service.yaml} 2.0.0과 일치하는지 검증한다(T034, T040). */
+/**
+ * quality-service 요청·응답이 계약 {@code quality-service.yaml} 3.0.0과 일치하는지 검증한다(SPEC-029 T034·T040,
+ * SPEC-030 T026).
+ */
 @IntegrationTest
 class QualityContractTest {
 
   private static final String ITEMS = "/api/v1/quality/review-items";
   private static final String SETS = "/api/v1/quality/golden-sets";
+  private static final String IMPORTS = "/api/v1/quality/dataset-imports";
+  private static final String EXPORTS = "/api/v1/quality/feature-exports";
   private static final String LABEL =
       "{\"verdict\":\"correct\",\"eventPresent\":true,\"eventType\":\"fall\",\"startMs\":1000,"
           + "\"endMs\":4000,\"severity\":\"high\",\"note\":null}";
@@ -60,6 +69,8 @@ class QualityContractTest {
   @Autowired EvaluationFixtures evaluations;
   @Autowired StageTimingIngestService ingest;
   @Autowired DailyStageAggregationJob aggregation;
+  @Autowired DatasetFixtures datasets;
+  @Autowired ExportFixtures exportFixtures;
 
   private final UUID me = UUID.randomUUID();
   private Path contract;
@@ -115,6 +126,17 @@ class QualityContractTest {
     perform(operator(HttpMethod.GET, me, ITEMS + "?reason=budget_exceeded"))
         .andExpect(status().isOk());
     perform(operator(HttpMethod.GET, me, ITEMS + "/{id}", itemId)).andExpect(status().isOk());
+    // 계약 3.0.0: 판정 결과가 없는 항목은 analysis null, 영상 시각은 int64
+    perform(operator(HttpMethod.GET, me, ITEMS + "/{id}", reviews.dismissedAlert(source)))
+        .andExpect(status().isOk());
+    long beyondInt32 = Integer.MAX_VALUE + 1_000L;
+    perform(
+            operator(
+                HttpMethod.GET,
+                me,
+                ITEMS + "/{id}",
+                reviews.reviewRequired(source, beyondInt32, beyondInt32 + 1_000)))
+        .andExpect(status().isOk());
   }
 
   @Test
@@ -276,6 +298,88 @@ class QualityContractTest {
             operator(
                 HttpMethod.GET, me, "/api/v1/quality/alert-reports?from=2026-01-01&to=2026-06-01"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 R-1·R-9] 가져오기 접수·목록·조회와 오류 응답(409·404·400)이 계약과 일치한다")
+  void datasetImports() throws Exception {
+    TestcontainersConfiguration.media().resetAll();
+    DatasetFixtures.upload("contract", DatasetFixtures.manifest("contract", "clip-0001"));
+    DatasetFixtures.mediaAnswers("clip-0001", 201);
+    String body = "{\"manifestKey\":\"" + DatasetFixtures.manifestKey("contract") + "\"}";
+    perform(json(HttpMethod.POST, IMPORTS, body)).andExpect(status().isAccepted());
+    perform(json(HttpMethod.POST, IMPORTS, body)).andExpect(status().isConflict());
+    datasets.runWorker();
+
+    UUID importId = DatasetImportService.importIdOf(DatasetFixtures.manifestKey("contract"));
+    perform(operator(HttpMethod.GET, me, IMPORTS + "/{id}", importId)).andExpect(status().isOk());
+    perform(operator(HttpMethod.GET, me, IMPORTS + "?page=0&size=20")).andExpect(status().isOk());
+    perform(operator(HttpMethod.GET, me, IMPORTS + "/{id}", UUID.randomUUID()))
+        .andExpect(status().isNotFound());
+    performInvalidRequest(json(HttpMethod.POST, IMPORTS, "{\"manifestKey\":\"bad\"}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 R-14·R-15] 내보내기 접수·조회와 오류 응답(400·404)이 계약과 일치한다")
+  void featureExports() throws Exception {
+    UUID source = UUID.randomUUID();
+    exportFixtures.completed(source, 1);
+    LocalDate today = LocalDate.now(ZoneOffset.UTC);
+    String body =
+        perform(
+                json(
+                    HttpMethod.POST,
+                    EXPORTS,
+                    "{\"from\":\"" + today + "\",\"to\":\"" + today + "\"}"))
+            .andExpect(status().isAccepted())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    exportFixtures.runWorker();
+    String exportId = new ObjectMapper().readTree(body).get("exportId").asText();
+
+    perform(operator(HttpMethod.GET, me, EXPORTS + "/{id}", exportId)).andExpect(status().isOk());
+    perform(operator(HttpMethod.GET, me, EXPORTS + "/{id}", UUID.randomUUID()))
+        .andExpect(status().isNotFound());
+    perform(json(HttpMethod.POST, EXPORTS, "{\"goldenSetId\":\"" + UUID.randomUUID() + "\"}"))
+        .andExpect(status().isNotFound());
+    perform(json(HttpMethod.POST, EXPORTS, "{}")).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("[SPEC-030 R-16~R-18] 성능 Gate 응답과 403이 계약과 일치한다")
+  void stageGate() throws Exception {
+    UUID baseline = UUID.randomUUID();
+    UUID candidate = UUID.randomUUID();
+    Instant at = Instant.now().minusSeconds(3600);
+    for (int i = 0; i < 5; i++) {
+      ingest.ingest(
+          StageFixtures.batch(
+              StageFixtures.timing(baseline, "normalize.transcode", at, 1000, "ok"),
+              StageFixtures.timing(candidate, "normalize.transcode", at, 1500, "ok"),
+              StageFixtures.timing(candidate, "normalize.probe", at, 10, "ok")));
+    }
+    String body =
+        "{\"baselineSourceIds\":[\""
+            + baseline
+            + "\"],\"candidateSourceIds\":[\""
+            + candidate
+            + "\"]}";
+
+    perform(stageGate(body, "quality-evals")).andExpect(status().isOk());
+    perform(stageGate(body, "someone-else")).andExpect(status().isForbidden());
+  }
+
+  private MockHttpServletRequestBuilder json(HttpMethod method, String path, String body) {
+    return operator(method, me, path).contentType(MediaType.APPLICATION_JSON).content(body);
+  }
+
+  private static MockHttpServletRequestBuilder stageGate(String body, String caller) {
+    return MockMvcRequestBuilders.post("/internal/v1/quality/stage-gates")
+        .header("X-Caller", caller)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body);
   }
 
   private static MockHttpServletRequestBuilder internal(String body, String caller) {

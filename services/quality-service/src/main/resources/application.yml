@@ -39,6 +39,10 @@ vlm:
       golden-bucket: ${QUALITY_GOLDEN_BUCKET}
       # 화면에 줄 근거 프레임 서명 주소 유효 시간(SPEC-035 R-4)
       signed-url-ttl: 1h
+      # 외부 데이터셋 가져오기 버킷(SPEC-030). 매니페스트를 읽기만 한다.
+      import-bucket: ${QUALITY_IMPORT_BUCKET:}
+      # 특징 내보내기 버킷(SPEC-030 R-14). Golden Set 버킷은 Object Lock이라 쓰지 않는다.
+      export-bucket: ${QUALITY_EXPORT_BUCKET:}
     review:
       # 표본 비율(SPEC-029 R-2). 유형별로 sample-rates.<eventType>을 더한다.
       sample-rates:
@@ -53,6 +57,27 @@ vlm:
       allowed-callers: ${QUALITY_INTERNAL_ALLOWED_CALLERS:quality-evals}
     stage:
       retention: 90d
+    export:
+      # 이보다 오래 작업 표시가 없으면 Pod가 죽은 것으로 보고 다른 작업자가 처음부터 다시 쓴다.
+      # 결과 파일 하나를 읽고 쓰는 시간보다 충분히 길어야 한다.
+      heartbeat-timeout: 5m
+    dataset:
+      # 받을 매니페스트 taxonomyVersion(R-2)
+      supported-taxonomy-versions: [v2]
+      # 이보다 오래 작업 표시가 없으면 Pod가 죽은 것으로 보고 다른 작업자가 이어받는다.
+      # media 호출 한 건(read 60s × 3회)보다 길어야 한다.
+      heartbeat-timeout: 5m
+    media:
+      # media-service 내부 주소(SPEC-030 R-4)
+      base-url: ${MEDIA_SERVICE_INTERNAL_URI:http://localhost:8082}
+      connect-timeout: 2s
+      # 서버 쪽 복사 시간. X-Request-Deadline도 이 값으로 정한다.
+      read-timeout: 60s
+      # 503·연결 실패·시간 초과에 2회 재시도(내부 호출 규약)
+      max-attempts: 3
+      retry-wait: 500ms
+      circuit-minimum-calls: 10
+      circuit-open-duration: 30s
     consumers-enabled: true
     jobs:
       scheduling-enabled: true

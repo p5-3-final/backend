@@ -8,4 +8,7 @@ public interface GoldenStorage {
 
   /** Golden Set 버킷에 JSON 문서를 쓴다. */
   void putJson(String goldenKey, byte[] json);
+
+  /** Golden Set 버킷의 문서를 읽는다. */
+  byte[] read(String goldenKey);
 }

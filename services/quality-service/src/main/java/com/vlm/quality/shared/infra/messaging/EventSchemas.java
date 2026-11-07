@@ -14,6 +14,9 @@ import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import com.vlm.quality.shared.domain.ContractDocuments;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,6 +75,33 @@ public class EventSchemas implements ContractDocuments {
     } catch (InvalidEventException e) {
       throw new IllegalStateException("generated document violates the contract", e);
     }
+  }
+
+  @Override
+  public ParsedDocument parse(String schemaPath, byte[] json, int maxViolations) {
+    JsonNode node;
+    try {
+      node = strict.readTree(json);
+    } catch (JsonProcessingException e) {
+      return new ParsedDocument(null, List.of("$: JSON이 아니다 (" + e.getOriginalMessage() + ")"));
+    } catch (IOException e) {
+      throw new UncheckedIOException("cannot read document bytes", e);
+    }
+    if (node == null || !node.isObject()) {
+      return new ParsedDocument(null, List.of("$: JSON 객체가 아니다"));
+    }
+    List<String> violations =
+        schema(schemaPath).validate(node).stream()
+            .limit(maxViolations)
+            .map(EventSchemas::describe)
+            .toList();
+    return new ParsedDocument(node, violations);
+  }
+
+  // 문서 루트는 위치가 빈 문자열이라 JSON Path 루트($)로 적는다.
+  private static String describe(ValidationMessage message) {
+    String location = message.getInstanceLocation().toString();
+    return (location.isEmpty() ? "$" : location) + ": " + message.getError();
   }
 
   private JsonNode read(String payload) {

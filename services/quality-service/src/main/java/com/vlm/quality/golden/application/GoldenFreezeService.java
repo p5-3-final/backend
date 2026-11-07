@@ -1,6 +1,8 @@
 package com.vlm.quality.golden.application;
 
 import com.vlm.common.error.BusinessException;
+import com.vlm.quality.golden.domain.DatasetItem;
+import com.vlm.quality.golden.domain.DatasetItemRepository;
 import com.vlm.quality.golden.domain.FreezeEntry;
 import com.vlm.quality.golden.domain.GoldenDraftRepository;
 import com.vlm.quality.golden.domain.GoldenFrames;
@@ -45,6 +47,7 @@ public class GoldenFreezeService {
   private final GoldenSetService setService;
   private final GoldenSetRepository sets;
   private final GoldenDraftRepository drafts;
+  private final DatasetItemRepository datasetItems;
   private final GoldenVersionRepository versions;
   private final GoldenStorage storage;
   private final GoldenManifestWriter manifests;
@@ -67,6 +70,9 @@ public class GoldenFreezeService {
   }
 
   private GoldenSetVersion freezeMarked(GoldenSet set, UUID operator) {
+    if (set.isDataset()) {
+      return freezeDataset(set, operator);
+    }
     List<FreezeEntry> entries = drafts.forFreeze(set.id());
     if (entries.isEmpty()) {
       throw new BusinessException(QualityErrorCode.GOLDEN_EMPTY);
@@ -87,6 +93,33 @@ public class GoldenFreezeService {
         });
     log.info(
         "Froze golden set setId={} version={} entries={}", set.setId(), version, entries.size());
+    return frozen;
+  }
+
+  // SPEC-030 R-10: 데이터셋 세트는 라벨 대상이 media에 남는 영상 자체라 프레임을 복사하지 않는다.
+  private GoldenSetVersion freezeDataset(GoldenSet set, UUID operator) {
+    List<DatasetItem> items = datasetItems.forFreeze(set.id());
+    if (items.isEmpty()) {
+      throw new BusinessException(QualityErrorCode.GOLDEN_EMPTY);
+    }
+    Integer latest = setService.get(set.setId()).latestVersion();
+    int version = latest == null ? 1 : latest + 1;
+    Instant frozenAt = clock.instant();
+    String manifestKey = GoldenFrames.manifestKey(set.setId(), version);
+    storage.putJson(manifestKey, manifests.writeDataset(set, version, frozenAt, items));
+    // 계약 GoldenSetVersion.entryCount는 1 이상이다. 데이터셋 세트는 데이터셋 항목 수를 센다.
+    var frozen =
+        new GoldenSetVersion(set.setId(), version, items.size(), manifestKey, frozenAt, operator);
+    transactions.executeWithoutResult(
+        status -> {
+          versions.insert(set.id(), frozen);
+          sets.finishFreeze(set.setId(), version, frozenAt);
+        });
+    log.info(
+        "Froze dataset golden set setId={} version={} items={}",
+        set.setId(),
+        version,
+        items.size());
     return frozen;
   }
 

@@ -76,7 +76,8 @@ class AlertRaisedIntakeTest {
   }
 
   @Test
-  @DisplayName("[SPEC-029 R-28] dismissed를 받으면 사유 alert_dismissed 검토 항목을 하나 만든다")
+  @DisplayName(
+      "[SPEC-029 R-28] dismissed를 받으면 판정 결과(analysis)가 null인 사유 alert_dismissed 검토 항목을 하나 만든다")
   void queuesDismissedForReview() {
     UUID candidate = UUID.randomUUID();
     ObjectNode dismissed = Events.alertRaised(candidate, source, camera, "dismissed", T0);
@@ -92,12 +93,14 @@ class AlertRaisedIntakeTest {
                     == 1);
     Map<String, Object> item =
         jdbc.queryForMap(
-            "SELECT reason, start_ms, review_reasons::text AS reasons FROM review_items"
+            "SELECT reason, start_ms, review_reasons::text AS reasons, analysis FROM review_items"
                 + " WHERE event_id = CAST(? AS UUID)",
             eventId);
     assertThat(item.get("reason")).isEqualTo("alert_dismissed");
     assertThat(item.get("start_ms")).isEqualTo(dismissed.get("observedMs").asLong());
     assertThat(item.get("reasons")).isEqualTo("[\"rejected\"]");
+    // 판정 결과가 없는 항목이라 analysis는 null이다(계약 quality-service 3.0.0 ReviewItem.analysis).
+    assertThat(item.get("analysis")).isNull();
     assertThat(count("SELECT count(*) FROM review_items")).isEqualTo(1);
   }
 

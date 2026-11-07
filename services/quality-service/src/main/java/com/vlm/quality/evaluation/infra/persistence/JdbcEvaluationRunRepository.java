@@ -121,8 +121,7 @@ class JdbcEvaluationRunRepository implements EvaluationRunRepository {
                 rs.getObject("gate_baseline_run_id", UUID.class),
                 rs.getObject("gate_passed", Boolean.class),
                 BigDecimal.valueOf(rs.getDouble("gate_tolerance")),
-                read(rs.getString("gate_failures"), new TypeReference<List<GateFailure>>() {}),
-                List.of()),
+                read(rs.getString("gate_failures"), new TypeReference<List<GateFailure>>() {})),
             rs.getTimestamp("received_at").toInstant());
   }
 

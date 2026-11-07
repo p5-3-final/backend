@@ -116,12 +116,27 @@ curl -s -X POST localhost:8082/api/v1/media/videos -H 'Content-Type: application
   -d "{\"fileName\":\"before.mp4\",\"sizeBytes\":1000,\"contentType\":\"video/mp4\",\"sessionId\":\"$SESSION\",\"role\":\"BEFORE\"}"
 ```
 
+### 외부 데이터셋 영상 등록 (SPEC-030)
+
+quality-service가 외부 데이터셋을 가져올 때 영상마다 부르는 내부 API다. 게이트웨이로 전달하지 않는다.
+
+- `POST /internal/v1/media/dataset-videos`: 가져오기 버킷(`MEDIA_IMPORT_S3_BUCKET`)의 파일을 원본 버킷 `sources/<videoId>/original`로 서버 쪽 복사하고, `UPLOADED` 상태와 보존 등급 `DATASET`으로 등록한 뒤 같은 트랜잭션에서 `video.uploaded` Outbox를 쓴다. 201이다.
+- `videoId`는 uuid5(importId, externalId)다. 같은 쌍을 다시 부르면 복사·발행 없이 200으로 같은 영상을 돌려준다. 동시에 같은 요청이 와도 영상은 1개다.
+- 오류: 파일 없음 404 `MEDIA_IMPORT_OBJECT_NOT_FOUND`, 허용 목록 밖 `X-Caller` 403 `MEDIA_CALLER_NOT_ALLOWED`, 형식·크기 위반 400(`MEDIA_UNSUPPORTED_FORMAT`, `MEDIA_FILE_SIZE_INVALID`), 복사가 기한을 넘기면 504 `MEDIA_DEADLINE_EXCEEDED`.
+- 기한: `X-Request-Deadline`(epoch ms) 헤더가 있으면 그 시각까지, 없으면 `vlm.media.dataset.default-timeout`(기본 60s) 동안 복사를 기다린다.
+- 보존 등급 `DATASET`은 저장만 한다. 삭제 동작은 기존 영상과 같다.
+
+| 환경변수 | 내용 | 기본값 |
+| --- | --- | --- |
+| `MEDIA_IMPORT_S3_BUCKET` | 외부 데이터셋 가져오기 버킷(읽기만) | 비움(이 API를 부르면 기동 설정 오류) |
+| `MEDIA_INTERNAL_ALLOWED_CALLERS` | 내부 API를 부를 수 있는 `X-Caller` 값(쉼표 구분) | `quality-service` |
+
 ### quality-service 단독 실행 (SPEC-029)
 
-검토 큐, Golden Set, 평가 실행 기록, 처리 단계 측정, 긴급 알림 지표를 맡는다. 계약은 docs 레포 `service-contracts/openapi/quality-service.yaml`(2.0.0)이다.
+검토 큐, Golden Set, 평가 실행 기록, 처리 단계 측정, 긴급 알림 지표를 맡는다. 계약은 docs 레포 `service-contracts/openapi/quality-service.yaml`(3.0.0, 계약 묶음 5.0.0)이다.
 
 - 계약에서 API 인터페이스·모델을 생성한다(`openApiGenerate`, 출력 `build/generated/openapi`). 루트 구조가 아니면 `CONTRACTS_DIR`을 준다. 이미지 빌드는 `scripts/fetch-service-contracts.sh`로 계약을 먼저 받은 뒤 `docker build --build-arg SERVICE=quality-service .`로 한다.
-- 소비 토픽(그룹 `quality-service`): `event.analyzed`(검토 큐), `video.deleted`(삭제 전파), `stage.timing`(측정 원본), `alert.raised`(긴급 알림 기록). 발행은 없다.
+- 소비 토픽(그룹 `quality-service`): `event.analyzed`(검토 큐), `video.deleted`(삭제 전파), `stage.timing`(측정 원본), `alert.raised`(긴급 알림 기록), `source.completed`(영상별 결과 파일 경로, SPEC-030). 발행은 없다.
 - 운영자 API(`/api/v1/quality/**`)는 `X-User-Roles`에 `OPERATOR`가 있어야 한다. 게이트웨이는 `QUALITY_SERVICE_URI`로 전달한다. 평가 잡 API(`/internal/v1/quality/**`)는 게이트웨이로 전달하지 않고 `X-Caller`가 허용 목록에 있어야 한다.
 - 주기 작업: 맡은 지 24시간 지난 항목 풀기(10분마다), 전날 측정 일 집계(매일 00:15 UTC), 측정 원본 월 파티션 생성·삭제(매일 00:30 UTC). 여러 Pod 중 하나만 돈다(advisory lock).
 
@@ -134,6 +149,9 @@ curl -s -X POST localhost:8082/api/v1/media/videos -H 'Content-Type: application
 | `QUALITY_SOURCE_BUCKET` | 근거 프레임을 읽는 원본 버킷 | 없음(필수) |
 | `QUALITY_GOLDEN_BUCKET` | 확정 버전 매니페스트·프레임 사본 버킷 | 없음(필수) |
 | `QUALITY_INTERNAL_ALLOWED_CALLERS` | 내부 API를 부를 수 있는 `X-Caller` 값(쉼표 구분) | `quality-evals` |
+| `QUALITY_IMPORT_BUCKET` | 외부 데이터셋 가져오기 버킷(매니페스트를 읽기만, SPEC-030) | 비움(가져오기를 처리하면 설정 오류) |
+| `QUALITY_EXPORT_BUCKET` | 특징 내보내기 버킷(SPEC-030) | 비움(내보내기를 처리하면 설정 오류) |
+| `MEDIA_SERVICE_INTERNAL_URI` | media-service 내부 API 주소(SPEC-030) | `http://localhost:8082` |
 
 ```bash
 set -a; source .env; set +a
@@ -141,6 +159,14 @@ set -a; source .env; set +a
 curl -s 'localhost:8088/api/v1/quality/review-items?status=UNASSIGNED' \
   -H "X-User-Id: $(uuidgen)" -H 'X-User-Roles: USER,OPERATOR'
 ```
+
+#### 데이터셋 가져오기·특징 내보내기·성능 Gate (SPEC-030)
+
+- `POST /api/v1/quality/dataset-imports`(202), `GET …/dataset-imports`, `GET …/dataset-imports/{importId}`: 가져오기 버킷의 매니페스트(`quality/v1/dataset-import-manifest`)를 검증하고 영상마다 media `registerDatasetVideo`를 부른 뒤 dev·eval Golden Set을 하나씩 만들어 확정한다. `importId`는 uuid5(manifestKey)라 같은 매니페스트를 다시 가져오면 같은 영상이 된다. 진행 중이면 409 `QUALITY_IMPORT_IN_PROGRESS`다.
+- `POST /api/v1/quality/feature-exports`(202), `GET …/feature-exports/{exportId}`: goldenSetId(최신 확정 버전의 영상)나 기간(`source.completed`를 받은 UTC 날짜, 최대 90일) 중 하나로 영상을 고르고 위험 상태마다 `quality/v1/feature-row` 한 줄을 내보내기 버킷 `exports/<exportId>/features.jsonl`에 쓴다.
+- `POST /internal/v1/quality/stage-gates`: 기준·후보 영상 목록의 90일 안 측정 원본으로 단계별 p95를 비교한다. 결과를 저장하지 않는다.
+- 가져오기·내보내기는 요청 스레드가 아니라 전용 단일 스레드 실행기에서 2초마다 DB 행을 가져가 처리한다. 작업 표시(heartbeat)가 5분 넘게 없으면 다른 Pod가 이어받는다.
+- media 호출은 connect 2s·read 60s, 5xx·연결 오류만 최대 3회 시도하고, 최근 10건 중 50% 이상 실패하면 30초 동안 서킷을 연다(Resilience4j).
 
 ## 문서
 

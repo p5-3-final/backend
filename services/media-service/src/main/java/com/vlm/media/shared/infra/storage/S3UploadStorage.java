@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.exception.ApiCallTimeoutException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -178,6 +179,39 @@ class S3UploadStorage implements UploadStorage {
     } catch (NoSuchKeyException e) {
       return OptionalLong.empty();
     }
+  }
+
+  @Override
+  public OptionalLong importObjectSize(String importKey) {
+    try {
+      return OptionalLong.of(
+          s3.headObject(r -> r.bucket(importBucket()).key(importKey)).contentLength());
+    } catch (NoSuchKeyException e) {
+      return OptionalLong.empty();
+    }
+  }
+
+  @Override
+  public void copyFromImport(String importKey, String storageKey, Duration timeout) {
+    try {
+      s3.copyObject(
+          c ->
+              c.sourceBucket(importBucket())
+                  .sourceKey(importKey)
+                  .destinationBucket(properties.bucket())
+                  .destinationKey(storageKey)
+                  .overrideConfiguration(o -> o.apiCallTimeout(timeout)));
+    } catch (ApiCallTimeoutException e) {
+      throw new CopyTimeoutException(e);
+    }
+  }
+
+  private String importBucket() {
+    String bucket = properties.importBucket();
+    if (bucket == null || bucket.isBlank()) {
+      throw new IllegalStateException("vlm.media.storage.import-bucket is not configured");
+    }
+    return bucket;
   }
 
   /** 브라우저가 POST할 버킷 주소. 서명용 공개 주소를 기준으로 path-style이면 경로에, 아니면 호스트에 버킷을 넣는다. */

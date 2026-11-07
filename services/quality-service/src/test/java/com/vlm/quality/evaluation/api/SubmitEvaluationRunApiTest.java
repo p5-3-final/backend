@@ -1,14 +1,17 @@
 package com.vlm.quality.evaluation.api;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.vlm.quality.support.EvaluationFixtures;
 import com.vlm.quality.support.IntegrationTest;
+import com.vlm.quality.support.QualityApi;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -84,5 +87,34 @@ class SubmitEvaluationRunApiTest {
     evaluations
         .submit(EvaluationFixtures.run(UUID.randomUUID(), setId, 1, "0.77"))
         .andExpect(jsonPath("$.gate.passed").value(true));
+  }
+
+  @Test
+  @DisplayName(
+      "[SPEC-029 R-18] 기준에만 있는 지표가 빠지면 Gate가 passed=false이고 그 지표를 value null로 담아 다시 조회해도 같다")
+  void recordsBaselineOnlyMetricWithNullValue() throws Exception {
+    UUID setId = evaluations.frozenSet("missing-metric-set");
+    evaluations.baseline(setId, "0.78");
+    UUID runId = UUID.randomUUID();
+    // 기준 실행의 judge_precision 대신 다른 지표만 낸다.
+    String withoutMetric =
+        EvaluationFixtures.run(runId, setId, 1, "0.78")
+            .replace("\"judge_precision\"", "\"candidate_recall\"");
+
+    evaluations
+        .submit(withoutMetric)
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.gate.passed").value(false))
+        .andExpect(jsonPath("$.gate.failures[0].name").value("judge_precision"))
+        .andExpect(jsonPath("$.gate.failures[0].baseline").value(0.78))
+        .andExpect(jsonPath("$.gate.failures[0].value").value(nullValue()));
+    mvc.perform(
+            QualityApi.operator(
+                HttpMethod.GET,
+                UUID.randomUUID(),
+                "/api/v1/quality/evaluation-runs/{runId}",
+                runId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.gate.failures[0].value").value(nullValue()));
   }
 }

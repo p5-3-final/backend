@@ -10,18 +10,15 @@ import org.jspecify.annotations.Nullable;
  *
  * @param baselineRunId 받을 때의 기준 실행. 없으면 null
  * @param passed 기준이 없으면 null
- * @param missingInCandidate 기준에만 있는 지표. 계약 failures[].value가 null을 허용하지 않아 failures에 넣지 못하고 passed만
- *     false로 만든다(계약 C-30 대기). 저장하지 않고 받을 때 로그로 남긴다
+ * @param failures 나빠진 지표와 기준에만 있는 지표(value null)
  */
 public record GateResult(
     @Nullable UUID baselineRunId,
     @Nullable Boolean passed,
     BigDecimal tolerance,
-    List<GateFailure> failures,
-    List<MetricKey> missingInCandidate) {
+    List<GateFailure> failures) {
 
   public GateResult {
     failures = List.copyOf(failures);
-    missingInCandidate = List.copyOf(missingInCandidate);
   }
 }

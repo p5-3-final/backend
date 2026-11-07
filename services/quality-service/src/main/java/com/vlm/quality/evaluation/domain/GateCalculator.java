@@ -31,24 +31,24 @@ public final class GateCalculator {
       List<Metric> baseline,
       BigDecimal tolerance) {
     if (baselineRunId == null) {
-      return new GateResult(null, null, tolerance, List.of(), List.of());
+      return new GateResult(null, null, tolerance, List.of());
     }
     Map<MetricKey, Metric> byKey = new LinkedHashMap<>();
     candidate.forEach(metric -> byKey.put(MetricKey.of(metric), metric));
     List<GateFailure> failures = new ArrayList<>();
-    List<MetricKey> missing = new ArrayList<>();
     for (Metric reference : baseline) {
       Metric current = byKey.get(MetricKey.of(reference));
       if (current == null) {
-        missing.add(MetricKey.of(reference));
+        // 이번 실행에서 빠진 지표는 비교할 값이 없어 실패로 본다(계약 failures[].value null).
+        failures.add(
+            new GateFailure(reference.name(), reference.eventType(), reference.value(), null));
       } else if (worse(current.value(), reference, tolerance)) {
         failures.add(
             new GateFailure(
                 reference.name(), reference.eventType(), reference.value(), current.value()));
       }
     }
-    boolean passed = failures.isEmpty() && missing.isEmpty();
-    return new GateResult(baselineRunId, passed, tolerance, failures, missing);
+    return new GateResult(baselineRunId, failures.isEmpty(), tolerance, failures);
   }
 
   private static boolean worse(BigDecimal value, Metric reference, BigDecimal tolerance) {

@@ -17,6 +17,9 @@ dependencies {
     // 운영 S3와 로컬·테스트 SeaweedFS를 같은 클라이언트로 쓴다(ADR-0006).
     implementation("software.amazon.awssdk:s3")
     implementation(libs.json.schema.validator)
+    // quality → media 첫 서비스 간 동기 호출의 재시도·서킷브레이커(SPEC-030 plan 10절 1, D-26)
+    implementation(libs.resilience4j.retry)
+    implementation(libs.resilience4j.circuitbreaker)
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
@@ -24,6 +27,8 @@ dependencies {
     testImplementation(libs.testcontainers.kafka)
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.swagger.request.validator.mockmvc)
+    // media-service 호출을 대신한다(testing.md "외부 서비스 호출은 WireMock")
+    testImplementation(libs.wiremock.standalone)
 }
 
 // 계약 원본은 docs 레포에 있다. 로컬은 작업 공간 구조(project/repos/backend)를 따르고, CI·이미지 빌드는 CONTRACTS_DIR로 넘긴다.
@@ -83,6 +88,13 @@ tasks.processResources {
             "stages/v1/*.schema.json",
             "taxonomy/v2/*.schema.json",
             "quality/v1/golden-manifest.schema.json",
+            "quality/v1/dataset-import-manifest.schema.json",
+            "quality/v1/feature-row.schema.json",
+            "events/source.completed.schema.json",
+            "events/_risk-forecast.schema.json",
+            "events/_source-summary.schema.json",
+            "events/segment.ready.schema.json",
+            "aggregates/v1/source-result.schema.json",
         )
         into("contracts")
     }

@@ -2,6 +2,7 @@ package com.vlm.quality.stage.infra.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vlm.quality.stage.domain.StageSample;
 import com.vlm.quality.stage.domain.StageStat;
 import com.vlm.quality.stage.domain.StageTiming;
 import com.vlm.quality.stage.domain.StageTimingRepository;
@@ -212,5 +213,55 @@ class JdbcStageTimingRepository implements StageTimingRepository {
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("cannot write versions", e);
     }
+  }
+
+  // 두 목록을 한 번에 훑어 쪽별로 FILTER한다. 음수는 SPEC-029 R-22처럼 백분위에서 빼고, Gate는 백분위만 쓰므로 개수에서도 뺀다.
+  @Override
+  public List<StageSample> p95BySources(
+      List<UUID> baselineSourceIds,
+      List<UUID> candidateSourceIds,
+      List<String> stageIds,
+      Instant since) {
+    String stageFilter = stageIds.isEmpty() ? "" : " AND stage_id IN (:stageIds)";
+    String having =
+        stageIds.isEmpty()
+            ? " HAVING count(*) FILTER (WHERE side = 'b') > 0"
+                + " AND count(*) FILTER (WHERE side = 'c') > 0"
+            : "";
+    String sql =
+        "WITH t AS (SELECT 'b' AS side, stage_id, duration_ms FROM stage_timings"
+            + " WHERE source_id IN (:baseline) AND started_at >= :since AND duration_ms >= 0"
+            + stageFilter
+            + " UNION ALL SELECT 'c' AS side, stage_id, duration_ms FROM stage_timings"
+            + " WHERE source_id IN (:candidate) AND started_at >= :since AND duration_ms >= 0"
+            + stageFilter
+            + ") SELECT stage_id,"
+            + " count(*) FILTER (WHERE side = 'b') AS baseline_count,"
+            + " percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)"
+            + " FILTER (WHERE side = 'b') AS baseline_p95,"
+            + " count(*) FILTER (WHERE side = 'c') AS candidate_count,"
+            + " percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)"
+            + " FILTER (WHERE side = 'c') AS candidate_p95"
+            + " FROM t GROUP BY stage_id"
+            + having
+            + " ORDER BY stage_id";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("baseline", baselineSourceIds)
+            .addValue("candidate", candidateSourceIds)
+            .addValue("since", Timestamp.from(since));
+    if (!stageIds.isEmpty()) {
+      params.addValue("stageIds", stageIds);
+    }
+    return jdbc.query(
+        sql,
+        params,
+        (rs, row) ->
+            new StageSample(
+                rs.getString("stage_id"),
+                rs.getInt("baseline_count"),
+                rs.getObject("baseline_p95", Double.class),
+                rs.getInt("candidate_count"),
+                rs.getObject("candidate_p95", Double.class)));
   }
 }

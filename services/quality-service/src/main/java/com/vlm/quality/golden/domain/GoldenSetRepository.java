@@ -15,6 +15,14 @@ public interface GoldenSetRepository {
 
   Optional<GoldenSet> findBySetId(UUID setId);
 
+  /** 이름이 없을 때만 데이터셋 세트(origin import)를 만든다(SPEC-030 R-8). 만들었으면 true. */
+  boolean insertDatasetSetIfNameFree(UUID setId, String name, String split, Instant now);
+
+  Optional<GoldenSet> findByName(String name);
+
+  /** 데이터셋 세트의 출처·사용 조건을 바꾼다(R-10). */
+  void setDatasetOrigin(long goldenSetRowId, String originJson, Instant now);
+
   List<GoldenSet> list(int page, int size);
 
   long count();

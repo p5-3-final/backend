@@ -22,6 +22,7 @@ class QualityJobScheduling {
   private final StaleAssignmentJob staleAssignmentJob;
   private final DailyStageAggregationJob dailyStageAggregationJob;
   private final StageTimingPartitionJob stageTimingPartitionJob;
+  private final BackgroundJobs backgroundJobs;
 
   // R-10: 10분마다
   @Scheduled(fixedDelayString = "${vlm.quality.jobs.stale-assignment-interval-ms:600000}")
@@ -33,6 +34,12 @@ class QualityJobScheduling {
   @Scheduled(cron = "0 15 0 * * *", zone = "UTC")
   void aggregateStageTimings() {
     dailyStageAggregationJob.aggregateYesterday();
+  }
+
+  // SPEC-030: 2초마다 맡을 가져오기·내보내기를 찾는다. 일은 전용 실행기에서 돈다.
+  @Scheduled(fixedDelayString = "${vlm.quality.jobs.background-poll-interval-ms:2000}")
+  void pollBackgroundJobs() {
+    backgroundJobs.trigger();
   }
 
   // R-25: 매일 00:30 UTC

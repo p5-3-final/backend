@@ -20,7 +20,7 @@ class S3ClientConfigTest {
   @DisplayName("주소를 비우면 S3 리전 기본 주소와 가상 호스트 방식으로 서명한다(운영)")
   void usesRegionalS3WhenEndpointIsEmpty() {
     MediaStorageProperties properties =
-        new MediaStorageProperties("vlm-media", "ap-northeast-2", null, null, false);
+        new MediaStorageProperties("vlm-media", "ap-northeast-2", null, null, false, null);
 
     try (S3Presigner presigner = S3Clients.presigner(properties, CREDENTIALS);
         S3Client client = S3Clients.client(properties, CREDENTIALS)) {
@@ -35,7 +35,7 @@ class S3ClientConfigTest {
   void usesConfiguredEndpointsWithPathStyle() {
     MediaStorageProperties properties =
         new MediaStorageProperties(
-            "vlm-media", "us-east-1", "http://seaweedfs:8333", "http://localhost:8333", true);
+            "vlm-media", "us-east-1", "http://seaweedfs:8333", "http://localhost:8333", true, null);
 
     try (S3Presigner presigner = S3Clients.presigner(properties, CREDENTIALS);
         S3Client client = S3Clients.client(properties, CREDENTIALS)) {
@@ -50,7 +50,8 @@ class S3ClientConfigTest {
   @DisplayName("공개 주소를 비우면 서버 호출 주소로 서명한다")
   void fallsBackToEndpointForSigning() {
     MediaStorageProperties properties =
-        new MediaStorageProperties("vlm-media", "us-east-1", "http://localhost:8333", null, true);
+        new MediaStorageProperties(
+            "vlm-media", "us-east-1", "http://localhost:8333", null, true, null);
 
     try (S3Presigner presigner = S3Clients.presigner(properties, CREDENTIALS)) {
       assertThat(presignedGet(presigner))
