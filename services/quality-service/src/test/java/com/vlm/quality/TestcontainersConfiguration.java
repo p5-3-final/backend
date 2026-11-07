@@ -73,7 +73,8 @@ public class TestcontainersConfiguration {
         new NewTopic("event.analyzed", 1, (short) 1),
         new NewTopic("video.deleted", 1, (short) 1),
         new NewTopic("stage.timing", 1, (short) 1),
-        new NewTopic("alert.raised", 1, (short) 1));
+        new NewTopic("alert.raised", 1, (short) 1),
+        new NewTopic("source.completed", 1, (short) 1));
   }
 
   @Bean
