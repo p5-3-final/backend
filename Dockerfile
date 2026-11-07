@@ -11,7 +11,10 @@ ARG CONTRACTS_DIR=/workspace/.service-contracts/service-contracts
 WORKDIR /workspace
 COPY . .
 # Gradle 배포본과 의존성은 BuildKit 캐시에 두어 다시 빌드할 때 받지 않는다. 테스트는 CI의 checks에서 돌린다.
-RUN --mount=type=cache,target=/root/.gradle \
+# compose가 여러 서비스를 동시에 빌드하면 같은 캐시를 함께 연다. Gradle은 잠금을 가진 프로세스에 해제를 요청하는데
+# 빌드마다 컨테이너가 달라 요청이 닿지 않고 60초 뒤 "Timeout waiting to lock journal cache"로 실패한다.
+# sharing=locked로 이 캐시를 쓰는 빌드를 한 번에 하나씩 돌린다.
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     test -n "${SERVICE}" \
     && CONTRACTS_DIR="${CONTRACTS_DIR}" ./gradlew --no-daemon ":services:${SERVICE}:bootJar" \
     && java -Djarmode=tools -jar "services/${SERVICE}/build/libs/${SERVICE}.jar" \
