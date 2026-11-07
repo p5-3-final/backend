@@ -215,7 +215,7 @@ class QualityContractTest {
   void evaluationRuns() throws Exception {
     UUID setId = evaluations.frozenSet("contract-eval");
     UUID baseline = UUID.randomUUID();
-    perform(internal(EvaluationFixtures.run(baseline, setId, 1, "0.90"), "quality-evals"))
+    perform(internal(EvaluationFixtures.run(baseline, setId, 1, "0.90"), "quality-eval"))
         .andExpect(status().isCreated());
     perform(
             operator(HttpMethod.PUT, me, SETS + "/{setId}/baseline", setId)
@@ -224,8 +224,8 @@ class QualityContractTest {
         .andExpect(status().isOk());
     UUID candidate = UUID.randomUUID();
     String body = EvaluationFixtures.run(candidate, setId, 1, "0.80");
-    perform(internal(body, "quality-evals")).andExpect(status().isCreated());
-    perform(internal(body, "quality-evals")).andExpect(status().isOk());
+    perform(internal(body, "quality-eval")).andExpect(status().isCreated());
+    perform(internal(body, "quality-eval")).andExpect(status().isOk());
     perform(internal(body, "someone-else")).andExpect(status().isForbidden());
 
     perform(operator(HttpMethod.GET, me, "/api/v1/quality/evaluation-runs?goldenSetId={s}", setId))
@@ -367,7 +367,7 @@ class QualityContractTest {
             + candidate
             + "\"]}";
 
-    perform(stageGate(body, "quality-evals")).andExpect(status().isOk());
+    perform(stageGate(body, "quality-eval")).andExpect(status().isOk());
     perform(stageGate(body, "someone-else")).andExpect(status().isForbidden());
   }
 

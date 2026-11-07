@@ -59,7 +59,7 @@ public class EvaluationFixtures {
   public ResultActions submit(String body) throws Exception {
     return mvc.perform(
         MockMvcRequestBuilders.post(SUBMIT)
-            .header("X-Caller", "quality-evals")
+            .header("X-Caller", "quality-eval")
             .contentType(MediaType.APPLICATION_JSON)
             .content(body));
   }
